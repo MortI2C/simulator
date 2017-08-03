@@ -8,6 +8,7 @@ using namespace std;
 class Policy {
    public:
     virtual bool scheduleWorkload(vector<workload>::iterator, int) =0;
+    virtual void freeResources(int) =0;
 };
 
 #endif
