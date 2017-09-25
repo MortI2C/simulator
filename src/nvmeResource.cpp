@@ -4,21 +4,41 @@
 #include "nvmeResource.hpp"
 #include "resources_structures.hpp"
 
-NvmeResource::NvmeResource (std::vector<nvme_slot> resource) {
-    this->nvme = resource;
+NvmeResource::NvmeResource (int totalBandwidth, int totalCapacity) {
+    this->nvme.totalBandwidth = totalBandwidth;
+    this->nvme.totalCapacity = totalCapacity;
+    this->nvme.availableBandwidth = totalBandwidth;
+    this->nvme.availableCapacity = totalCapacity;
 }
 
-bool NvmeResource::availableSlots() {
-    bool avail = false;
-    for(std::vector<nvme_slot>::iterator it = nvme.begin(); !avail && it!=nvme.end(); ++it)
-        avail = !it->used;
-    return avail;
+int NvmeResource::getTotalBandwidth() {
+    return this->nvme.totalBandwidth;
 }
 
-std::vector<nvme_slot>::iterator NvmeResource::getSlot() {
-    std::vector<nvme_slot>::iterator found = nvme.end();
-    for(std::vector<nvme_slot>::iterator it = nvme.begin(); found==nvme.end() && it!=nvme.end(); ++it)
-        if(!it->used) found = it;
+int NvmeResource::getTotalCapacity() {
+    return this->nvme.totalCapacity;
+}
 
-    return found;
+int NvmeResource::getAvailableBandwidth() {
+    return this->nvme.availableBandwidth;
+}
+
+int NvmeResource::getAvailableCapacity() {
+    return this->nvme.availableCapacity;
+}
+
+void NvmeResource::setTotalBandwidth(int bandwidth) {
+    this->nvme.totalBandwidth = bandwidth;
+}
+
+void NvmeResource::setTotalCapacity(int capacity) {
+    this->nvme.totalCapacity = capacity;
+}
+
+void NvmeResource::setAvailableBandwidth(int bandwidth) {
+    this->nvme.availableBandwidth = bandwidth;
+}
+
+void NvmeResource::setAvailableCapacity(int capacity) {
+    this->nvme.availableCapacity = capacity;
 }

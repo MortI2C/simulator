@@ -7,12 +7,10 @@ using namespace std;
 
 class ArrivalUniformModel {
    public:
-    ArrivalUniformModel(int baseExecutionTime = 1499) {
-        this->baseExecutionTime = baseExecutionTime;
+    ArrivalUniformModel() {
     }
-    vector<workload> generate_arrivals(int, double, int);
-   private:
-    int baseExecutionTime;
+    void generate_arrivals(vector<workload>&, int, double);
+
 };
 
 #endif

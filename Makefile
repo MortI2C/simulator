@@ -1,6 +1,6 @@
 CXX := g++
-CFLAGS := -std=c++11
-LD_FLAGS := -std=c++11
+CFLAGS := -std=c++11 -g
+LD_FLAGS := 
 CPP_FILES := $(wildcard src/*.cpp)
 OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
 

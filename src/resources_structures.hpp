@@ -3,22 +3,30 @@
 
 #include <iostream>
 #include <vector>
-struct nvme_slot {
-   int time;
-   bool used;
-};
+#include "math.h"
+#include "nvmeResource.hpp"
+//#include "Rack.hpp"
+using namespace std;
 
-struct allocated_resources {
-    std::vector<nvme_slot>::iterator resource;
-    int completion_time;
+class Rack;
+struct raid;
+
+struct allocatedResources {
+    int composition;
+    Rack* allocatedRack;
+    int workloadsUsing = 0;
 };
 
 struct workload {
+    allocatedResources allocation;
+    int executionTime;
+    int nvmeBandwidth;
+    int nvmeCapacity;
     bool highprio;
     int deadline;
-    int completion_time;
     int arrival;
     int scheduled;
+    int cyclesDelayed=0;
 };
 
 #endif

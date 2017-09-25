@@ -6,14 +6,26 @@
 #include "resources_structures.hpp"
 
 class NvmeResource {
-    std::vector<nvme_slot> nvme;
+    struct nvme {
+		int availableBandwidth;
+		int availableCapacity;
+		int totalBandwidth;
+		int totalCapacity;
+		bool used = false;
+	} nvme;
 
     public:
 		NvmeResource() {
 
 		};
-		NvmeResource (std::vector<nvme_slot>);
-		bool availableSlots();
-		std::vector<nvme_slot>::iterator getSlot();
+		NvmeResource (int, int);
+		void setTotalBandwidth(int);
+		void setTotalCapacity(int);
+		void setAvailableBandwidth(int);
+		void setAvailableCapacity(int);
+		int getTotalBandwidth();
+		int getTotalCapacity();
+		int getAvailableBandwidth();
+		int getAvailableCapacity();
 };
 #endif
