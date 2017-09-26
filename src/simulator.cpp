@@ -46,6 +46,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
     vector<workload> runningWorkloads;
     vector<workload> pendingToSchedule;
 
+    vector<workload> scheduled;
     vector<workload>::iterator wlpointer = workloads.begin();
     while(processedPatients < patients) {
         //1st Check Workloads running finishing in this step
@@ -53,7 +54,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
         vector<vector<workload>::iterator> toFinish;
         for(vector<workload>::iterator run = runningWorkloads.begin(); !finish && run!=runningWorkloads.end(); ++run) {
             if((run->executionTime+run->scheduled)<=step) {
-                cout << "freeing" << endl;
+                scheduled.push_back(*run);
                 toFinish.push_back(run);
                 freeResources(*run);
             } else
@@ -75,25 +76,21 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
         for(int i = 0; i<toFinish.size(); ++i) {
             pendingToSchedule.erase(toFinish[i]);
         }
+
         //3rd try to schedule new arriving jobs
         bool stop = false;
-        vector<vector<workload>::iterator> toRemove;
         while(wlpointer!=workloads.end() && processedPatients < patients && wlpointer->arrival <= step) {
             if(policy->scheduleWorkload(wlpointer,step,layout)) {
                 insertOrderedByStep(runningWorkloads,*wlpointer);
-                toRemove.push_back(wlpointer);
                 ++processedPatients;
+                workloads.erase(wlpointer);
             } else {
                 insertOrderedByStep(pendingToSchedule,*wlpointer);
-                toRemove.push_back(wlpointer);
+                workloads.erase(wlpointer);
             }
-            wlpointer++;
+            wlpointer = workloads.begin();
         }
 
-        for(vector<vector<workload>::iterator>::iterator it = toRemove.begin();
-                it!=toRemove.end(); ++it) {
-            workloads.erase(*it);
-        }
         wlpointer = workloads.begin();
         //Advance simulation step
         step++;
@@ -102,7 +99,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
     int missedDeadline = 0;
     int waitingTime = 0;
     int exeTime = 0;
-    for(vector<workload>::iterator it = workloads.begin(); it != workloads.end(); it++) {
+    for(vector<workload>::iterator it = scheduled.begin(); it != scheduled.end(); it++) {
         if((it->executionTime+it->scheduled) > step) step = (it->executionTime+it->scheduled);
         if(it->deadline < (it->executionTime+it->scheduled)) ++missedDeadline;
         waitingTime += (it->scheduled - it->arrival);
@@ -123,7 +120,7 @@ int main(int argc, char* argv[]) {
         prio_threshold=atof(argv[2]);
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
-    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1000);
+    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1000, 4000, 3200);
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
     arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 

@@ -9,7 +9,7 @@ class WorkloadPoissonGenerator {
    public:
     WorkloadPoissonGenerator() {
     }
-    vector<workload> generateWorkloads(int, float, float, float);
+    vector<workload> generateWorkloads(int, float, float, float, int, int);
 };
 
 #endif

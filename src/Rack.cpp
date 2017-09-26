@@ -51,7 +51,7 @@ void Rack::freeComposition(Rack* rack, int composition) {
        rack->compositions[composition].used = false;
        int freedResources = 0;
        for (int i = 0; freedResources < rack->compositions[composition].numVolumes
-                       && i < rack->compositions[composition].numVolumes; ++i) {
+                       && i < rack->freeResources.size(); ++i) {
            if (!rack->freeResources[i]) {
                rack->freeResources[i] = 1;
                ++freedResources;

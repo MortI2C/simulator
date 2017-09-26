@@ -11,7 +11,7 @@ using namespace std;
 struct nvmeFitness {
     int fitness;
     int composition;
-    Rack rack;
+    Rack* rack;
 };
 
 void insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
@@ -32,11 +32,11 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            if(it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+            if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
                         +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
-                        i,*it
+                        i,&(*it)
                 };
                 insertSorted(fittingCompositions, element);
             }
@@ -45,15 +45,15 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
 
     if(!fittingCompositions.empty()) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
-        it->rack.compositions[it->composition].composedNvme.setAvailableCapacity(
-                (it->rack.compositions[it->composition].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)
+        it->rack->compositions[it->composition].composedNvme.setAvailableCapacity(
+                (it->rack->compositions[it->composition].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)
         );
-        it->rack.compositions[it->composition].composedNvme.setAvailableBandwidth(
-                (it->rack.compositions[it->composition].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
+        it->rack->compositions[it->composition].composedNvme.setAvailableBandwidth(
+                (it->rack->compositions[it->composition].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
         );
 
         wload->allocation.composition = it->composition;
-        wload->allocation.allocatedRack = &(it->rack);
+        wload->allocation.allocatedRack = it->rack;
         wload->allocation.workloadsUsing++;
         scheduled = true;
     } else {
@@ -75,18 +75,17 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
         }
 
         if(fitness != -1) {
-            cout << "use free resource" << endl;
             scheduled = true;
             int freeComposition = -1;
             for(int i = 0; freeComposition == -1 && i<scheduledRack->compositions.size(); ++i) {
                 if(!scheduledRack->compositions[i].used)
                     freeComposition = i;
             }
+
             int allocatedResources = 0;
             scheduledRack->numFreeResources-=minResources;
             scheduledRack->compositions[freeComposition].used = true;
 //            scheduledRack->freeResources.erase(scheduledRack->freeResources.begin(),scheduledRack->freeResources.begin()+minResources-1);
-
             scheduledRack->compositions[freeComposition].composedNvme = NvmeResource(minResources*nvmeBw,minResources*nvmeCapacity);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
@@ -106,6 +105,6 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
 
     if(scheduled)
         wload->scheduled = step;
-
+    
     return scheduled;
 }

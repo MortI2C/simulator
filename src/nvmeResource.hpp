@@ -5,14 +5,16 @@
 #include <queue>
 #include "resources_structures.hpp"
 
+struct Nvme {
+    int availableBandwidth;
+    int availableCapacity;
+    int totalBandwidth;
+    int totalCapacity;
+    bool used = false;
+};
+
 class NvmeResource {
-    struct nvme {
-		int availableBandwidth;
-		int availableCapacity;
-		int totalBandwidth;
-		int totalCapacity;
-		bool used = false;
-	} nvme;
+    Nvme nvme;
 
     public:
 		NvmeResource() {
