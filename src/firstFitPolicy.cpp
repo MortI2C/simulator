@@ -2,25 +2,38 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include "bestFitPolicy.hpp"
+#include "firstFitPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
+void FirstFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+    bool inserted = false;
+    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
+        if(it->fitness >= element.fitness) {
+            vector.insert(it,element);
+            inserted = true;
+        }
+    }
+    if(!inserted)
+        vector.push_back(element);
+}
+
+bool FirstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size(); ++i) {
+        for(int i = 0; fittingCompositions.empty() && i<it->compositions.size(); ++i) {
             if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
                         +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
                         i,&(*it)
                 };
-                insertSorted(fittingCompositions, element);
+                fittingCompositions.push_back(element);
+//                insertSorted(fittingCompositions, element);
             }
         }
     }
@@ -49,10 +62,9 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
         int fitness = -1;
         for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
             if(it->numFreeResources>=minResources) {
-                if (fitness == -1 || fitness > (it->numFreeResources - minResources)) {
-                    scheduledRack = it;
-                    fitness = it->numFreeResources - minResources;
-                }
+                scheduledRack=it;
+                scheduled = true;
+                fitness = 1;
             }
         }
 
@@ -89,17 +101,4 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
         wload->scheduled = step;
 
     return scheduled;
-}
-
-
-void BestFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
-    bool inserted = false;
-    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        if(it->fitness >= element.fitness) {
-            vector.insert(it,element);
-            inserted = true;
-        }
-    }
-    if(!inserted)
-        vector.push_back(element);
 }

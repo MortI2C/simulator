@@ -11,6 +11,12 @@ using namespace std;
 class Rack;
 struct raid;
 
+struct nvmeFitness {
+    int fitness;
+    int composition;
+    Rack* rack;
+};
+
 struct allocatedResources {
     int composition;
     Rack* allocatedRack;

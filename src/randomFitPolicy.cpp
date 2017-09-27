@@ -2,13 +2,26 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include "bestFitPolicy.hpp"
+#include <stdlib.h>
+#include "randomFitPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
+void RandomFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+    bool inserted = false;
+    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
+        if(it->fitness >= element.fitness) {
+            vector.insert(it,element);
+            inserted = true;
+        }
+    }
+    if(!inserted)
+        vector.push_back(element);
+}
+
+bool RandomFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -26,7 +39,8 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
     }
 
     if(!fittingCompositions.empty()) {
-        vector<nvmeFitness>::iterator it = fittingCompositions.begin();
+        int v2 = rand() % fittingCompositions.size();
+        vector<nvmeFitness>::iterator it = fittingCompositions.begin()+v2;
         it->rack->compositions[it->composition].composedNvme.setAvailableCapacity(
                 (it->rack->compositions[it->composition].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)
         );
@@ -89,17 +103,4 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
         wload->scheduled = step;
 
     return scheduled;
-}
-
-
-void BestFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
-    bool inserted = false;
-    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        if(it->fitness >= element.fitness) {
-            vector.insert(it,element);
-            inserted = true;
-        }
-    }
-    if(!inserted)
-        vector.push_back(element);
 }

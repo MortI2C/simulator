@@ -5,7 +5,11 @@
 #include <typeinfo>
 #include "resources_structures.hpp"
 #include "policy.hpp"
-#include "bestFitPolicy.hpp"
+//#include "randomFitPolicy.hpp"
+//#include "bestFitPolicy.hpp"
+//#include "worstFitPolicy.hpp"
+//#include "firstFitPolicy.hpp"
+#include "minFragPolicy.hpp"
 #include "arrivalUniformModel.hpp"
 #include "arrivalPoissonModel.hpp"
 #include "workloadPoissonGenerator.hpp"
@@ -41,6 +45,8 @@ void freeResources(workload& wload) {
 }
 
 void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int patients, Layout& layout) {
+    std::cout.unsetf ( std::ios::floatfield );
+    std::cout.precision(2);
     int step = 0;
     int processedPatients = 0;
     vector<workload> runningWorkloads;
@@ -48,7 +54,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
 
     vector<workload> scheduled;
     vector<workload>::iterator wlpointer = workloads.begin();
-    while(processedPatients < patients) {
+    while(processedPatients < patients || !runningWorkloads.empty()) {
         //1st Check Workloads running finishing in this step
         bool finish = false;
         vector<vector<workload>::iterator> toFinish;
@@ -63,7 +69,6 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
         for(int i = 0; i<toFinish.size(); ++i) {
             runningWorkloads.erase(toFinish[i]);
         }
-
         //2nd schedule pending to schedule workloads
         toFinish.clear();
         for(vector<workload>::iterator it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
@@ -93,6 +98,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
 
         wlpointer = workloads.begin();
         //Advance simulation step
+        cout << step << " " << layout.calculateFragmentation() << endl;
         step++;
     }
 
@@ -110,7 +116,7 @@ void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int p
 
     double ratio = (double)missedDeadline/patients;
     ratio*=100;
-    cout << step << " " << missedDeadline << " " << waitingTime << " " << exeTime << endl;
+//    cout << step << " " << missedDeadline << " " << waitingTime << " " << exeTime << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -120,13 +126,13 @@ int main(int argc, char* argv[]) {
         prio_threshold=atof(argv[2]);
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
-    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1000, 4000, 3200);
+    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
     arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 
     Layout layout = Layout();
     layout.generateLayout("layouts/layout-1.json");
-    BestFitPolicy* bestFit = new BestFitPolicy();
+    MinFragPolicy* bestFit = new MinFragPolicy();
     calculateMissedDeadlines(bestFit, workloads, patients, layout);
 
     return 0;

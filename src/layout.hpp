@@ -15,6 +15,7 @@ class Layout {
     }
 
     void generateLayout(string filePath);
+    double calculateFragmentation();
 };
 
 #endif

@@ -2,6 +2,7 @@
 #define _UTIL_CPP_
 
 #include "math.h"
+#include "resources_structures.hpp"
 #include <random>
 
 inline float nextTime(float rateParameter)

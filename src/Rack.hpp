@@ -30,7 +30,11 @@ class Rack {
     void dumpRack();
     void stabilizeContainers();
     void addNvmeResourceVector(vector<NvmeResource>);
-
+    double calculateFragmentation();
+    double estimateFragmentation(int, int, int);
+    int getTotalCapacityUsed();
+    int getTotalBandwidthUsed();
+    bool inUse();
 };
 
 #endif

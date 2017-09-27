@@ -11,7 +11,7 @@ using namespace std;
 vector<workload> WorkloadPoissonGenerator::generateWorkloads(int npatients, float lambdaExeTimes, float lambdaBw, float lambdaCapacity, int maxBw, int maxCapacity) {
     vector <workload> workloads(npatients);
     std::random_device rand_dev;
-    std::mt19937 generator(rand_dev());
+    std::mt19937 generator(5);
     for(int i = 0; i<npatients; ++i) {
         workloads[i].executionTime = (int)nextTime(1/lambdaExeTimes);
         int nvmeBw = (int)nextTime(1/lambdaBw);

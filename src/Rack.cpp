@@ -2,6 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
 #include "Rack.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
@@ -64,4 +66,76 @@ void Rack::stabilizeContainers() {
    this->resources.resize(this->resources.size());
    this->freeResources.resize(this->freeResources.size());
    this->compositions.resize(this->freeResources.size());
+}
+
+double Rack::calculateFragmentation() {
+    int numResources = this->resources.size();
+    int totalBwUsed = 0;
+    int totalCapacityUsed = 0;
+    int totalBw = (this->resources.begin()->getTotalBandwidth());
+    int totalCapacity = (this->resources.begin()->getTotalCapacity());
+    int resourcesUsed = 0;
+    for(int i = 0; i<this->compositions.size(); ++i) {
+        if(this->compositions[i].used) {
+            totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
+            totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
+            resourcesUsed+=this->compositions[i].numVolumes;
+        }
+    }
+
+    int minResources = max(ceil(totalBwUsed/totalBw),ceil(totalCapacityUsed/totalCapacity));
+    return (double)(resourcesUsed-minResources)/numResources;
+}
+
+double Rack::estimateFragmentation(int sumResources, int sumBw, int sumCap) {
+    int numResources = this->resources.size();
+    int totalBwUsed = 0;
+    int totalCapacityUsed = 0;
+    int totalBw = (this->resources.begin()->getTotalBandwidth());
+    int totalCapacity = (this->resources.begin()->getTotalCapacity());
+    int resourcesUsed = 0;
+    for(int i = 0; i<this->compositions.size(); ++i) {
+        if(this->compositions[i].used) {
+            totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
+            totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
+            resourcesUsed+=this->compositions[i].numVolumes;
+        }
+    }
+    resourcesUsed+=sumResources;
+    totalBwUsed+=sumBw;
+    totalCapacityUsed+=sumCap;
+
+    int minResources = max(ceil(totalBwUsed/totalBw),ceil(totalCapacityUsed/totalCapacity));
+    return (double)(resourcesUsed-minResources)/numResources;
+}
+
+int Rack::getTotalBandwidthUsed() {
+    int numResources = this->resources.size();
+    int totalBwUsed = 0;
+    for(int i = 0; i<this->compositions.size(); ++i) {
+        if(this->compositions[i].used)
+            totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
+    }
+
+    return totalBwUsed;
+}
+
+int Rack::getTotalCapacityUsed(){
+    int totalCapacityUsed = 0;
+    for(int i = 0; i<this->compositions.size(); ++i) {
+        if(this->compositions[i].used)
+            totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
+    }
+
+    return totalCapacityUsed;
+}
+
+bool Rack::inUse() {
+    bool inuse = false;
+    for(int i = 0; !inuse && i<this->compositions.size(); ++i) {
+        if(this->compositions[i].used)
+            inuse = true;
+    }
+
+    return inuse;
 }

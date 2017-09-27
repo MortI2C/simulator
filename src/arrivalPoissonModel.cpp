@@ -20,7 +20,7 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
     const int range_from = 0;
     const float range_to = timeInterval;
     std::random_device rand_dev;
-    std::mt19937 generator(rand_dev());
+    std::mt19937 generator(5);
     uniform_real_distribution<double> distribution(0.0, 1.0);
     //lambda(t) = 3.1 - 8.5 t + 24.7 t2 + 130.8 t3 + 107.7 t4 - 804.2 t5 - 2038.5 t6 + 1856.8 t7 + 4618.6 t8
 

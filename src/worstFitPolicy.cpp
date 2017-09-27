@@ -2,13 +2,13 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include "bestFitPolicy.hpp"
+#include "worstFitPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
+bool WorstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -49,7 +49,7 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
         int fitness = -1;
         for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
             if(it->numFreeResources>=minResources) {
-                if (fitness == -1 || fitness > (it->numFreeResources - minResources)) {
+                if (fitness == -1 || fitness < (it->numFreeResources - minResources)) {
                     scheduledRack = it;
                     fitness = it->numFreeResources - minResources;
                 }
@@ -87,15 +87,15 @@ bool BestFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
 
     if(scheduled)
         wload->scheduled = step;
-
+    
     return scheduled;
 }
 
 
-void BestFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+void WorstFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
     bool inserted = false;
     for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        if(it->fitness >= element.fitness) {
+        if(it->fitness < element.fitness) {
             vector.insert(it,element);
             inserted = true;
         }

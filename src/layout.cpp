@@ -28,3 +28,33 @@ void Layout::generateLayout(string filePath) {
       this->racks[rackId++] = newRack;
    }
 }
+
+double Layout::calculateFragmentation() {
+    double racksFragAccumulated = 0;
+    int totalBwRack = this->racks.begin()->resources.begin()->getTotalBandwidth()*this->racks.begin()->resources.size();
+    int totalCapRack = this->racks.begin()->resources.begin()->getTotalCapacity()*this->racks.begin()->resources.size();
+    int totalBwUsed = 0;
+    int totalCapUsed = 0;
+    int totalRacksUsed = 0;
+    double f_nvme = 0;
+    for(vector<Rack>::iterator it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        int rackBw = it->getTotalBandwidthUsed();
+        int rackCap = it->getTotalCapacityUsed();
+        if(rackBw > 0 || rackCap > 0)
+            ++totalRacksUsed;
+
+        totalBwUsed += rackBw;
+        totalCapUsed += rackCap;
+
+        f_nvme += it->calculateFragmentation();
+    }
+    f_nvme /= this->racks.size();
+
+    int minResources = max(ceil((double)totalBwUsed/totalBwRack),ceil((double)totalCapUsed/totalCapRack));
+    double f_rack = (double)(totalRacksUsed-minResources)/this->racks.size();
+
+    if(f_rack == 0)
+        return f_nvme;
+    else
+        return f_rack;
+}
