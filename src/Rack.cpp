@@ -157,7 +157,7 @@ int Rack::compositionTTL(int composition, int step) {
             ++it) {
         vector<workload>::iterator wlIterator = *it;
         if(wlIterator->scheduled >= 0) {
-            int wlTTL = step - (wlIterator->scheduled+wlIterator->executionTime);
+            int wlTTL = wlIterator->scheduled+wlIterator->executionTime;
             if(ttl == -1 || wlTTL >= ttl)
                 ttl = wlTTL;
         }

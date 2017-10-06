@@ -14,9 +14,9 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            int wlTTL = wload->executionTime + step;
+            int wlTTL = wload->executionTime;
             int compositionTTL = it->compositionTTL(i,step);
-            if(compositionTTL != -1 && compositionTTL>=(wlTTL*0.01) &&
+            if(compositionTTL != -1 && compositionTTL>=(wlTTL*0.3) &&
 //              if(it->compositions[i].used &&
                     it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {

@@ -109,17 +109,20 @@ int main(int argc, char* argv[]) {
     FirstFitPolicy* firstFit = new FirstFitPolicy();
     MinFragPolicy* minFrag = new MinFragPolicy();
     MinFragScheduler* scheduler = new MinFragScheduler();
+    FcfsScheduler* fcfsSched = new FcfsScheduler();
 
-    cout << "bestfit: ";
-    simulator(scheduler, bestFit, workloads, patients, layout);
-    cout << "worstfit: ";
-    simulator(scheduler, worstFit, workloads, patients, layout);
-    cout << "randomfit: ";
-    simulator(scheduler, randomFit, workloads, patients, layout);
-    cout << "firstfit: ";
-    simulator(scheduler, firstFit, workloads, patients, layout);
-    cout << "minfrag: ";
+//    cout << "bestfit: ";
+//    simulator(scheduler, bestFit, workloads, patients, layout);
+//    cout << "worstfit: ";
+//    simulator(scheduler, worstFit, workloads, patients, layout);
+//    cout << "randomfit: ";
+//    simulator(scheduler, randomFit, workloads, patients, layout);
+//    cout << "firstfit: ";
+//    simulator(scheduler, firstFit, workloads, patients, layout);
+//    cout << "minfrag: ";
     simulator(scheduler, minFrag, workloads, patients, layout);
+    cout << "minfrag fcfs: ";
+    simulator(fcfsSched, minFrag, workloads, patients, layout);
 
     return 0;
 }
