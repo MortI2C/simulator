@@ -10,7 +10,7 @@ using namespace std;
 class BestFitPolicy : public PlacementPolicy {
    public:
     void insertSorted(vector<nvmeFitness>&, nvmeFitness);
-    bool placeWorkload(vector<workload>::iterator, Layout&);
+    bool placeWorkload(vector<workload>::iterator, Layout&, int);
 };
 
 #endif

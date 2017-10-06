@@ -26,7 +26,7 @@ bool FcfsScheduler::scheduleWorkloads(vector <workload>& pendingToSchedule,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
     vector<vector<workload>::iterator> toFinish;
     for(vector<workload>::iterator it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-        if(placementPolicy->placeWorkload(it,layout)) {
+        if(placementPolicy->placeWorkload(it,layout,step)) {
             it->scheduled = step;
             insertOrderedByStep(runningWorkloads,*it);
             toFinish.push_back(it);

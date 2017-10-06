@@ -8,14 +8,19 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout) {
+bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout, int step) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+            int wlTTL = wload->executionTime + step;
+            int compositionTTL = it->compositionTTL(i,step);
+            if(compositionTTL != -1 && compositionTTL>=(wlTTL*0.01) &&
+//              if(it->compositions[i].used &&
+                    it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
+
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
                         +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
                         i,&(*it)
@@ -37,7 +42,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
         it->rack->compositions[it->composition].workloadsUsing++;
-//        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -82,7 +87,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
-//            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
 
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);

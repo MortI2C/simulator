@@ -8,7 +8,7 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool FirstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout) {
+bool FirstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout, int step) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {

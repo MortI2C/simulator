@@ -39,6 +39,7 @@ class Rack {
     bool inUse();
     double resourcesUsed();
     double workloadsRaid();
+    int compositionTTL(int, int);
 };
 
 #endif

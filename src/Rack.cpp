@@ -149,3 +149,19 @@ double Rack::resourcesUsed() {
 
     return resourcesUsed/this->resources.size();
 }
+
+int Rack::compositionTTL(int composition, int step) {
+    int ttl = -1;
+    for(auto it = this->compositions[composition].assignedWorkloads.begin();
+            it != this->compositions[composition].assignedWorkloads.end();
+            ++it) {
+        vector<workload>::iterator wlIterator = *it;
+        if(wlIterator->scheduled >= 0) {
+            int wlTTL = step - (wlIterator->scheduled+wlIterator->executionTime);
+            if(ttl == -1 || wlTTL >= ttl)
+                ttl = wlTTL;
+        }
+    }
+
+    return ttl;
+}

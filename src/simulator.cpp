@@ -54,7 +54,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
             if((run->executionTime+run->scheduled)<=step) {
                 toFinish.push_back(run);
                 scheduledWorkloads.push_back(*run);
-                placementPolicy->freeResources(*run);
+                placementPolicy->freeResources(run);
             } else
                 finish = true;
         }
@@ -110,15 +110,15 @@ int main(int argc, char* argv[]) {
     MinFragPolicy* minFrag = new MinFragPolicy();
     MinFragScheduler* scheduler = new MinFragScheduler();
 
-//    cout << "bestfit: ";
-//    simulator(scheduler, bestFit, workloads, patients, layout);
-//    cout << "worstfit: ";
-//    simulator(scheduler, worstFit, workloads, patients, layout);
-//    cout << "randomfit: ";
-//    simulator(scheduler, randomFit, workloads, patients, layout);
-//    cout << "firstfit: ";
-//    simulator(scheduler, firstFit, workloads, patients, layout);
-//    cout << "minfrag: ";
+    cout << "bestfit: ";
+    simulator(scheduler, bestFit, workloads, patients, layout);
+    cout << "worstfit: ";
+    simulator(scheduler, worstFit, workloads, patients, layout);
+    cout << "randomfit: ";
+    simulator(scheduler, randomFit, workloads, patients, layout);
+    cout << "firstfit: ";
+    simulator(scheduler, firstFit, workloads, patients, layout);
+    cout << "minfrag: ";
     simulator(scheduler, minFrag, workloads, patients, layout);
 
     return 0;

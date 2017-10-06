@@ -31,17 +31,17 @@ bool MinFragScheduler::scheduleWorkloads(vector <workload>& pendingToSchedule,
     //Recurse workloads pending and order possible to schedule workloads by fragmentation level
     for(vector<workload>::iterator it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
 //        cout << "going to compose?" << endl;
-        if(placementPolicy->placeWorkload(it,layout)) {
+        if(placementPolicy->placeWorkload(it,layout,step)) {
 //            cout << "composing: " << it->nvmeBandwidth << " " << it->nvmeCapacity << endl;
             workloadFrag element = {layout.calculateFragmentation(),it};
             insertOrderedByFrag(potentialSchedule,element);
-            placementPolicy->freeResources(*it);
+            placementPolicy->freeResources(it);
         }
     }
 
     //Try to schedule potential schedule workloads
     for(vector<workloadFrag>::iterator it = potentialSchedule.begin(); it!=potentialSchedule.end(); ++it) {
-        if(placementPolicy->placeWorkload(it->wload,layout)) {
+        if(placementPolicy->placeWorkload(it->wload,layout,step)) {
             it->wload->scheduled = step;
             insertOrderedByStep(runningWorkloads,*it->wload);
             toFinish.push_back(it->wload);

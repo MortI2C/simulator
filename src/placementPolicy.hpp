@@ -9,8 +9,9 @@ using namespace std;
 
 class PlacementPolicy {
    public:
-    virtual bool placeWorkload(vector<workload>::iterator, Layout&) =0;
-    void freeResources(workload& wload) {
+    virtual bool placeWorkload(vector<workload>::iterator, Layout&, int) =0;
+    void freeResources(vector<workload>::iterator wloadIt) {
+        workload wload = *wloadIt;
         wload.allocation.allocatedRack->compositions
         [wload.allocation.composition].composedNvme
                 .setAvailableBandwidth(wload.allocation.allocatedRack->compositions
@@ -24,17 +25,17 @@ class PlacementPolicy {
                                               .getAvailableCapacity()+wload.nvmeCapacity);
 
 //        //Remove Workload from assigned compositions Wloads
-//        bool found = false;
-//        for(auto i = wload.allocation.allocatedRack->
-//                compositions[wload.allocation.composition].assignedWorkloads.begin();
-//                !found && i!=wload.allocation.allocatedRack->
-//                        compositions[wload.allocation.composition].assignedWorkloads.end();
-//            ++i) {
-//            if(*i == wloadIt) {
-//                found = true;
-//                wload.allocation.allocatedRack->compositions[wload.allocation.composition].assignedWorkloads.erase(i);
-//            }
-//        }
+        bool found = false;
+        for(auto i = wload.allocation.allocatedRack->
+                compositions[wload.allocation.composition].assignedWorkloads.begin();
+                !found && i!=wload.allocation.allocatedRack->
+                        compositions[wload.allocation.composition].assignedWorkloads.end();
+            ++i) {
+            if(*i == wloadIt) {
+                found = true;
+                wload.allocation.allocatedRack->compositions[wload.allocation.composition].assignedWorkloads.erase(i);
+            }
+        }
 
         //if no more workloads in comopsition, free composition
         if((--wload.allocation.allocatedRack->compositions[wload.allocation.composition].workloadsUsing)==0) {
