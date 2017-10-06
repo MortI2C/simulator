@@ -16,6 +16,11 @@ class Layout {
 
     void generateLayout(string filePath);
     double calculateFragmentation();
+    double resourcesUsed();
+    int raidsUsed();
+    double avgRaidSize();
+    double workloadsRaid();
+    void printRaidsInfo();
 };
 
 #endif

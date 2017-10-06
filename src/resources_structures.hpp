@@ -20,7 +20,6 @@ struct nvmeFitness {
 struct allocatedResources {
     int composition;
     Rack* allocatedRack;
-    int workloadsUsing = 0;
 };
 
 struct workload {

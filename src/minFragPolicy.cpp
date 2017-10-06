@@ -8,7 +8,7 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool MinFragPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
+bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -36,7 +36,8 @@ bool MinFragPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
 
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
-        wload->allocation.workloadsUsing++;
+        it->rack->compositions[it->composition].workloadsUsing++;
+//        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -71,6 +72,7 @@ bool MinFragPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
                 if(!scheduledRack->compositions[i].used)
                     freeComposition = i;
             }
+
             int allocatedResources = 0;
             scheduledRack->numFreeResources-=minResources;
             scheduledRack->compositions[freeComposition].used = true;
@@ -79,9 +81,11 @@ bool MinFragPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
+            scheduledRack->compositions[freeComposition].workloadsUsing++;
+//            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
+
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
-            wload->allocation.workloadsUsing = 1;
             int usedResources = 0;
             for(int i = 0; usedResources<minResources && i<scheduledRack->freeResources.size(); ++i) {
                 if(scheduledRack->freeResources[i]) {
@@ -91,9 +95,6 @@ bool MinFragPolicy::scheduleWorkload(vector<workload>::iterator wload, int step,
             }
         }
     }
-
-    if(scheduled)
-        wload->scheduled = step;
 
     return scheduled;
 }

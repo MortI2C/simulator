@@ -83,7 +83,7 @@ double Rack::calculateFragmentation() {
         }
     }
 
-    int minResources = max(ceil(totalBwUsed/totalBw),ceil(totalCapacityUsed/totalCapacity));
+    int minResources = max(ceil((double)totalBwUsed/totalBw),ceil((double)totalCapacityUsed/totalCapacity));
     return (double)(resourcesUsed-minResources)/numResources;
 }
 
@@ -138,4 +138,14 @@ bool Rack::inUse() {
     }
 
     return inuse;
+}
+
+double Rack::resourcesUsed() {
+    double resourcesUsed = 0;
+    for(auto i = this->compositions.begin(); i!=this->compositions.end(); ++i) {
+        if(i->used)
+            resourcesUsed+=i->numVolumes;
+    }
+
+    return resourcesUsed/this->resources.size();
 }

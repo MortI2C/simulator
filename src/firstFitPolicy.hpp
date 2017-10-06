@@ -2,15 +2,15 @@
 #define FIRST_FIT_POLICY_H
 #include <iostream>
 #include <vector>
-#include "policy.hpp"
+#include "placementPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 using namespace std;
 
-class FirstFitPolicy : public Policy {
+class FirstFitPolicy : public PlacementPolicy {
    public:
     void insertSorted(vector<nvmeFitness>&, nvmeFitness);
-    bool scheduleWorkload(vector<workload>::iterator, int, Layout&);
+    bool placeWorkload(vector<workload>::iterator, Layout&);
 };
 
 #endif

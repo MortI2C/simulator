@@ -8,19 +8,7 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-void FirstFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
-    bool inserted = false;
-    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        if(it->fitness >= element.fitness) {
-            vector.insert(it,element);
-            inserted = true;
-        }
-    }
-    if(!inserted)
-        vector.push_back(element);
-}
-
-bool FirstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step, Layout& layout) {
+bool FirstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -49,7 +37,7 @@ bool FirstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step
 
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
-        wload->allocation.workloadsUsing++;
+        it->rack->compositions[it->composition].workloadsUsing++;
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -84,9 +72,9 @@ bool FirstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
+            scheduledRack->compositions[freeComposition].workloadsUsing++;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
-            wload->allocation.workloadsUsing = 1;
             int usedResources = 0;
             for(int i = 0; usedResources<minResources && i<scheduledRack->freeResources.size(); ++i) {
                 if(scheduledRack->freeResources[i]) {
@@ -97,8 +85,18 @@ bool FirstFitPolicy::scheduleWorkload(vector<workload>::iterator wload, int step
         }
     }
 
-    if(scheduled)
-        wload->scheduled = step;
-
     return scheduled;
+}
+
+
+void FirstFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+    bool inserted = false;
+    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
+        if(it->fitness >= element.fitness) {
+            vector.insert(it,element);
+            inserted = true;
+        }
+    }
+    if(!inserted)
+        vector.push_back(element);
 }

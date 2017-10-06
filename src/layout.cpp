@@ -58,3 +58,69 @@ double Layout::calculateFragmentation() {
     else
         return f_rack;
 }
+
+double Layout::resourcesUsed() {
+    double resourcesUsed = 0;
+    for(auto i = this->racks.begin(); i!=this->racks.end(); ++i) {
+        resourcesUsed+=i->resourcesUsed();
+    }
+    return resourcesUsed/this->racks.size();
+}
+
+int Layout::raidsUsed() {
+    int raidsUsed = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(int i = 0; i<it->compositions.size(); ++i) {
+            if(it->compositions[i].used) {
+                raidsUsed++;
+            }
+        }
+    }
+    return raidsUsed;
+}
+
+double Layout::avgRaidSize() {
+    int raidsUsed = 0;
+    double avgSize = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(int i = 0; i<it->compositions.size(); ++i) {
+            if(it->compositions[i].used) {
+                raidsUsed++;
+                avgSize+=it->compositions[i].numVolumes;
+            }
+        }
+    }
+    return avgSize/raidsUsed;
+}
+
+double Layout::workloadsRaid() {
+    int raidsUsed = 0;
+    double avgSize = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(int i = 0; i<it->compositions.size(); ++i) {
+            if(it->compositions[i].used) {
+                raidsUsed++;
+                avgSize+=it->compositions[i].workloadsUsing;
+            }
+        }
+    }
+    return avgSize/raidsUsed;
+}
+
+void Layout::printRaidsInfo() {
+    int rack = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        cout << "Rack: " << rack++ << endl;
+        for(int i = 0; i<it->compositions.size(); ++i) {
+            if(it->compositions[i].used) {
+                cout << "Total: " << it->compositions[i].composedNvme.getTotalBandwidth() << "/" <<
+                     it->compositions[i].composedNvme.getTotalCapacity() << " Avail: " <<
+                     it->compositions[i].composedNvme.getAvailableBandwidth() << "/" <<
+                     it->compositions[i].composedNvme.getAvailableCapacity() <<
+                     " num volumes: " << it->compositions[i].numVolumes << " workloads: " <<
+                     it->compositions[i].workloadsUsing << endl;
+            }
+        }
+    }
+    cout << endl;
+}

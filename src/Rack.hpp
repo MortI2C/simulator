@@ -12,6 +12,8 @@ struct raid {
     NvmeResource composedNvme;
     int numVolumes = 0;
     bool used = false;
+    int workloadsUsing = 0;
+    vector<vector<workload>::iterator> assignedWorkloads;
 };
 
 class Rack {
@@ -35,6 +37,8 @@ class Rack {
     int getTotalCapacityUsed();
     int getTotalBandwidthUsed();
     bool inUse();
+    double resourcesUsed();
+    double workloadsRaid();
 };
 
 #endif

@@ -4,119 +4,90 @@
 #include <string>
 #include <typeinfo>
 #include "resources_structures.hpp"
-#include "policy.hpp"
-//#include "randomFitPolicy.hpp"
-//#include "bestFitPolicy.hpp"
-//#include "worstFitPolicy.hpp"
-//#include "firstFitPolicy.hpp"
+#include "schedulingPolicy.hpp"
+#include "placementPolicy.hpp"
+#include "randomFitPolicy.hpp"
+#include "bestFitPolicy.hpp"
+#include "worstFitPolicy.hpp"
+#include "firstFitPolicy.hpp"
 #include "minFragPolicy.hpp"
+#include "fcfsSchedulePolicy.hpp"
+#include "minFragSchedulePolicy.hpp"
 #include "arrivalUniformModel.hpp"
 #include "arrivalPoissonModel.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "layout.hpp"
 using namespace std;
 
-//Insert into vector ordered by completion step, worst-case O(n)
-void insertOrderedByStep(vector<workload>& vector, workload& wload) {
-    int completionTime = wload.executionTime+wload.scheduled;
-    bool inserted = false;
-    for(std::vector<workload>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        int currentCompletion = it->executionTime+it->scheduled;
-        if(completionTime > currentCompletion) {
-            inserted = true;
-
-            vector.insert(it,wload);
-        }
+void printStatistics(int step, const vector<workload>& scheduledWorkloads) {
+    int waitingTime = 0;
+    int exeTime = 0;
+    for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
+        waitingTime += (it->scheduled - it->arrival);
+        exeTime += ((it->executionTime+it->scheduled) - it->arrival);
     }
-    if(!inserted)
-        vector.push_back(wload);
+    waitingTime/=scheduledWorkloads.size();
+    exeTime/=scheduledWorkloads.size();
+
+    cout << step << " " << waitingTime << " " << exeTime << endl;
 }
 
-void freeResources(workload& wload) {
-    NvmeResource composedNvme = wload.allocation.allocatedRack->compositions
-        [wload.allocation.composition].composedNvme;
-    composedNvme.setAvailableBandwidth(composedNvme.getAvailableBandwidth()-wload.nvmeBandwidth);
-    composedNvme.setAvailableCapacity(composedNvme.getAvailableCapacity()-wload.nvmeCapacity);
-
-    if((--wload.allocation.workloadsUsing)==0) {
-        wload.allocation.allocatedRack->freeComposition(wload.allocation.allocatedRack, wload.allocation.composition);
-        wload.allocation = {};
-    }
-}
-
-void calculateMissedDeadlines(Policy* policy, vector<workload>& workloads, int patients, Layout& layout) {
-    std::cout.unsetf ( std::ios::floatfield );
+void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
+    std::cout.unsetf(std::ios::floatfield);
     std::cout.precision(2);
     int step = 0;
     int processedPatients = 0;
+//    int raidsUsed = 0;
+    double frag = 0;
+    double resourcesUsed = 0;
+
     vector<workload> runningWorkloads;
     vector<workload> pendingToSchedule;
-
-    vector<workload> scheduled;
+    vector<workload> scheduledWorkloads(patients);
     vector<workload>::iterator wlpointer = workloads.begin();
+
     while(processedPatients < patients || !runningWorkloads.empty()) {
         //1st Check Workloads running finishing in this step
         bool finish = false;
         vector<vector<workload>::iterator> toFinish;
         for(vector<workload>::iterator run = runningWorkloads.begin(); !finish && run!=runningWorkloads.end(); ++run) {
             if((run->executionTime+run->scheduled)<=step) {
-                scheduled.push_back(*run);
                 toFinish.push_back(run);
-                freeResources(*run);
+                scheduledWorkloads.push_back(*run);
+                placementPolicy->freeResources(*run);
             } else
                 finish = true;
         }
         for(int i = 0; i<toFinish.size(); ++i) {
             runningWorkloads.erase(toFinish[i]);
         }
-        //2nd schedule pending to schedule workloads
-        toFinish.clear();
-        for(vector<workload>::iterator it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-            if(policy->scheduleWorkload(it,step,layout)) {
-                insertOrderedByStep(runningWorkloads,*it);
-                toFinish.push_back(it);
-                ++processedPatients;
-            }
-        }
-        for(int i = 0; i<toFinish.size(); ++i) {
-            pendingToSchedule.erase(toFinish[i]);
-        }
 
-        //3rd try to schedule new arriving jobs
-        bool stop = false;
-        while(wlpointer!=workloads.end() && processedPatients < patients && wlpointer->arrival <= step) {
-            if(policy->scheduleWorkload(wlpointer,step,layout)) {
-                insertOrderedByStep(runningWorkloads,*wlpointer);
-                ++processedPatients;
-                workloads.erase(wlpointer);
-            } else {
-                insertOrderedByStep(pendingToSchedule,*wlpointer);
-                workloads.erase(wlpointer);
-            }
-            wlpointer = workloads.begin();
+        //2nd add arriving workloads to pending to schedule
+        while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
+            pendingToSchedule.push_back(*wlpointer);
+            ++wlpointer;
         }
+        //3rd schedule new workloads
+        //Postcondition: workloads to run inserted in vector in completion step order!
+        int priorScheduler = pendingToSchedule.size();
+        scheduler->scheduleWorkloads(pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
+        processedPatients += (priorScheduler - pendingToSchedule.size());
 
-        wlpointer = workloads.begin();
-        //Advance simulation step
-        cout << step << " " << layout.calculateFragmentation() << endl;
-        step++;
+        frag+=layout.calculateFragmentation();
+        resourcesUsed+=layout.resourcesUsed();
+
+        int raids = layout.raidsUsed();
+        double size = layout.avgRaidSize();
+//        layout.printRaidsInfo();
+//        cout << step << " " << raids << " " << size << " " << size*raids << " " << layout.workloadsRaid() << endl;
+//        cout << step << " " << layout.resourcesUsed() << " " << layout.calculateFragmentation() << endl;
+//        cout << step << " " << layout.calculateFragmentation() << endl;
+        ++step;
     }
 
-    int missedDeadline = 0;
-    int waitingTime = 0;
-    int exeTime = 0;
-    for(vector<workload>::iterator it = scheduled.begin(); it != scheduled.end(); it++) {
-        if((it->executionTime+it->scheduled) > step) step = (it->executionTime+it->scheduled);
-        if(it->deadline < (it->executionTime+it->scheduled)) ++missedDeadline;
-        waitingTime += (it->scheduled - it->arrival);
-        exeTime += ((it->executionTime+it->scheduled) - it->scheduled);
-    }
-    waitingTime/=patients;
-    exeTime/=patients;
+    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
-    double ratio = (double)missedDeadline/patients;
-    ratio*=100;
-//    cout << step << " " << missedDeadline << " " << waitingTime << " " << exeTime << endl;
+//    printStatistics(step, scheduledWorkloads);
 }
 
 int main(int argc, char* argv[]) {
@@ -132,8 +103,23 @@ int main(int argc, char* argv[]) {
 
     Layout layout = Layout();
     layout.generateLayout("layouts/layout-1.json");
-    MinFragPolicy* bestFit = new MinFragPolicy();
-    calculateMissedDeadlines(bestFit, workloads, patients, layout);
+    BestFitPolicy* bestFit = new BestFitPolicy();
+    WorstFitPolicy* worstFit = new WorstFitPolicy();
+    RandomFitPolicy* randomFit = new RandomFitPolicy();
+    FirstFitPolicy* firstFit = new FirstFitPolicy();
+    MinFragPolicy* minFrag = new MinFragPolicy();
+    MinFragScheduler* scheduler = new MinFragScheduler();
+
+//    cout << "bestfit: ";
+//    simulator(scheduler, bestFit, workloads, patients, layout);
+//    cout << "worstfit: ";
+//    simulator(scheduler, worstFit, workloads, patients, layout);
+//    cout << "randomfit: ";
+//    simulator(scheduler, randomFit, workloads, patients, layout);
+//    cout << "firstfit: ";
+//    simulator(scheduler, firstFit, workloads, patients, layout);
+//    cout << "minfrag: ";
+    simulator(scheduler, minFrag, workloads, patients, layout);
 
     return 0;
 }

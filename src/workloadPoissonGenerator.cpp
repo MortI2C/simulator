@@ -14,22 +14,22 @@ vector<workload> WorkloadPoissonGenerator::generateWorkloads(int npatients, floa
     std::mt19937 generator(5);
     for(int i = 0; i<npatients; ++i) {
         workloads[i].executionTime = (int)nextTime(1/lambdaExeTimes);
-        int nvmeBw = (int)nextTime(1/lambdaBw);
-        while(nvmeBw > maxBw)
+        int nvmeBw = 0;
+        while(nvmeBw > maxBw || nvmeBw <= 0)
             nvmeBw = (int)nextTime(1/lambdaBw);
 
-        int nvmeCap = (int)nextTime(1/lambdaCapacity);
-        while(nvmeCap > maxCapacity)
+        int nvmeCap = 0;
+        while(nvmeCap > maxCapacity || nvmeCap <= 0)
             nvmeCap = (int)nextTime(1/lambdaCapacity);
 
         workloads[i].nvmeBandwidth = nvmeBw;
         workloads[i].nvmeCapacity = nvmeCap;
     }
-
+//
 //    for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {
 //        cout << " " << it->executionTime << "|" << it->nvmeBandwidth << "|" << it->nvmeCapacity;
 //    }
-//
-//    cout << endl;
+
+    cout << endl;
     return workloads;
 }
