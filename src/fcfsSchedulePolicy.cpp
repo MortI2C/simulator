@@ -30,6 +30,8 @@ bool FcfsScheduler::scheduleWorkloads(vector <workload>& pendingToSchedule,
             it->scheduled = step;
             insertOrderedByStep(runningWorkloads,*it);
             toFinish.push_back(it);
+            cout << step << endl;
+            layout.printRaidsInfo();
         }
     }
 

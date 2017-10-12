@@ -13,6 +13,7 @@ struct raid;
 
 struct nvmeFitness {
     int fitness;
+    int ttlDifference;
     int composition;
     Rack* rack;
 };
@@ -25,6 +26,7 @@ struct allocatedResources {
 struct workload {
     allocatedResources allocation;
     int executionTime;
+    int timeLeft;
     int nvmeBandwidth;
     int nvmeCapacity;
     bool highprio;

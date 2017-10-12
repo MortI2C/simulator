@@ -59,6 +59,7 @@ void Rack::freeComposition(Rack* rack, int composition) {
                ++freedResources;
            }
        }
+
        rack->numFreeResources+=freedResources;
 }
 

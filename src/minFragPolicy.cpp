@@ -8,24 +8,35 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
+inline int maxConcurrency(int numVolumes) {
+    return 1+2*numVolumes;
+}
+
 bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout, int step) {
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            int wlTTL = wload->executionTime;
-            int compositionTTL = it->compositionTTL(i,step);
-            if(compositionTTL != -1 && compositionTTL>=(wlTTL*0.3) &&
-//              if(it->compositions[i].used &&
+            if(it->compositions[i].used) {
+                int wlTTL = wload->executionTime;
+                int compositionTTL = it->compositionTTL(i, step);
+                int estimateTTL = this->timeDistortion(it->compositions[i].numVolumes,
+                                                       it->compositions[i].workloadsUsing + 1);
+                estimateTTL+=step;
+
+                if (it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].numVolumes) &&
                     it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
-                nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
-                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
-                        i,&(*it)
-                };
-                insertSorted(fittingCompositions, element);
+                    nvmeFitness element = {
+                            ((it->compositions[i].composedNvme.getAvailableBandwidth() - wload->nvmeBandwidth)
+                             + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
+                            estimateTTL - compositionTTL, i, &(*it)
+                    };
+                    if(compositionTTL >= estimateTTL*0.5)
+                        insertSorted(fittingCompositions, element);
+                }
             }
         }
     }
@@ -42,6 +53,21 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
         it->rack->compositions[it->composition].workloadsUsing++;
+        wload->timeLeft = this->timeDistortion(
+                it->rack->compositions[it->composition].numVolumes,
+                it->rack->compositions[it->composition].workloadsUsing);
+        wload->executionTime = wload->timeLeft;
+        for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
+               iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
+            vector<workload>::iterator it2 = *iw;
+            int newTime = this->timeDistortion(
+                    it->rack->compositions[it->composition].numVolumes,
+                    it->rack->compositions[it->composition].workloadsUsing);
+//            cout <<  "before: " << it2->timeLeft << " ";
+            it2->timeLeft += newTime - it2->executionTime;
+            it2->executionTime = newTime;
+//            cout << "after: " << it2->timeLeft << endl;
+        }
         it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
         scheduled = true;
     } else {
@@ -56,7 +82,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         int fitness = -1;
         for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
             if(it->inUse() && it->numFreeResources >= minResources) {
-                nvmeFitness element = {it->numFreeResources - minResources,
+                nvmeFitness element = {it->numFreeResources - minResources,0,
                                        0, &(*it)
                 };
                 insertSorted(fittingCompositions, element);
@@ -88,7 +114,8 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
-
+            wload->executionTime = this->timeDistortion(minResources,1);
+            wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
             int usedResources = 0;
@@ -107,9 +134,13 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
     bool inserted = false;
     for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        if(it->fitness >= element.fitness) {
+        if(it->ttlDifference < element.ttlDifference) {
             vector.insert(it,element);
-            inserted = true;
+        } else if(it->ttlDifference = element.ttlDifference) {
+            if (it->fitness >= element.fitness) {
+                vector.insert(it, element);
+                inserted = true;
+            }
         }
     }
     if(!inserted)

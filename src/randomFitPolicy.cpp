@@ -18,7 +18,7 @@ bool RandomFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& la
             if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
-                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
+                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),0,
                         i,&(*it)
                 };
                 insertSorted(fittingCompositions, element);
@@ -38,7 +38,9 @@ bool RandomFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& la
 
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
+        wload->timeLeft = wload->executionTime;
         it->rack->compositions[it->composition].workloadsUsing++;
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -75,6 +77,7 @@ bool RandomFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& la
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
             int usedResources = 0;

@@ -17,7 +17,7 @@ bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
-                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
+                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),0,
                         i,&(*it)
                 };
                 insertSorted(fittingCompositions, element);
@@ -37,6 +37,21 @@ bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
         it->rack->compositions[it->composition].workloadsUsing++;
+        wload->timeLeft = this->timeDistortion(
+                it->rack->compositions[it->composition].numVolumes,
+                it->rack->compositions[it->composition].workloadsUsing);
+        wload->executionTime = wload->timeLeft;
+        for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
+            iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
+            vector<workload>::iterator it2 = *iw;
+            int newTime = this->timeDistortion(
+                    it->rack->compositions[it->composition].numVolumes,
+                    it->rack->compositions[it->composition].workloadsUsing);
+            it2->timeLeft += newTime - it2->executionTime;
+            it2->executionTime = newTime;
+        }
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
+
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -67,12 +82,14 @@ bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             int allocatedResources = 0;
             scheduledRack->numFreeResources-=minResources;
             scheduledRack->compositions[freeComposition].used = true;
-//            scheduledRack->freeResources.erase(scheduledRack->freeResources.begin(),scheduledRack->freeResources.begin()+minResources-1);
             scheduledRack->compositions[freeComposition].composedNvme = NvmeResource(minResources*nvmeBw,minResources*nvmeCapacity);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
+            wload->timeLeft = this->timeDistortion(minResources,1);
+            wload->executionTime = wload->timeLeft;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
             int usedResources = 0;

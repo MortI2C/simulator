@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
+#include <stdlib.h>
 #include "worstFitPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
@@ -17,8 +18,8 @@ bool WorstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& lay
             if(it->compositions[i].used && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
                 nvmeFitness element = {((it->compositions[i].composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
-                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),
-                        i,&(*it)
+                                        +(it->compositions[i].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)),0,
+                                       i,&(*it)
                 };
                 insertSorted(fittingCompositions, element);
             }
@@ -37,6 +38,7 @@ bool WorstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& lay
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
         it->rack->compositions[it->composition].workloadsUsing++;
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -73,6 +75,7 @@ bool WorstFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& lay
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
             int usedResources = 0;

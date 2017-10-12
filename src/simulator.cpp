@@ -51,7 +51,9 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         bool finish = false;
         vector<vector<workload>::iterator> toFinish;
         for(vector<workload>::iterator run = runningWorkloads.begin(); !finish && run!=runningWorkloads.end(); ++run) {
+            run->timeLeft--;
             if((run->executionTime+run->scheduled)<=step) {
+//            if(run->timeLeft<=0) {
                 toFinish.push_back(run);
                 scheduledWorkloads.push_back(*run);
                 placementPolicy->freeResources(run);
@@ -93,16 +95,27 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 int main(int argc, char* argv[]) {
     int patients=atoi(argv[1]);
     double prio_threshold = 0.2;
+//    if(argc>2)
+//        prio_threshold=atof(argv[2]);
+
+    string layoutPath = "layouts/layout-1.json";
     if(argc>2)
-        prio_threshold=atof(argv[2]);
+       layoutPath = argv[2];
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
-    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
+//    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
+    vector<workload> workloads(patients);
+    for(int i = 0; i<patients; ++i) {
+        workloads[i].executionTime = 1500;
+        workloads[i].nvmeBandwidth = 400;
+        workloads[i].nvmeCapacity = 43;
+    }
+
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
     arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 
     Layout layout = Layout();
-    layout.generateLayout("layouts/layout-1.json");
+    layout.generateLayout(layoutPath);
     BestFitPolicy* bestFit = new BestFitPolicy();
     WorstFitPolicy* worstFit = new WorstFitPolicy();
     RandomFitPolicy* randomFit = new RandomFitPolicy();
@@ -117,12 +130,13 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, worstFit, workloads, patients, layout);
 //    cout << "randomfit: ";
 //    simulator(scheduler, randomFit, workloads, patients, layout);
-//    cout << "firstfit: ";
-//    simulator(scheduler, firstFit, workloads, patients, layout);
-//    cout << "minfrag: ";
-    simulator(scheduler, minFrag, workloads, patients, layout);
-    cout << "minfrag fcfs: ";
-    simulator(fcfsSched, minFrag, workloads, patients, layout);
+    cout << "minfrag: ";
+    vector<workload> copyWL = workloads;
+    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+//    cout << "worst fit: ";
+//    simulator(fcfsSched, worstFit, workloads, patients, layout);
+    cout << "bestfit fcfs: ";
+    simulator(fcfsSched, bestFit, workloads, patients, layout);
 
     return 0;
 }

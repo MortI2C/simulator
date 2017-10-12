@@ -26,9 +26,9 @@ vector<workload> WorkloadPoissonGenerator::generateWorkloads(int npatients, floa
         workloads[i].nvmeCapacity = nvmeCap;
     }
 //
-//    for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {
-//        cout << " " << it->executionTime << "|" << it->nvmeBandwidth << "|" << it->nvmeCapacity;
-//    }
+    for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {
+        cout << " " << it->executionTime << "|" << it->nvmeBandwidth << "|" << it->nvmeCapacity;
+    }
 
     cout << endl;
     return workloads;
