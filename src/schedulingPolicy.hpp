@@ -9,7 +9,7 @@ using namespace std;
 
 class SchedulingPolicy {
    public:
-    virtual bool scheduleWorkloads(vector<workload>&, vector<workload>&, PlacementPolicy*, int, Layout&) =0;
+    virtual bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&) =0;
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };
 

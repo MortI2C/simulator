@@ -24,6 +24,7 @@ vector<workload> WorkloadPoissonGenerator::generateWorkloads(int npatients, floa
 
         workloads[i].nvmeBandwidth = nvmeBw;
         workloads[i].nvmeCapacity = nvmeCap;
+        workloads[i].wlId = i;
     }
 //
     for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {

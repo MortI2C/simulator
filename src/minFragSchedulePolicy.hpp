@@ -9,8 +9,8 @@ using namespace std;
 
 class MinFragScheduler : public SchedulingPolicy {
    public:
-      bool scheduleWorkloads(vector<workload>&, vector<workload>&, PlacementPolicy*, int, Layout&);
-      void insertOrderedByStep(vector<workload>& vector, workload&);
+      bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
+      void insertOrderedByStep(vector<int>&, vector<workload>&, int);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };
 

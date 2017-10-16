@@ -26,7 +26,7 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
 
     for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {
         it->arrival = (int)nextTime(1/timeInterval);
-        cout << it->arrival << " ";
+//        cout << it->arrival << " ";
         double number = distribution(generator);
         if (number <= prio_threshold) {
             double completion = it->executionTime * 1.09 + it->arrival;
@@ -38,6 +38,6 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
             it->deadline = (int) completion;
         }
     }
-    cout << endl;
+//    cout << endl;
     sort(workloads.begin(), workloads.end(), by_arrival());
 }

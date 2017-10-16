@@ -8,7 +8,8 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout, int step){
+bool BestFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step){
+    workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -43,14 +44,15 @@ bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         wload->executionTime = wload->timeLeft;
         for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
             iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
-            vector<workload>::iterator it2 = *iw;
+            workload it2 = workloads[*iw];
             int newTime = this->timeDistortion(
                     it->rack->compositions[it->composition].numVolumes,
                     it->rack->compositions[it->composition].workloadsUsing);
-            it2->timeLeft += newTime - it2->executionTime;
-            it2->executionTime = newTime;
+//            cout <<  "before: " << it2->wlId << " " << it2->timeLeft << " ";
+            it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
+            it2.executionTime = newTime;
         }
-        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wloadIt);
 
         scheduled = true;
     } else {
@@ -87,7 +89,7 @@ bool BestFitPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
-            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
             wload->timeLeft = this->timeDistortion(minResources,1);
             wload->executionTime = wload->timeLeft;
             wload->allocation.composition = freeComposition;

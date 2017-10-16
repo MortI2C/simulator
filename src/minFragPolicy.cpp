@@ -12,7 +12,8 @@ inline int maxConcurrency(int numVolumes) {
     return 1+2*numVolumes;
 }
 
-bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layout, int step) {
+bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step) {
+    workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -20,7 +21,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         for(int i = 0; i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
                 int wlTTL = wload->executionTime;
-                int compositionTTL = it->compositionTTL(i, step);
+                int compositionTTL = it->compositionTTL(workloads, i, step);
                 int estimateTTL = this->timeDistortion(it->compositions[i].numVolumes,
                                                        it->compositions[i].workloadsUsing + 1);
                 estimateTTL+=step;
@@ -35,7 +36,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
                             estimateTTL - compositionTTL, i, &(*it)
                     };
                     if(compositionTTL >= estimateTTL*0.5)
-                        insertSorted(fittingCompositions, element);
+                        this->insertSorted(fittingCompositions, element);
                 }
             }
         }
@@ -59,16 +60,16 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
         wload->executionTime = wload->timeLeft;
         for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
                iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
-            vector<workload>::iterator it2 = *iw;
+            workload it2 = workloads[*iw];
             int newTime = this->timeDistortion(
                     it->rack->compositions[it->composition].numVolumes,
                     it->rack->compositions[it->composition].workloadsUsing);
-//            cout <<  "before: " << it2->timeLeft << " ";
-            it2->timeLeft += newTime - it2->executionTime;
-            it2->executionTime = newTime;
+//            cout <<  "before: " << it2->wlId << " " << it2->timeLeft << " ";
+            it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
+            it2.executionTime = newTime;
 //            cout << "after: " << it2->timeLeft << endl;
         }
-        it->rack->compositions[it->composition].assignedWorkloads.push_back(wload);
+        it->rack->compositions[it->composition].assignedWorkloads.push_back(wloadIt);
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -113,7 +114,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
-            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wload);
+            scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
             wload->executionTime = this->timeDistortion(minResources,1);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
@@ -131,18 +132,19 @@ bool MinFragPolicy::placeWorkload(vector<workload>::iterator wload, Layout& layo
     return scheduled;
 }
 
-void MinFragPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
-    for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(it->ttlDifference < element.ttlDifference) {
-            vector.insert(it,element);
+            vect.insert(it,element);
+            inserted = true;
         } else if(it->ttlDifference = element.ttlDifference) {
             if (it->fitness >= element.fitness) {
-                vector.insert(it, element);
+                vect.insert(it, element);
                 inserted = true;
             }
         }
     }
     if(!inserted)
-        vector.push_back(element);
+        vect.push_back(element);
 }

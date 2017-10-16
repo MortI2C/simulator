@@ -41,38 +41,41 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double frag = 0;
     double resourcesUsed = 0;
 
-    vector<workload> runningWorkloads;
-    vector<workload> pendingToSchedule;
-    vector<workload> scheduledWorkloads(patients);
+    vector<int> runningWorkloads;
+    vector<int> pendingToSchedule;
+//    vector<workload> scheduledWorkloads(patients);
+    int ipointer = 0;
     vector<workload>::iterator wlpointer = workloads.begin();
 
     while(processedPatients < patients || !runningWorkloads.empty()) {
         //1st Check Workloads running finishing in this step
-        bool finish = false;
-        vector<vector<workload>::iterator> toFinish;
-        for(vector<workload>::iterator run = runningWorkloads.begin(); !finish && run!=runningWorkloads.end(); ++run) {
+        vector<vector<int>::iterator> toFinish;
+        for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end(); ++it) {
+            workload* run = &workloads[*it];
             run->timeLeft--;
-            if((run->executionTime+run->scheduled)<=step) {
-//            if(run->timeLeft<=0) {
-                toFinish.push_back(run);
-                scheduledWorkloads.push_back(*run);
-                placementPolicy->freeResources(run);
-            } else
-                finish = true;
+//            if((run->executionTime+run->scheduled)<=step) {
+            if(run->timeLeft<=0) {
+                toFinish.push_back(it);
+//                scheduledWorkloads.push_back(*run);/
+//                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
+                placementPolicy->freeResources(workloads,*it);
+            }
         }
-        for(int i = 0; i<toFinish.size(); ++i) {
-            runningWorkloads.erase(toFinish[i]);
+        for(auto i = toFinish.begin(); i!=toFinish.end(); ++i) {
+            runningWorkloads.erase(*i);
         }
 
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
-            pendingToSchedule.push_back(*wlpointer);
+            pendingToSchedule.push_back(ipointer);
             ++wlpointer;
+            ++ipointer;
         }
+
         //3rd schedule new workloads
         //Postcondition: workloads to run inserted in vector in completion step order!
         int priorScheduler = pendingToSchedule.size();
-        scheduler->scheduleWorkloads(pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
+        scheduler->scheduleWorkloads(workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
         processedPatients += (priorScheduler - pendingToSchedule.size());
 
         frag+=layout.calculateFragmentation();
@@ -86,6 +89,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
+    step--; //correction
 
     cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
@@ -109,6 +113,7 @@ int main(int argc, char* argv[]) {
         workloads[i].executionTime = 1500;
         workloads[i].nvmeBandwidth = 400;
         workloads[i].nvmeCapacity = 43;
+        workloads[i].wlId = i;
     }
 
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();

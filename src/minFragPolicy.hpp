@@ -9,8 +9,8 @@ using namespace std;
 
 class MinFragPolicy : public PlacementPolicy {
    public:
-    void insertSorted(vector<nvmeFitness>&, nvmeFitness);
-    bool placeWorkload(vector<workload>::iterator, Layout&, int);
+    void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
+    bool placeWorkload(vector<workload>&, int, Layout&, int);
 };
 
 #endif

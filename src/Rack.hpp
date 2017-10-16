@@ -13,7 +13,7 @@ struct raid {
     int numVolumes = 0;
     bool used = false;
     int workloadsUsing = 0;
-    vector<vector<workload>::iterator> assignedWorkloads;
+    vector<int> assignedWorkloads;
 };
 
 class Rack {
@@ -39,7 +39,7 @@ class Rack {
     bool inUse();
     double resourcesUsed();
     double workloadsRaid();
-    int compositionTTL(int, int);
+    int compositionTTL(vector<workload>&, int, int);
 };
 
 #endif

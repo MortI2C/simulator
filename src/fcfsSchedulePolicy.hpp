@@ -9,7 +9,7 @@ using namespace std;
 
 class FcfsScheduler : public SchedulingPolicy {
    public:
-      bool scheduleWorkloads(vector<workload>&, vector<workload>&, PlacementPolicy*, int, Layout&);
+      bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };
 

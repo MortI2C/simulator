@@ -7,31 +7,32 @@
 using namespace std;
 
 //Insert into vector ordered by completion step, worst-case O(n)
-void insertOrderedByStep(vector<workload>& vector, workload& wload) {
+void insertOrderedByStep(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
     int completionTime = wload.executionTime+wload.scheduled;
     bool inserted = false;
-    for(std::vector<workload>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
-        int currentCompletion = it->executionTime+it->scheduled;
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+        int currentCompletion = workloads[*it].executionTime+workloads[*it].scheduled;
         if(completionTime > currentCompletion) {
             inserted = true;
-            vector.insert(it,wload);
+            vect.insert(it,i);
         }
     }
     if(!inserted)
-        vector.push_back(wload);
+        vect.push_back(i);
 }
 
-bool FcfsScheduler::scheduleWorkloads(vector <workload>& pendingToSchedule,
-                                     vector <workload>& runningWorkloads,
+bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
+                                     vector <int>& pendingToSchedule,
+                                     vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
-    vector<vector<workload>::iterator> toFinish;
-    for(vector<workload>::iterator it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-        if(placementPolicy->placeWorkload(it,layout,step)) {
-            it->scheduled = step;
-            insertOrderedByStep(runningWorkloads,*it);
+    vector<vector<int>::iterator> toFinish;
+    for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
+        if(placementPolicy->placeWorkload(workloads,*it,layout,step)) {
+            workloads[*it].scheduled = step;
+            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(it);
-            cout << step << endl;
-            layout.printRaidsInfo();
+//            cout << step << endl;
+//            layout.printRaidsInfo();
         }
     }
 
