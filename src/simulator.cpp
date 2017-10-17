@@ -19,6 +19,26 @@
 #include "layout.hpp"
 using namespace std;
 
+double getAvgExeTime(int step, const vector<workload>& scheduledWorkloads) {
+    double exeTime = 0;
+    for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
+        exeTime += (it->stepFinished-it->scheduled);
+    }
+    exeTime/=scheduledWorkloads.size();
+
+    return exeTime;
+}
+
+double getAvgWaitingTime(int step, const vector<workload>& scheduledWorkloads) {
+    double waitingTime = 0;
+    for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
+        waitingTime += (it->scheduled - it->arrival);
+    }
+    waitingTime/=scheduledWorkloads.size();
+
+    return waitingTime;
+}
+
 void printStatistics(int step, const vector<workload>& scheduledWorkloads) {
     int waitingTime = 0;
     int exeTime = 0;
@@ -34,42 +54,49 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads) {
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
     std::cout.unsetf(std::ios::floatfield);
-    std::cout.precision(2);
+    std::cout.precision(4);
     int step = 0;
     int processedPatients = 0;
 //    int raidsUsed = 0;
     double frag = 0;
     double resourcesUsed = 0;
+    double loadFactor = 0;
+    double actualLoadFactor = 0;
 
     vector<int> runningWorkloads;
     vector<int> pendingToSchedule;
 //    vector<workload> scheduledWorkloads(patients);
-    int ipointer = 0;
     vector<workload>::iterator wlpointer = workloads.begin();
-
     while(processedPatients < patients || !runningWorkloads.empty()) {
         //1st Check Workloads running finishing in this step
-        vector<vector<int>::iterator> toFinish;
+        vector<int> toFinish;
         for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end(); ++it) {
             workload* run = &workloads[*it];
             run->timeLeft--;
 //            if((run->executionTime+run->scheduled)<=step) {
             if(run->timeLeft<=0) {
-                toFinish.push_back(it);
+                workloads[*it].stepFinished = step;
+                toFinish.push_back(*it);
 //                scheduledWorkloads.push_back(*run);/
 //                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
                 placementPolicy->freeResources(workloads,*it);
             }
         }
-        for(auto i = toFinish.begin(); i!=toFinish.end(); ++i) {
-            runningWorkloads.erase(*i);
+
+        //Remove already placed workloads
+        for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
+            for(auto it2 = runningWorkloads.begin(); it2!=runningWorkloads.end(); ++it2) {
+                if(*it2 == *it) {
+                    runningWorkloads.erase(it2);
+                    break;
+                }
+            }
         }
 
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
-            pendingToSchedule.push_back(ipointer);
+            pendingToSchedule.push_back(wlpointer->wlId);
             ++wlpointer;
-            ++ipointer;
         }
 
         //3rd schedule new workloads
@@ -80,9 +107,13 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 
         frag+=layout.calculateFragmentation();
         resourcesUsed+=layout.resourcesUsed();
+        loadFactor+=layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
+        actualLoadFactor+=layout.actualLoadFactor(workloads,runningWorkloads);;
 
         int raids = layout.raidsUsed();
         double size = layout.avgRaidSize();
+//        cout << step << " " << layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) <<
+//             " " << layout.actualLoadFactor(workloads,runningWorkloads) << endl;
 //        layout.printRaidsInfo();
 //        cout << step << " " << raids << " " << size << " " << size*raids << " " << layout.workloadsRaid() << endl;
 //        cout << step << " " << layout.resourcesUsed() << " " << layout.calculateFragmentation() << endl;
@@ -91,9 +122,11 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     }
     step--; //correction
 
-    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
+//    cout << loadFactor/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << endl;
+    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
+//    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
-//    printStatistics(step, scheduledWorkloads);
+//    printStatistics(step, workloads);
 }
 
 int main(int argc, char* argv[]) {
@@ -117,7 +150,9 @@ int main(int argc, char* argv[]) {
     }
 
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
-    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
+    //cluster experiments
+//    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
+    arrival->generate_arrivals(workloads, 99*7, prio_threshold);
 
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
@@ -135,13 +170,13 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, worstFit, workloads, patients, layout);
 //    cout << "randomfit: ";
 //    simulator(scheduler, randomFit, workloads, patients, layout);
-    cout << "minfrag: ";
+//    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
     simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    cout << "worst fit: ";
 //    simulator(fcfsSched, worstFit, workloads, patients, layout);
-    cout << "bestfit fcfs: ";
-    simulator(fcfsSched, bestFit, workloads, patients, layout);
+//    cout << "bestfit fcfs: ";
+//    simulator(fcfsSched, bestFit, workloads, patients, layout);
 
     return 0;
 }

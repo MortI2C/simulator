@@ -33,6 +33,7 @@ struct workload {
     int deadline;
     int arrival;
     int scheduled;
+    int stepFinished;
     int cyclesDelayed=0;
     int wlId;
 };

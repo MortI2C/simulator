@@ -25,19 +25,25 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& pendingToSchedule,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
-    vector<vector<int>::iterator> toFinish;
+    vector<int> toFinish;
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         if(placementPolicy->placeWorkload(workloads,*it,layout,step)) {
             workloads[*it].scheduled = step;
-            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
-            toFinish.push_back(it);
+            runningWorkloads.push_back(*it);
+//            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
+            toFinish.push_back(*it);
 //            cout << step << endl;
 //            layout.printRaidsInfo();
         }
     }
 
     //Remove already placed workloads
-    for(int i = 0; i<toFinish.size(); ++i) {
-        pendingToSchedule.erase(toFinish[i]);
+    for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
+        for(auto it2 = pendingToSchedule.begin(); it2!=pendingToSchedule.end(); ++it2) {
+            if(*it2 == *it) {
+                pendingToSchedule.erase(it2);
+                break;
+            }
+        }
     }
 }

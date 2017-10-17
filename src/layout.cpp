@@ -25,6 +25,7 @@ void Layout::generateLayout(string filePath) {
          nvmes.push_back(newNvme);
       }
       newRack.addNvmeResourceVector(nvmes);
+      newRack.stabilizeContainers();
       this->racks[rackId++] = newRack;
    }
 }
@@ -123,4 +124,31 @@ void Layout::printRaidsInfo() {
         }
     }
     cout << endl;
+}
+
+double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
+    int resAvail = (this->racks.begin()->resources.begin()->getTotalBandwidth()
+        + this->racks.begin()->resources.begin()->getTotalCapacity())
+        * this->racks.begin()->resources.size()*this->racks.size();
+
+    int resRequested = 0;
+    for(auto it = queued.begin(); it!=queued.end(); ++it)
+        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+
+    for(auto it = running.begin(); it!=running.end(); ++it)
+        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+
+    return (double)resRequested/resAvail;
+}
+
+double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& running) {
+    int resAvail = (this->racks.begin()->resources.begin()->getTotalBandwidth()
+                    + this->racks.begin()->resources.begin()->getTotalCapacity())
+                   * this->racks.begin()->resources.size()*this->racks.size();
+
+    int resRequested = 0;
+    for(auto it = running.begin(); it!=running.end(); ++it)
+        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+
+    return (double)resRequested/resAvail;
 }

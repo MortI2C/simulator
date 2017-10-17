@@ -65,8 +65,8 @@ void Rack::freeComposition(Rack* rack, int composition) {
 
 void Rack::stabilizeContainers() {
    this->resources.resize(this->resources.size());
-   this->freeResources.resize(this->freeResources.size());
-   this->compositions.resize(this->freeResources.size());
+   this->freeResources.resize(this->resources.size());
+   this->compositions.resize(this->resources.size());
 }
 
 double Rack::calculateFragmentation() {

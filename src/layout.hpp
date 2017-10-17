@@ -21,6 +21,8 @@ class Layout {
     double avgRaidSize();
     double workloadsRaid();
     void printRaidsInfo();
+    double loadFactor(vector<workload>&, vector<int>&, vector<int>&);
+    double actualLoadFactor(vector<workload>&, vector<int>&);
 };
 
 #endif

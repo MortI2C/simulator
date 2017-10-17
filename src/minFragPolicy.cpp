@@ -113,12 +113,12 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
-            scheduledRack->compositions[freeComposition].workloadsUsing++;
+            scheduledRack->compositions[freeComposition].workloadsUsing = 1;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
             wload->executionTime = this->timeDistortion(minResources,1);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
-            wload->allocation.allocatedRack = &(*scheduledRack);
+            wload->allocation.allocatedRack = scheduledRack;
             int usedResources = 0;
             for(int i = 0; usedResources<minResources && i<scheduledRack->freeResources.size(); ++i) {
                 if(scheduledRack->freeResources[i]) {
@@ -135,7 +135,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->ttlDifference < element.ttlDifference) {
+        if(it->ttlDifference > element.ttlDifference) {
             vect.insert(it,element);
             inserted = true;
         } else if(it->ttlDifference = element.ttlDifference) {
