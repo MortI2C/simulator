@@ -51,6 +51,7 @@ void Rack::freeComposition(Rack* rack, int composition) {
        int nvmeCapacity = rack->compositions[composition].composedNvme.getTotalCapacity() /
                           rack->compositions[composition].numVolumes;
        rack->compositions[composition].used = false;
+       rack->compositions[composition].highprio = false;
        int freedResources = 0;
        for (int i = 0; freedResources < rack->compositions[composition].numVolumes
                        && i < rack->freeResources.size(); ++i) {

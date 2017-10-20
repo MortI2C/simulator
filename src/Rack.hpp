@@ -14,6 +14,7 @@ struct raid {
     bool used = false;
     int workloadsUsing = 0;
     vector<int> assignedWorkloads;
+    bool highprio = false;
 };
 
 class Rack {
