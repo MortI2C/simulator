@@ -8,8 +8,11 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-inline int maxConcurrency(int numVolumes) {
-    return 1+2*numVolumes;
+inline int maxConcurrency(int numVolumes, double loadFactor) {
+//    if(loadFactor <= 0.6)
+        return 1+2*numVolumes;
+//    else
+//        return 2+2*numVolumes;
 }
 
 bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step) {
@@ -26,7 +29,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
                                                        it->compositions[i].workloadsUsing + 1);
                 estimateTTL+=step;
 
-                if (it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].numVolumes) &&
+                if (it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].numVolumes,this->loadFactor) &&
                     it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
@@ -35,7 +38,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
                              + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
                             estimateTTL - compositionTTL, i, &(*it)
                     };
-                    if(compositionTTL >= estimateTTL*0.5)
+                    if(compositionTTL <= estimateTTL)
                         this->insertSorted(fittingCompositions, element);
                 }
             }
@@ -77,6 +80,10 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
         int nvmeBw = layout.racks.begin()->resources.begin()->getTotalBandwidth();
         int nvmeCapacity = layout.racks.begin()->resources.begin()->getTotalCapacity();
         int minResources = max(ceil((float)bandwidth/nvmeBw),ceil((float)capacity/nvmeCapacity));
+//        bool extendedMode = (this->loadFactor >= 0.4);
+        bool extendedMode = false;
+        if(extendedMode)
+            minResources++;
 
         Rack* scheduledRack = nullptr;
         vector<nvmeFitness> fittingRacks;

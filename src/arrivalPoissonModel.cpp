@@ -33,7 +33,7 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
             it->highprio = true;
             it->deadline = (int) completion;
         } else {
-            double completion = it->executionTime * 1.25 + it->arrival; //1.5, 1.25, 1.85
+            double completion = it->executionTime * 1.35 + it->arrival; //1.5, 1.25, 1.85
             it->highprio = false;
             it->deadline = (int) completion;
         }

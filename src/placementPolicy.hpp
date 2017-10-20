@@ -16,11 +16,12 @@ class PlacementPolicy {
         float c;
     };
     distortionValues distortion;
+    double loadFactor;
 //    vector<distortionValues> distortion;
     PlacementPolicy() {
 //        this->distortion = vector<distortionValues>(2);
 //          this->distortion = distortionValues({919.078,-76.67,1.58321});
-        this->distortion = distortionValues({1203.98,0.105534,-2.9787});
+        this->distortion = distortionValues({1706.29,1.08423,0.858092});
 //        this->distortion[0].a = 1181.22;
 //        this->distortion[0].b = 0.14008;
 //        this->distortion[1].a = 1322.88;
@@ -76,7 +77,8 @@ class PlacementPolicy {
         }
     }
     int timeDistortion(int nRaidVolumes, int nConcurrent) {
-      return ceil(this->distortion.a*exp(this->distortion.b*nConcurrent)+exp(this->distortion.c*nRaidVolumes));
+        return ceil(this->distortion.a*pow(this->distortion.b,nConcurrent)*pow(this->distortion.c,nRaidVolumes));
+//      return ceil(this->distortion.a*exp(this->distortion.b*nConcurrent)+this->distortion.c*exp(this->distortion.d*nRaidVolumes));
 //        return ceil(this->distortion[nRaidVolumes-1].a*exp(this->distortion[nRaidVolumes-1].b*nConcurrent));
     }
 
