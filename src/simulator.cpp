@@ -56,34 +56,16 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads) {
     int waitingTime = 0;
     int exeTime = 0;
     int completionTime = 0;
-    float missedDeadlines = 0;
     for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
         waitingTime += (it->scheduled - it->arrival);
         exeTime += (it->stepFinished-it->scheduled);
         completionTime += (it->stepFinished-it->arrival);
-        if(it->stepFinished > it->deadline)
-            ++missedDeadlines;
     }
     waitingTime/=scheduledWorkloads.size();
     exeTime/=scheduledWorkloads.size();
     completionTime/=scheduledWorkloads.size();
-    missedDeadlines/=scheduledWorkloads.size();
 
-    cout << scheduledWorkloads.size() << " " << step << " " << waitingTime << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
-}
-
-void insertSortedDeadline(vector<workload>& workloads, vector<int>& vect, int element) {
-    workload wload = workloads[element];
-    bool inserted = false;
-    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        workload current = workloads[*it];
-        if(current.deadline > wload.deadline) {
-            vect.insert(it,element);
-            inserted = true;
-        }
-    }
-    if(!inserted)
-        vect.push_back(element);
+    cout << step << " " << waitingTime << " " << exeTime << " " << completionTime << endl;
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
@@ -129,7 +111,6 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
-//            insertSortedDeadline(workloads,pendingToSchedule, wlpointer->wlId);
             pendingToSchedule.push_back(wlpointer->wlId);
             ++wlpointer;
         }
@@ -168,7 +149,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
 //    cout << loadFactor/step << " ";
-    printStatistics(step, workloads);
+//    printStatistics(step, workloads);
 }
 
 int main(int argc, char* argv[]) {
@@ -199,7 +180,7 @@ int main(int argc, char* argv[]) {
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-    arrival->generate_arrivals(workloads, 1500, prio_threshold);
+    arrival->generate_arrivals(workloads, 79, prio_threshold);
 
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
