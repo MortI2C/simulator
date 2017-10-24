@@ -25,7 +25,7 @@ void Layout::generateLayout(string filePath) {
          nvmes.push_back(newNvme);
       }
       newRack.addNvmeResourceVector(nvmes);
-      newRack.stabilizeContainers();
+//      newRack.stabilizeContainers();
       this->racks[rackId++] = newRack;
    }
 }

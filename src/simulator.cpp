@@ -133,7 +133,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         placementPolicy->loadFactor = currLoadFactor;
         int raids = layout.raidsUsed();
         double size = layout.avgRaidSize();
-        cout << step << " " << currLoadFactor << " " << currActLoadFactor << " " << currResourcesUsed << " " << pendingToSchedule.size() << " " << currFrag << endl;
+//        cout << step << " " << currLoadFactor << " " << currActLoadFactor << " " << currResourcesUsed << " " << pendingToSchedule.size() << " " << currFrag << endl;
 //        cout << step << " " << layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) <<
 //             " " << layout.actualLoadFactor(workloads,runningWorkloads) << endl;
 //        layout.printRaidsInfo();
@@ -148,8 +148,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
-//    cout << loadFactor/step << " ";
-//    printStatistics(step, workloads);
+    cout << loadFactor/step << " ";
+    printStatistics(step, workloads);
 }
 
 int main(int argc, char* argv[]) {
