@@ -1,0 +1,48 @@
+{
+	"rack1": {
+		"nvmes": [{
+				"bandwidth": 200,
+				"capacity": 1200
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 1600
+			},
+			{
+				"bandwidth": 500,
+				"capacity": 1000
+			},
+			{
+				"bandwidth": 3000,
+				"capacity": 100
+			},
+			{
+				"bandwidth": 100,
+				"capacity": 3000
+			}
+		]
+	},
+	"rack2": {
+		"nvmes": [{
+				"bandwidth": 500,
+				"capacity": 1200
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 1200
+			},
+			{
+				"bandwidth": 3000,
+				"capacity": 400
+			},
+			{
+				"bandwidth": 700,
+				"capacity": 1200
+			},
+			{
+				"bandwidth": 400,
+				"capacity": 1300
+			}
+		]
+	}
+}

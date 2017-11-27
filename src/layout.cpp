@@ -11,23 +11,29 @@ using namespace std;
 using json = nlohmann::json;
 
 void Layout::generateLayout(string filePath) {
-   ifstream i(filePath);
-   json j;
-   i >> j;
-   int rackId = 0;
-   this->racks = vector<Rack>(j.size());
-   for(json::iterator it = j.begin(); it!=j.end(); ++it) {
-      Rack newRack = Rack();
-      json newArray = it.value();
-      vector<NvmeResource> nvmes;
-      for(json::iterator it2 = newArray["nvmes"].begin(); it2!=newArray["nvmes"].end(); ++it2) {
-         NvmeResource newNvme(it2.value()["bandwidth"],it2.value()["capacity"]);
-         nvmes.push_back(newNvme);
-      }
-      newRack.addNvmeResourceVector(nvmes);
+    ifstream i(filePath);
+    json j;
+    i >> j;
+    int rackId = 0;
+    this->racks = vector<Rack>(j.size());
+    for(json::iterator it = j.begin(); it!=j.end(); ++it) {
+        int totalBandwith = 0;
+        int totalCapacity = 0;
+        Rack newRack = Rack();
+        json newArray = it.value();
+        vector<NvmeResource> nvmes;
+        for(json::iterator it2 = newArray["nvmes"].begin(); it2!=newArray["nvmes"].end(); ++it2) {
+            NvmeResource newNvme(it2.value()["bandwidth"],it2.value()["capacity"]);
+            nvmes.push_back(newNvme);
+            totalBandwith += (int)it2.value()["bandwidth"];
+            totalCapacity += (int)it2.value()["capacity"];
+        }
+        newRack.addNvmeResourceVector(nvmes);
+        newRack.setTotalBandwidth(totalBandwith);
+        newRack.setTotalCapacity(totalCapacity);
 //      newRack.stabilizeContainers();
-      this->racks[rackId++] = newRack;
-   }
+        this->racks[rackId++] = newRack;
+    }
 }
 
 double Layout::calculateFragmentation() {
@@ -87,7 +93,7 @@ double Layout::avgRaidSize() {
         for(int i = 0; i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
                 raidsUsed++;
-                avgSize+=it->compositions[i].numVolumes;
+                avgSize+=it->compositions[i].volumes.size();
             }
         }
     }
@@ -118,7 +124,7 @@ void Layout::printRaidsInfo() {
                      it->compositions[i].composedNvme.getTotalCapacity() << " Avail: " <<
                      it->compositions[i].composedNvme.getAvailableBandwidth() << "/" <<
                      it->compositions[i].composedNvme.getAvailableCapacity() <<
-                     " num volumes: " << it->compositions[i].numVolumes << " workloads: " <<
+                     " num volumes: " << it->compositions[i].volumes.size() << " workloads: " <<
                      it->compositions[i].workloadsUsing << endl;
             }
         }
@@ -128,8 +134,8 @@ void Layout::printRaidsInfo() {
 
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
     int resAvail = (this->racks.begin()->resources.begin()->getTotalBandwidth()
-        + this->racks.begin()->resources.begin()->getTotalCapacity())
-        * this->racks.begin()->resources.size()*this->racks.size();
+                    + this->racks.begin()->resources.begin()->getTotalCapacity())
+                   * this->racks.begin()->resources.size()*this->racks.size();
 
     int resRequested = 0;
     for(auto it = queued.begin(); it!=queued.end(); ++it)

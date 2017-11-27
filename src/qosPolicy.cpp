@@ -2,7 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include "minFragPolicy.hpp"
+#include "qosPolicy.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
@@ -15,7 +15,7 @@ inline int maxConcurrency(int numVolumes, double loadFactor) {
 //        return 2+2*numVolumes;
 }
 
-bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
@@ -29,9 +29,22 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
                                                        it->compositions[i].workloadsUsing + 1);
                 estimateTTL+=step;
 
-                if ((it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].volumes.size(),this->loadFactor) &&
+                bool valid = true;
+                for(auto iw = it->compositions[i].assignedWorkloads.begin();
+                    valid && iw != it->compositions[i].assignedWorkloads.end(); ++iw) {
+                    workload it2 = workloads[*iw];
+                    int newTime = this->timeDistortion(
+                            it->compositions[i].volumes.size(),
+                            it->compositions[i].workloadsUsing);
+                    it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
+                    int deadlineLeft = it2.deadline - step;
+                    if(step <= it2.deadline && it2.timeLeft > deadlineLeft)
+                        valid = false;
+                }
+
+                if (deadline <= estimateTTL && valid &&
                     it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)) {
+                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
                     nvmeFitness element = {
                             ((it->compositions[i].composedNvme.getAvailableBandwidth() - wload->nvmeBandwidth)
@@ -101,7 +114,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
     return scheduled;
 }
 
-void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
+void QoSPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(!it->inUse && element.inUse) {
@@ -116,7 +129,7 @@ void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& ele
         vect.push_back(element);
 }
 
-void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
+void QoSPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(it->ttlDifference > element.ttlDifference) {

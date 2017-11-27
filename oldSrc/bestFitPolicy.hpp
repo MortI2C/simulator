@@ -2,9 +2,9 @@
 #define BEST_FIT_POLICY_H
 #include <iostream>
 #include <vector>
-#include "placementPolicy.hpp"
-#include "layout.hpp"
-#include "resources_structures.hpp"
+#include "../src/placementPolicy.hpp"
+#include "../src/layout.hpp"
+#include "../src/resources_structures.hpp"
 using namespace std;
 
 class BestFitPolicy : public PlacementPolicy {

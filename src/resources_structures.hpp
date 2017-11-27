@@ -11,6 +11,13 @@ using namespace std;
 class Rack;
 struct raid;
 
+struct rackFitness {
+    int fitness;
+    bool inUse;
+    vector<int> selection;
+    Rack* rack;
+};
+
 struct nvmeFitness {
     int fitness;
     int ttlDifference;

@@ -2,17 +2,16 @@
 #include <vector>
 #include "layout.hpp"
 #include "resources_structures.hpp"
-#include "fcfsSchedulePolicy.hpp"
+#include "earliestDeadlinePolicy.hpp"
 #include "placementPolicy.hpp"
 using namespace std;
 
-//Insert into vector ordered by completion step, worst-case O(n)
-void insertOrderedByStep(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
-    int completionTime = wload.executionTime+wload.scheduled;
+//Insert into vector ordered by deadline step, worst-case O(n)
+void insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
+    int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        int currentCompletion = workloads[*it].executionTime+workloads[*it].scheduled;
-        if(completionTime > currentCompletion) {
+        if(completionTime < workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
         }
@@ -21,13 +20,19 @@ void insertOrderedByStep(vector<workload>& workloads, vector<int>& vect, int i, 
         vect.push_back(i);
 }
 
-bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
+bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& pendingToSchedule,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
-    vector<int> toFinish;
+    vector<int> orderedWorkloads;
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-        if(placementPolicy->placeWorkload(workloads,*it,layout,step,-1)) {
+        workload wload = workloads[*it];
+        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+    }
+
+    vector<int> toFinish;
+    for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
+        if(placementPolicy->placeWorkload(workloads,*it,layout,step,workloads[*it].deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);

@@ -1,7 +1,7 @@
 {
 	"rack1": {
 		"nvmes": [{
-				"bandwidth": 2000,
+				"bandwidth": 1200,
 				"capacity": 1500
 			},
 			{
@@ -12,7 +12,7 @@
 	},
 	"rack2": {
 		"nvmes": [{
-				"bandwidth": 2000,
+				"bandwidth": 1000,
 				"capacity": 1500
 			},
 			{

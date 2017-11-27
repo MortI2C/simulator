@@ -2,14 +2,13 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include <stdlib.h>
-#include "randomFitPolicy.hpp"
-#include "layout.hpp"
-#include "resources_structures.hpp"
-#include "nvmeResource.hpp"
+#include "bestFitPolicy.hpp"
+#include "../src/layout.hpp"
+#include "../src/resources_structures.hpp"
+#include "../src/nvmeResource.hpp"
 using namespace std;
 
-bool RandomFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step) {
+bool BestFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step){
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
@@ -28,8 +27,7 @@ bool RandomFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, La
     }
 
     if(!fittingCompositions.empty()) {
-        int v2 = rand() % fittingCompositions.size();
-        vector<nvmeFitness>::iterator it = fittingCompositions.begin()+v2;
+        vector<nvmeFitness>::iterator it = fittingCompositions.begin();
         it->rack->compositions[it->composition].composedNvme.setAvailableCapacity(
                 (it->rack->compositions[it->composition].composedNvme.getAvailableCapacity()-wload->nvmeCapacity)
         );
@@ -39,9 +37,23 @@ bool RandomFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, La
 
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
-        wload->timeLeft = wload->executionTime;
         it->rack->compositions[it->composition].workloadsUsing++;
+        wload->timeLeft = this->timeDistortion(
+                it->rack->compositions[it->composition].numVolumes,
+                it->rack->compositions[it->composition].workloadsUsing);
+        wload->executionTime = wload->timeLeft;
+        for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
+            iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
+            workload it2 = workloads[*iw];
+            int newTime = this->timeDistortion(
+                    it->rack->compositions[it->composition].numVolumes,
+                    it->rack->compositions[it->composition].workloadsUsing);
+//            cout <<  "before: " << it2->wlId << " " << it2->timeLeft << " ";
+            it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
+            it2.executionTime = newTime;
+        }
         it->rack->compositions[it->composition].assignedWorkloads.push_back(wloadIt);
+
         scheduled = true;
     } else {
         int capacity = wload->nvmeCapacity;
@@ -72,13 +84,14 @@ bool RandomFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, La
             int allocatedResources = 0;
             scheduledRack->numFreeResources-=minResources;
             scheduledRack->compositions[freeComposition].used = true;
-//            scheduledRack->freeResources.erase(scheduledRack->freeResources.begin(),scheduledRack->freeResources.begin()+minResources-1);
             scheduledRack->compositions[freeComposition].composedNvme = NvmeResource(minResources*nvmeBw,minResources*nvmeCapacity);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(minResources*nvmeBw-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(minResources*nvmeCapacity-capacity);
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+            wload->timeLeft = this->timeDistortion(minResources,1);
+            wload->executionTime = wload->timeLeft;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);
             int usedResources = 0;
@@ -95,7 +108,7 @@ bool RandomFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, La
 }
 
 
-void RandomFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
+void BestFitPolicy::insertSorted(vector<nvmeFitness>& vector, nvmeFitness element) {
     bool inserted = false;
     for(std::vector<nvmeFitness>::iterator it = vector.begin(); !inserted && it!=vector.end(); ++it) {
         if(it->fitness >= element.fitness) {

@@ -14,16 +14,15 @@ void Rack::addNvmeResource(NvmeResource& nvme) {
 }
 
 void Rack::addNvmeResourceVector(vector<NvmeResource> nvmes) {
-    this->resources = vector<NvmeResource>(nvmes.size());
+    this->resources = nvmes;
     this->freeResources = vector<int>(nvmes.size());
     this->compositions = vector<raid>(nvmes.size());
     this->numFreeResources = nvmes.size();
-    int i = 0;
-    for(vector<NvmeResource>::iterator it = nvmes.begin(); it!=nvmes.end(); ++it, ++i) {
-        this->resources[i] = *it;
-        this->freeResources[i] = 1;
+    for(auto it = this->freeResources.begin(); it!=this->freeResources.end(); ++it) {
+        *it = 1;
     }
 }
+
 void Rack::deleteNvmeResource (NvmeResource* nvme) {
 //   vector<NvmeResource>::iterator foundElement = this->resources.end();
 //   for(vector<NvmeResource>::iterator it = this->resources.begin(); foundElement != this->resources.end() && it!=this->resources.end(); ++it) {
@@ -46,27 +45,20 @@ void Rack::dumpRack() {
 }
 
 void Rack::freeComposition(Rack* rack, int composition) {
-       int nvmeBw = rack->compositions[composition].composedNvme.getTotalBandwidth() /
-                    rack->compositions[composition].numVolumes;
-       int nvmeCapacity = rack->compositions[composition].composedNvme.getTotalCapacity() /
-                          rack->compositions[composition].numVolumes;
-       rack->compositions[composition].used = false;
-       int freedResources = 0;
-       for (int i = 0; freedResources < rack->compositions[composition].numVolumes
-                       && i < rack->freeResources.size(); ++i) {
-           if (!rack->freeResources[i]) {
-               rack->freeResources[i] = 1;
-               ++freedResources;
-           }
+       for(auto it = rack->compositions[composition].volumes.begin();
+               it!=rack->compositions[composition].volumes.end(); ++it) {
+           rack->freeResources[*it] = 1;
        }
-
-       rack->numFreeResources+=freedResources;
-}
-
-void Rack::stabilizeContainers() {
-   this->resources.resize(this->resources.size());
-   this->freeResources.resize(this->resources.size());
-   this->compositions.resize(this->resources.size());
+       rack->compositions[composition].used = false;
+       rack->numFreeResources+=rack->compositions[composition].volumes.size();
+       rack->compositions[composition].volumes.erase(
+               rack->compositions[composition].volumes.begin(),
+               rack->compositions[composition].volumes.end()
+       );
+       rack->compositions[composition].assignedWorkloads.erase(
+               rack->compositions[composition].assignedWorkloads.begin(),
+               rack->compositions[composition].assignedWorkloads.end()
+       );
 }
 
 double Rack::calculateFragmentation() {
@@ -80,7 +72,7 @@ double Rack::calculateFragmentation() {
         if(this->compositions[i].used) {
             totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
             totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
-            resourcesUsed+=this->compositions[i].numVolumes;
+            resourcesUsed+=this->compositions[i].volumes.size();
         }
     }
 
@@ -99,7 +91,7 @@ double Rack::estimateFragmentation(int sumResources, int sumBw, int sumCap) {
         if(this->compositions[i].used) {
             totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
             totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
-            resourcesUsed+=this->compositions[i].numVolumes;
+            resourcesUsed+=this->compositions[i].volumes.size();
         }
     }
     resourcesUsed+=sumResources;
@@ -132,20 +124,14 @@ int Rack::getTotalCapacityUsed(){
 }
 
 bool Rack::inUse() {
-    bool inuse = false;
-    for(int i = 0; !inuse && i<this->compositions.size(); ++i) {
-        if(this->compositions[i].used)
-            inuse = true;
-    }
-
-    return inuse;
+    return this->numFreeResources != this->resources.size();
 }
 
 double Rack::resourcesUsed() {
     double resourcesUsed = 0;
     for(auto i = this->compositions.begin(); i!=this->compositions.end(); ++i) {
         if(i->used)
-            resourcesUsed+=i->numVolumes;
+            resourcesUsed+=i->volumes.size();
     }
 
     return resourcesUsed/this->resources.size();
@@ -165,4 +151,12 @@ int Rack::compositionTTL(vector<workload>& workloads, int composition, int step)
     }
 
     return ttl;
+}
+
+void Rack::setTotalBandwidth(int bandwidth) {
+    this->totalBandwidth = bandwidth;
+}
+
+void Rack::setTotalCapacity(int capacity) {
+    this->totalCapacity = capacity;
 }

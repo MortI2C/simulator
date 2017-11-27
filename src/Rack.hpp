@@ -10,7 +10,7 @@ using namespace std;
 
 struct raid {
     NvmeResource composedNvme;
-    int numVolumes = 0;
+    vector<int> volumes;
     bool used = false;
     int workloadsUsing = 0;
     vector<int> assignedWorkloads;
@@ -19,6 +19,8 @@ struct raid {
 class Rack {
    public:
     int numFreeResources;
+    int totalBandwidth;
+    int totalCapacity;
     vector<NvmeResource> resources;
     vector<int> freeResources;
     vector<raid> compositions;
@@ -30,7 +32,6 @@ class Rack {
     void deleteNvmeResource (NvmeResource*);
     void freeComposition(Rack*, int);
     void dumpRack();
-    void stabilizeContainers();
     void addNvmeResourceVector(vector<NvmeResource>);
     double calculateFragmentation();
     double estimateFragmentation(int, int, int);
@@ -40,6 +41,8 @@ class Rack {
     double resourcesUsed();
     double workloadsRaid();
     int compositionTTL(vector<workload>&, int, int);
+    void setTotalBandwidth(int);
+    void setTotalCapacity(int);
 };
 
 #endif
