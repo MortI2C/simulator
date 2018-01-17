@@ -3,6 +3,9 @@
 #include <queue>
 #include <string>
 #include <typeinfo>
+#include <algorithm>
+#include <string>
+#include "json.hpp"
 #include "resources_structures.hpp"
 #include "schedulingPolicy.hpp"
 #include "placementPolicy.hpp"
@@ -94,6 +97,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //            if((run->executionTime+run->scheduled)<=step) {
             if(run->timeLeft<=0) {
                 workloads[*it].stepFinished = step;
+                scheduler->logger[workloads[*it].scheduled]["completion"] = step;
                 toFinish.push_back(*it);
 //                scheduledWorkloads.push_back(*run);/
 //                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
@@ -144,18 +148,21 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
+//    cout << scheduler->logger.dump() << endl;
+
     step--; //correction
 
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
 //    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
-//    cout << loadFactor/step << " ";
+    cout << loadFactor/step << " ";
     printStatistics(step, workloads);
 }
 
 int main(int argc, char* argv[]) {
     int patients=atoi(argv[1]);
+    double lambdaCoefficient=1;
     double prio_threshold = 0.2;
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
@@ -167,12 +174,15 @@ int main(int argc, char* argv[]) {
     if(argc>3)
         prio_threshold=atof(argv[3]);
 
+    if(argc>4)
+        lambdaCoefficient = atof(argv[4]);
+
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
 //    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
     vector<workload> workloads(patients);
     for(int i = 0; i<patients; ++i) {
-        workloads[i].executionTime = 1500;
+        workloads[i].executionTime = 1590;
         workloads[i].nvmeBandwidth = 400;
         workloads[i].nvmeCapacity = 43;
         workloads[i].wlId = i;
@@ -182,7 +192,7 @@ int main(int argc, char* argv[]) {
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-    arrival->generate_arrivals(workloads, 2400, prio_threshold);
+    arrival->generate_arrivals(workloads, 51.72*patients / lambdaCoefficient, prio_threshold);
 
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
@@ -202,7 +212,8 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
     simulator(fcfsSched, minFrag, copyWL, patients, layout);
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+//    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
+//    simulator(earliestSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    cout << "worst fit: ";
 //    simulator(fcfsSched, worstFit, workloads, patients, layout);

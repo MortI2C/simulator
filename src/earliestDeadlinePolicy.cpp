@@ -11,7 +11,7 @@ void insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime < workloads[*it].deadline) {
+        if(completionTime > workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
         }
@@ -32,11 +32,14 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
 
     vector<int> toFinish;
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
-        if(placementPolicy->placeWorkload(workloads,*it,layout,step,workloads[*it].deadline)) {
+        int maxDelay = workloads[*it].executionTime*2 + workloads[*it].arrival;
+        int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
+        if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(*it);
+            this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
 //            cout << step << endl;
 //            layout.printRaidsInfo();
         }

@@ -31,6 +31,7 @@ void Layout::generateLayout(string filePath) {
         newRack.addNvmeResourceVector(nvmes);
         newRack.setTotalBandwidth(totalBandwith);
         newRack.setTotalCapacity(totalCapacity);
+        newRack.rackId = rackId;
 //      newRack.stabilizeContainers();
         this->racks[rackId++] = newRack;
     }

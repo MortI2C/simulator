@@ -10,7 +10,7 @@ using namespace std;
 
 inline int maxConcurrency(int numVolumes, double loadFactor) {
 //    if(loadFactor <= 0.6)
-        return 2+2*numVolumes;
+        return 1+2*numVolumes;
 //    else
 //        return 2+2*numVolumes;
 }

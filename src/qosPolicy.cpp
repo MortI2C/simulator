@@ -42,7 +42,7 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
                         valid = false;
                 }
 
-                if (deadline <= estimateTTL && valid &&
+                if ((deadline == -1 || deadline >= estimateTTL) && valid &&
                     it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
@@ -70,8 +70,8 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
         vector<rackFitness> fittingRacks;
         for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
             vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth);
-            if(!selection.empty()) {
-                rackFitness element = {(it->numFreeResources - (int)selection.size()), it->inUse(),
+            if (!selection.empty() && (deadline == -1 || deadline >= this->timeDistortion(selection.size(),1))) {
+                rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
                                        selection, &(*it)
                 };
                 insertRackSorted(fittingRacks, element);
