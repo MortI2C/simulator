@@ -25,7 +25,7 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
             if(it->compositions[i].used) {
                 int wlTTL = wload->executionTime;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
-                int estimateTTL = this->timeDistortion(it->compositions[i].volumes.size(),
+                int estimateTTL = this->model.timeDistortion(it->compositions[i].volumes.size(),
                                                        it->compositions[i].workloadsUsing + 1);
                 estimateTTL+=step;
 
@@ -85,13 +85,14 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
 
             scheduledRack->numFreeResources-=element.selection.size();
             scheduledRack->compositions[freeComposition].used = true;
+            scheduledRack->compositions[freeComposition].used = true;
             scheduledRack->compositions[freeComposition].composedNvme = NvmeResource(composedBandwidth,composedCapacity);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(composedBandwidth-bandwidth);
             scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
             scheduledRack->compositions[freeComposition].volumes = element.selection;
             scheduledRack->compositions[freeComposition].workloadsUsing = 1;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-            wload->executionTime = this->timeDistortion(element.selection.size(),1);
+            wload->executionTime = this->model.timeDistortion(element.selection.size(),1);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;

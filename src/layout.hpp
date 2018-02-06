@@ -23,6 +23,8 @@ class Layout {
     void printRaidsInfo();
     double loadFactor(vector<workload>&, vector<int>&, vector<int>&);
     double actualLoadFactor(vector<workload>&, vector<int>&);
+    int getTotalBandwidth();
+    int getTotalCapacity();
 };
 
 #endif

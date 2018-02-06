@@ -9,6 +9,7 @@ using namespace std;
 
 class MinFragPolicy : public PlacementPolicy {
    public:
+    MinFragPolicy(DegradationModel model) : PlacementPolicy(model) {}
     void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);

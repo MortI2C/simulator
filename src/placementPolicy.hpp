@@ -6,22 +6,17 @@
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
+#include "degradationModel.hpp"
 using namespace std;
 
 class PlacementPolicy {
    public:
-    struct distortionValues {
-        float a;
-        float b;
-        float c;
-    };
-    distortionValues distortion;
+    DegradationModel model;
     double loadFactor;
 
-    PlacementPolicy();
+    PlacementPolicy(DegradationModel);
     virtual bool placeWorkload(vector<workload>&, int, Layout&, int, int) =0;
     void freeResources(vector<workload>&, int);
-    int timeDistortion(int, int);
     vector<int> MinSetHeuristic(vector<NvmeResource>&, vector<int>, int, int);
     void insertSortedBandwidth(vector<NvmeResource>&, vector<int>&, int);
     void insertSortedCapacity(vector<NvmeResource>&, vector<int>&, int);

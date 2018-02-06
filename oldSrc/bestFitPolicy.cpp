@@ -38,14 +38,14 @@ bool BestFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
         wload->allocation.composition = it->composition;
         wload->allocation.allocatedRack = it->rack;
         it->rack->compositions[it->composition].workloadsUsing++;
-        wload->timeLeft = this->timeDistortion(
+        wload->timeLeft = this->model.timeDistortion(
                 it->rack->compositions[it->composition].numVolumes,
                 it->rack->compositions[it->composition].workloadsUsing);
         wload->executionTime = wload->timeLeft;
         for(auto iw = it->rack->compositions[it->composition].assignedWorkloads.begin();
             iw != it->rack->compositions[it->composition].assignedWorkloads.end(); ++iw) {
             workload it2 = workloads[*iw];
-            int newTime = this->timeDistortion(
+            int newTime = this->model.timeDistortion(
                     it->rack->compositions[it->composition].numVolumes,
                     it->rack->compositions[it->composition].workloadsUsing);
 //            cout <<  "before: " << it2->wlId << " " << it2->timeLeft << " ";
@@ -90,7 +90,7 @@ bool BestFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
             scheduledRack->compositions[freeComposition].numVolumes = minResources;
             scheduledRack->compositions[freeComposition].workloadsUsing++;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-            wload->timeLeft = this->timeDistortion(minResources,1);
+            wload->timeLeft = this->model.timeDistortion(minResources,1);
             wload->executionTime = wload->timeLeft;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = &(*scheduledRack);

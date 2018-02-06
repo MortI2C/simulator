@@ -32,7 +32,7 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
 
     vector<int> toFinish;
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
-        int maxDelay = workloads[*it].executionTime*2 + workloads[*it].arrival;
+        int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
         int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
         if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
             workloads[*it].scheduled = step;

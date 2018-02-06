@@ -9,6 +9,10 @@ using namespace std;
 
 class EarliestDeadlineScheduler : public SchedulingPolicy {
    public:
+      int starvCoefficient;
+      EarliestDeadlineScheduler(int starvCoefficient = 4) {
+          this->starvCoefficient = starvCoefficient;
+      };
       bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };

@@ -27,15 +27,22 @@ void ArrivalUniformModel::generate_arrivals(vector<workload>& workloads, int tim
 //        cout << arrivals[i].arrival << " ";
         double number = distribution(generator);
         if (number <= prio_threshold) {
-            double completion = it->executionTime * 1.09 + it->arrival;
+            double completion = it->executionTime * 1.20 + it->arrival;
             it->highprio = true;
             it->deadline = (int) completion;
         } else {
-            double completion = it->executionTime * 1.25 + it->arrival;
+            double completion = it->executionTime * 1.80 + it->arrival;
             it->highprio = false;
             it->deadline = (int) completion;
         }
     }
 
     sort(workloads.begin(), workloads.end(), by_arrival());
+    int i = 0;
+    for(auto it = workloads.begin(); it!=workloads.end(); ++it,++i) {
+        if((it+1)!=workloads.end() && it->arrival == (it+1)->arrival) {
+            (it+1)->arrival++;
+        }
+        it->wlId = i;
+    }
 }

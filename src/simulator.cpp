@@ -12,6 +12,7 @@
 //#include "bestFitPolicy.hpp"
 #include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
+#include "reverseQosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
 #include "minFragSchedulePolicy.hpp"
 #include "arrivalUniformModel.hpp"
@@ -19,6 +20,7 @@
 #include "arrivalRegularModel.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
+#include "degradationModel.hpp"
 #include "layout.hpp"
 using namespace std;
 
@@ -164,6 +166,7 @@ int main(int argc, char* argv[]) {
     int patients=atoi(argv[1]);
     double lambdaCoefficient=1;
     double prio_threshold = 0.2;
+    int starvCoefficient = 4;
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
 
@@ -177,6 +180,9 @@ int main(int argc, char* argv[]) {
     if(argc>4)
         lambdaCoefficient = atof(argv[4]);
 
+    if(argc>5)
+        starvCoefficient = atoi(argv[5]);
+
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
 //    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
@@ -189,19 +195,21 @@ int main(int argc, char* argv[]) {
     }
 
     ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
+//    ArrivalUniformModel* arrival = new ArrivalUniformModel();
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-    arrival->generate_arrivals(workloads, 51.72*patients / lambdaCoefficient, prio_threshold);
-
+    arrival->generate_arrivals(workloads, ((patients/40)*2187) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
+    DegradationModel* model = new DegradationModel();
 //    BestFitPolicy* bestFit = new BestFitPolicy();
-    MinFragPolicy* minFrag = new MinFragPolicy();
-    QoSPolicy* qosPolicy = new QoSPolicy();
+    MinFragPolicy* minFrag = new MinFragPolicy(*model);
+    QoSPolicy* qosPolicy = new QoSPolicy(*model);
+    ReverseQoSPolicy* reverseQoS = new ReverseQoSPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
-    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler();
+    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
 
 //    cout << "bestfit: ";
 //    simulator(scheduler, bestFit, workloads, patients, layout);
@@ -211,9 +219,10 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
-//    simulator(earliestSched, qosPolicy, workloads, patients, layout);
+//    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
+    simulator(earliestSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    cout << "worst fit: ";
 //    simulator(fcfsSched, worstFit, workloads, patients, layout);

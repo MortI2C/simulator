@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 #include "Rack.hpp"
 #include "layout.hpp"
 //#include <jsoncpp/json/json.h>
@@ -133,29 +134,57 @@ void Layout::printRaidsInfo() {
     cout << endl;
 }
 
+int Layout::getTotalBandwidth() {
+    int bw = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(auto it2 = this->racks.begin()->resources.begin();
+            it2!=this->racks.begin()->resources.end(); ++it2) {
+            bw+=it2->getTotalBandwidth();
+        }
+    }
+    return bw;
+}
+
+int Layout::getTotalCapacity() {
+    int cap = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(auto it2 = this->racks.begin()->resources.begin();
+            it2!=this->racks.begin()->resources.end(); ++it2) {
+            cap+=it2->getTotalCapacity();
+        }
+    }
+    return cap;
+}
+
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
-    int resAvail = (this->racks.begin()->resources.begin()->getTotalBandwidth()
-                    + this->racks.begin()->resources.begin()->getTotalCapacity())
-                   * this->racks.begin()->resources.size()*this->racks.size();
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
 
-    int resRequested = 0;
-    for(auto it = queued.begin(); it!=queued.end(); ++it)
-        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+    int bwRequested = 0;
+    int capRequested = 0;
+    for(auto it = queued.begin(); it!=queued.end(); ++it) {
+        bwRequested += workloads[*it].nvmeBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+    }
 
-    for(auto it = running.begin(); it!=running.end(); ++it)
-        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+    for(auto it = running.begin(); it!=running.end(); ++it) {
+        bwRequested += workloads[*it].nvmeBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+    }
 
-    return (double)resRequested/resAvail;
+    return max((double)bwRequested/availBw,(double)capRequested/availCap);
 }
 
 double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& running) {
-    int resAvail = (this->racks.begin()->resources.begin()->getTotalBandwidth()
-                    + this->racks.begin()->resources.begin()->getTotalCapacity())
-                   * this->racks.begin()->resources.size()*this->racks.size();
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
 
-    int resRequested = 0;
-    for(auto it = running.begin(); it!=running.end(); ++it)
-        resRequested += workloads[*it].nvmeBandwidth + workloads[*it].nvmeCapacity;
+    int bwRequested = 0;
+    int capRequested = 0;
+    for(auto it = running.begin(); it!=running.end(); ++it) {
+        bwRequested += workloads[*it].nvmeBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+    }
 
-    return (double)resRequested/resAvail;
+    return max((double)bwRequested/availBw,(double)capRequested/availCap);
 }

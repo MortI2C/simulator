@@ -5,11 +5,13 @@
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 #include "placementPolicy.hpp"
+#include "degradationModel.hpp"
 using namespace std;
 
-PlacementPolicy::PlacementPolicy() {
-    this->distortion = distortionValues({1706.29,1.08423,0.858092});
+PlacementPolicy::PlacementPolicy(DegradationModel degradationModel) {
+    this->model = degradationModel;
 }
+
 void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     workload* wload = &workloads[wloadIt];
 
@@ -47,10 +49,6 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
         //Update other workloads times
         this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
     }
-}
-
-int PlacementPolicy::timeDistortion(int nRaidVolumes, int nConcurrent) {
-    return ceil(this->distortion.a*pow(this->distortion.b,nConcurrent)*pow(this->distortion.c,nRaidVolumes));
 }
 
 vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, vector<int> freeResources, int bw, int cap) {
@@ -154,7 +152,7 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.composition = compositionId;
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
-    wload->timeLeft = this->timeDistortion(
+    wload->timeLeft = this->model.timeDistortion(
             composition.volumes.size(),
             composition.workloadsUsing);
     wload->executionTime = wload->timeLeft;
@@ -166,7 +164,7 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
     for(auto iw = composition.assignedWorkloads.begin();
         iw != composition.assignedWorkloads.end(); ++iw) {
         workload it2 = workloads[*iw];
-        int newTime = this->timeDistortion(
+        int newTime = this->model.timeDistortion(
                 composition.volumes.size(),
                 composition.workloadsUsing);
         it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;

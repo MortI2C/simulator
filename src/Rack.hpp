@@ -24,6 +24,7 @@ class Rack {
     vector<NvmeResource> resources;
     vector<int> freeResources;
     vector<raid> compositions;
+    int rackId;
 
     Rack() {
 

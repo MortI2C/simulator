@@ -25,7 +25,7 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
             if(it->compositions[i].used) {
                 int wlTTL = wload->executionTime;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
-                int estimateTTL = this->timeDistortion(it->compositions[i].volumes.size(),
+                int estimateTTL = this->model.timeDistortion(it->compositions[i].volumes.size(),
                                                        it->compositions[i].workloadsUsing + 1);
                 estimateTTL+=step;
 
@@ -33,7 +33,7 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
                 for(auto iw = it->compositions[i].assignedWorkloads.begin();
                     valid && iw != it->compositions[i].assignedWorkloads.end(); ++iw) {
                     workload it2 = workloads[*iw];
-                    int newTime = this->timeDistortion(
+                    int newTime = this->model.timeDistortion(
                             it->compositions[i].volumes.size(),
                             it->compositions[i].workloadsUsing);
                     it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
@@ -70,7 +70,7 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
         vector<rackFitness> fittingRacks;
         for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
             vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth);
-            if (!selection.empty() && (deadline == -1 || deadline >= this->timeDistortion(selection.size(),1))) {
+            if (!selection.empty() && (deadline == -1 || deadline >= this->model.timeDistortion(selection.size(),1))) {
                 rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
                                        selection, &(*it)
                 };
@@ -104,7 +104,7 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
             scheduledRack->compositions[freeComposition].volumes = element.selection;
             scheduledRack->compositions[freeComposition].workloadsUsing = 1;
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-            wload->executionTime = this->timeDistortion(element.selection.size(),1);
+            wload->executionTime = this->model.timeDistortion(element.selection.size(),1);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
