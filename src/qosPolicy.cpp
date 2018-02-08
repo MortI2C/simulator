@@ -8,13 +8,6 @@
 #include "nvmeResource.hpp"
 using namespace std;
 
-inline int maxConcurrency(int numVolumes, double loadFactor) {
-//    if(loadFactor <= 0.6)
-        return 2+2*numVolumes;
-//    else
-//        return 2+2*numVolumes;
-}
-
 bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     if( !this->placeWorkloadInComposition(workloads,wloadIt,layout,step,deadline) ) {
         return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
