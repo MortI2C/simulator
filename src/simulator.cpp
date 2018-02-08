@@ -20,6 +20,7 @@
 #include "arrivalRegularModel.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
+#include "earliestSetDeadlinePolicy.hpp"
 #include "degradationModel.hpp"
 #include "layout.hpp"
 using namespace std;
@@ -99,7 +100,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //            if((run->executionTime+run->scheduled)<=step) {
             if(run->timeLeft<=0) {
                 workloads[*it].stepFinished = step;
-                scheduler->logger[workloads[*it].scheduled]["completion"] = step;
+                scheduler->logger[workloads[*it].scheduled]["completion"].push_back(step);
                 toFinish.push_back(*it);
 //                scheduledWorkloads.push_back(*run);/
 //                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
@@ -209,8 +210,8 @@ int main(int argc, char* argv[]) {
     ReverseQoSPolicy* reverseQoS = new ReverseQoSPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
-    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-
+//    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
+    EarliestSetDeadlineScheduler* earliestSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    cout << "bestfit: ";
 //    simulator(scheduler, bestFit, workloads, patients, layout);
 //    cout << "worstfit: ";

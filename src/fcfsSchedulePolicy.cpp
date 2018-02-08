@@ -29,7 +29,7 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         int maxDelay = workloads[*it].executionTime*4 + workloads[*it].arrival;
         int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
-        if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
+        if(placementPolicy->placeWorkload(workloads,*it,layout,step,-1)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);

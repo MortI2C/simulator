@@ -13,6 +13,9 @@ class ReverseQoSPolicy : public PlacementPolicy {
     void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);
+    bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int);
+    bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int);
+    bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int);
 };
 
 #endif

@@ -16,8 +16,11 @@ class PlacementPolicy {
 
     PlacementPolicy(DegradationModel);
     virtual bool placeWorkload(vector<workload>&, int, Layout&, int, int) =0;
+    virtual bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int) =0;
+    virtual bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int) =0;
+    virtual bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int) =0;
     void freeResources(vector<workload>&, int);
-    vector<int> MinSetHeuristic(vector<NvmeResource>&, vector<int>, int, int);
+    vector<int> MinSetHeuristic(vector<NvmeResource>&, vector<int>, int, int, int = 1);
     void insertSortedBandwidth(vector<NvmeResource>&, vector<int>&, int);
     void insertSortedCapacity(vector<NvmeResource>&, vector<int>&, int);
     void updateRackWorkloads(vector <workload>&, int, Rack*, raid&, int);
