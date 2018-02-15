@@ -195,12 +195,13 @@ int main(int argc, char* argv[]) {
         workloads[i].wlId = i;
     }
 
-    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
 //    ArrivalUniformModel* arrival = new ArrivalUniformModel();
+    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
+//    ArrivalRegularModel* arrival = new ArrivalRegularModel();
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-    arrival->generate_arrivals(workloads, ((patients/40)*2187) / lambdaCoefficient, prio_threshold);
+    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
     DegradationModel* model = new DegradationModel();
@@ -210,8 +211,8 @@ int main(int argc, char* argv[]) {
     ReverseQoSPolicy* reverseQoS = new ReverseQoSPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
-//    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-    EarliestSetDeadlineScheduler* earliestSched = new EarliestSetDeadlineScheduler(starvCoefficient);
+    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
+//    EarliestSetDeadlineScheduler* earliestSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    cout << "bestfit: ";
 //    simulator(scheduler, bestFit, workloads, patients, layout);
 //    cout << "worstfit: ";
