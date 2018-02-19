@@ -25,6 +25,7 @@ class Layout {
     double actualLoadFactor(vector<workload>&, vector<int>&);
     int getTotalBandwidth();
     int getTotalCapacity();
+    int calculateMaxBandwidth();
 };
 
 #endif

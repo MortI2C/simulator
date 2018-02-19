@@ -188,3 +188,13 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
 
     return max((double)bwRequested/availBw,(double)capRequested/availCap);
 }
+
+int Layout::calculateMaxBandwidth() {
+    int max = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        if(it->totalBandwidth > max)
+            max = it->totalBandwidth;
+    }
+
+    return max;
+}

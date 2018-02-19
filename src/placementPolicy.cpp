@@ -52,8 +52,7 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     wload->allocation = {};
 }
 
-vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, vector<int> freeResources, int bw, int cap, int minDevices) {
-    assert(minDevices > 0);
+vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, vector<int> freeResources, int bw, int cap) {
     vector<int> sortBw;
     vector<int> sortCap;
     int totalBandwidth = 0;
@@ -67,57 +66,52 @@ vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, ve
         }
     }
 
-    if(totalBandwidth < bw || totalCapacity < cap || freeResources.size()<minDevices) {
+    if(totalBandwidth < bw || totalCapacity < cap) {
         return vector<int>();
     }
 
     int bBw = 0;
     int bCap = 0;
     vector<int> candidatesBw;
-    for(auto it = sortBw.begin(); bBw < bw && it!=sortBw.end() && minDevices > candidatesBw.size(); ++it) {
+    for(auto it = sortBw.begin(); bBw < bw && it!=sortBw.end(); ++it) {
         candidatesBw.push_back(*it);
         bBw += resources[*it].getTotalBandwidth();
         bCap += resources[*it].getTotalCapacity();
     }
 
-    if(bCap >= cap && minDevices <= candidatesBw.size())
+    if(bCap >= cap)
         return candidatesBw;
 
     int cBw = 0;
     int cCap = 0;
     vector<int> candidatesCap;
-    for(auto it = sortCap.begin(); cCap < cap && it!=sortCap.end() && minDevices > candidatesCap.size(); ++it) {
+    for(auto it = sortCap.begin(); cCap < cap && it!=sortCap.end(); ++it) {
         candidatesCap.push_back(*it);
         cBw += resources[*it].getTotalBandwidth();
         cCap += resources[*it].getTotalCapacity();
     }
 
-    if(cBw >= bw && minDevices <= candidatesCap.size())
+    if(cBw >= bw)
         return candidatesCap;
 
     if(candidatesBw.size() >= candidatesCap.size()) {
-        for(auto it = sortCap.begin(); bCap < cap && it!=sortCap.end() && minDevices > candidatesBw.size(); ++it) {
+        for(auto it = sortCap.begin(); bCap < cap && it!=sortCap.end(); ++it) {
             if(find(candidatesBw.begin(),candidatesBw.end(),*it) == candidatesBw.end()) {
                 bCap += resources[*it].getTotalCapacity();
                 candidatesBw.push_back(*it);
             }
         }
-        if(candidatesBw.size() < minDevices)
-            return vector<int>();
-        else
-            return candidatesBw;
+
+        return candidatesBw;
     } else {
-        for(auto it = sortBw.begin(); cBw < bw && it!=sortBw.end() && minDevices > candidatesCap.size(); ++it) {
+        for(auto it = sortBw.begin(); cBw < bw && it!=sortBw.end(); ++it) {
             if(find(candidatesCap.begin(),candidatesCap.end(),*it) == candidatesCap.end()) {
                 cBw += resources[*it].getTotalBandwidth();
                 candidatesCap.push_back(*it);
             }
         }
 
-        if(candidatesCap.size() < minDevices)
-            return vector<int>();
-        else
-            return candidatesCap;
+        return candidatesCap;
     }
 }
 
@@ -162,8 +156,8 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
     wload->timeLeft = this->model.timeDistortion(
-            composition.volumes.size(),
-            composition.workloadsUsing);
+            composition.composedNvme.getTotalBandwidth(),
+            composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
     wload->executionTime = wload->timeLeft;
     this->updateRackWorkloadsTime(workloads, composition);
     composition.assignedWorkloads.push_back(wloadIt);
@@ -174,8 +168,8 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
         iw != composition.assignedWorkloads.end(); ++iw) {
         workload it2 = workloads[*iw];
         int newTime = this->model.timeDistortion(
-                composition.volumes.size(),
-                composition.workloadsUsing);
+                composition.composedNvme.getTotalBandwidth(),
+                composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
         it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
         it2.executionTime = newTime;
     }

@@ -57,8 +57,10 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
             if(it->compositions[i].used) {
                 int wlTTL = wload->executionTime;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
-                int estimateTTL = this->model.timeDistortion(it->compositions[i].volumes.size(),
-                                                             it->compositions[i].workloadsUsing + 1);
+                int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
+                int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
+                int estimateTTL = this->model.timeDistortion(compositionTotalBw,
+                                                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
                 estimateTTL+=step;
 
                 bool valid = true;
@@ -109,7 +111,11 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth);
-        if (!selection.empty() && (deadline == -1 || deadline >= this->model.timeDistortion(selection.size(),1))) {
+        int selectionBw = 0;
+        for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
+            selectionBw = it->resources[*it2].getTotalBandwidth();
+        }
+        if (!selection.empty() && (deadline == -1 || deadline >= this->model.timeDistortion(selectionBw,bandwidth))) {
             rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
                                    selection, &(*it)
             };
@@ -144,7 +150,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-        wload->executionTime = this->model.timeDistortion(element.selection.size(),1);
+        wload->executionTime = this->model.timeDistortion(composedBandwidth,bandwidth);
         wload->timeLeft = wload->executionTime;
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
@@ -155,15 +161,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
 bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
     int deadline = workloads[*(wloads.begin())].deadline;
-    int minDevices = 0;
-    for(int c = 1; c<=wloads.size() && minDevices == 0; ++c) {
-        if(this->model.timeDistortion(c,wloads.size()) <= (deadline - step)) {
-            minDevices = c;
-        }
-    }
-    if(minDevices == 0)
-        return false;
-
+    int minBandwidth = 0;
     int capacity = 0;
     int bandwidth = 0;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
@@ -171,11 +169,21 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         bandwidth+=workloads[*it].nvmeBandwidth;
     }
 
+    bool found = false;
+    for(int c = bandwidth; c<=layout.calculateMaxBandwidth(); ++c) {
+        if(this->model.timeDistortion(c,bandwidth) <= (deadline - step)) {
+            minBandwidth = c;
+            found = true;
+        }
+    }
+    if(!found)
+        return false;
+
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
-        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth, minDevices);
+        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, minBandwidth);
         if (!selection.empty()) {
             rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
                                    selection, &(*it)
@@ -212,7 +220,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
-            wload->executionTime = this->model.timeDistortion(element.selection.size(), wloads.size());
+            wload->executionTime = this->model.timeDistortion(composedBandwidth, bandwidth);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;

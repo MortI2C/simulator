@@ -39,8 +39,8 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(*it);
-//            this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
-//            cout << step << endl;
+            this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
+//            cout << "workload: " << *it << " step: " << step << endl;
 //            layout.printRaidsInfo();
         }
     }

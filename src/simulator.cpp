@@ -12,7 +12,6 @@
 //#include "bestFitPolicy.hpp"
 #include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
-#include "reverseQosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
 #include "minFragSchedulePolicy.hpp"
 #include "arrivalUniformModel.hpp"
@@ -190,7 +189,7 @@ int main(int argc, char* argv[]) {
     vector<workload> workloads(patients);
     for(int i = 0; i<patients; ++i) {
         workloads[i].executionTime = 1590;
-        workloads[i].nvmeBandwidth = 400;
+        workloads[i].nvmeBandwidth = 423.615;
         workloads[i].nvmeCapacity = 43;
         workloads[i].wlId = i;
     }
@@ -208,7 +207,6 @@ int main(int argc, char* argv[]) {
 //    BestFitPolicy* bestFit = new BestFitPolicy();
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
-    ReverseQoSPolicy* reverseQoS = new ReverseQoSPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
@@ -221,8 +219,8 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
-//    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
+    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
     simulator(earliestSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
