@@ -72,7 +72,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
                     it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
                     int deadlineLeft = it2.deadline - step;
-                    if(step > it2.deadline || it2.timeLeft > deadlineLeft)
+                    if(step <= it2.deadline && it2.timeLeft > deadlineLeft)
                         valid = false;
                 }
 

@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
-    arrival->generate_arrivals(workloads, ((patients/40)*1778.137) / lambdaCoefficient, prio_threshold);
+    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
     simulator(earliestSched, qosPolicy, copyWL, patients, layout);

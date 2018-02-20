@@ -41,13 +41,13 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
 //    cout << endl;
     sort(workloads.begin(), workloads.end(), by_arrival());
     //Make sure unique arrival values and make wlid = index after sorting
-//    int i = 0;
-//    for(auto it = workloads.begin(); it!=workloads.end(); ++it,++i) {
+    int i = 0;
+    for(auto it = workloads.begin(); it!=workloads.end(); ++it,++i) {
 //        if((it+1)!=workloads.end() && it->arrival == (it+1)->arrival) {
 //            (it+1)->arrival++;
 //        }
-//        it->wlId = i;
-//    }
+        it->wlId = i;
+    }
 //
 //    for(auto it = workloads.begin(); it!=workloads.end(); ++it) {
 //        cout << it->arrival << " ";
