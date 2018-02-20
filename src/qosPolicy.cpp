@@ -67,7 +67,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                     workload it2 = workloads[*iw];
                     int newTime = this->model.timeDistortion(
                             it->compositions[i].volumes.size(),
-                            it->compositions[i].workloadsUsing);
+                            it->compositions[i].workloadsUsing+1);
                     it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
                     int deadlineLeft = it2.deadline - step;
                     if(step <= it2.deadline && it2.timeLeft > deadlineLeft)
