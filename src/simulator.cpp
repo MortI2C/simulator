@@ -200,7 +200,9 @@ int main(int argc, char* argv[]) {
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
+//    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
+    arrival->generate_arrivals(workloads, ((patients/40)*1778.137) / lambdaCoefficient, prio_threshold);
+//    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
     DegradationModel* model = new DegradationModel();
@@ -210,7 +212,7 @@ int main(int argc, char* argv[]) {
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-//    EarliestSetDeadlineScheduler* earliestSched = new EarliestSetDeadlineScheduler(starvCoefficient);
+    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    cout << "bestfit: ";
 //    simulator(scheduler, bestFit, workloads, patients, layout);
 //    cout << "worstfit: ";
@@ -219,10 +221,11 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, minFrag, copyWL, patients, layout);
-    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
+//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+//    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
-    simulator(earliestSched, qosPolicy, workloads, patients, layout);
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    cout << "worst fit: ";
 //    simulator(fcfsSched, worstFit, workloads, patients, layout);

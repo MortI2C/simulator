@@ -29,11 +29,11 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
 //        cout << it->arrival << " ";
         double number = distribution(generator);
         if (number <= prio_threshold) {
-            double completion = it->executionTime * 1.20 + it->arrival;
+            double completion = it->executionTime * 1.25 + it->arrival;
             it->highprio = true;
             it->deadline = (int) completion;
         } else {
-            double completion = it->executionTime * 1.80 + it->arrival; //1.5, 1.25, 1.85
+            double completion = it->executionTime * 1.85 + it->arrival; //1.5, 1.25, 1.85
             it->highprio = false;
             it->deadline = (int) completion;
         }
@@ -41,11 +41,16 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
 //    cout << endl;
     sort(workloads.begin(), workloads.end(), by_arrival());
     //Make sure unique arrival values and make wlid = index after sorting
-    int i = 0;
-    for(auto it = workloads.begin(); it!=workloads.end(); ++it,++i) {
-        if((it+1)!=workloads.end() && it->arrival == (it+1)->arrival) {
-            (it+1)->arrival++;
-        }
-        it->wlId = i;
-    }
+//    int i = 0;
+//    for(auto it = workloads.begin(); it!=workloads.end(); ++it,++i) {
+//        if((it+1)!=workloads.end() && it->arrival == (it+1)->arrival) {
+//            (it+1)->arrival++;
+//        }
+//        it->wlId = i;
+//    }
+//
+//    for(auto it = workloads.begin(); it!=workloads.end(); ++it) {
+//        cout << it->arrival << " ";
+//    }
+//    cout << endl;
 }

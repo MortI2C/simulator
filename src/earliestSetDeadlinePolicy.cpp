@@ -13,7 +13,7 @@ void EarliestSetDeadlineScheduler::insertOrderedByDeadline(vector<workload>& wor
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime > workloads[*it].deadline) {
+        if(completionTime <= workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
         }
@@ -44,7 +44,7 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(*it);
             this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
-//            cout << step << endl;
+//            cout << "workload: " << *it << " step: " << step << endl;
 //            layout.printRaidsInfo();
         }
     }
@@ -57,7 +57,7 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(*it);
             this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
-//            cout << step << endl;
+//            cout << "workload: " << *it << " step: " << step << endl;
 //            layout.printRaidsInfo();
         }
     }
@@ -79,12 +79,6 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
         workload wload = workloads[*it];
         insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
     }
-//
-//    for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
-//        cout << *it << " ";
-//    }
-//    if(orderedWorkloads.size()>0)
-//    cout << endl;
 
     bool placed = false;
     for(int i = orderedWorkloads.size(); !placed && i>0; --i) {
@@ -96,6 +90,8 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
                 runningWorkloads.push_back(*it);
                 toFinish.push_back(*it);
                 this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
+//                cout << "big compo workload: " << *it << " step: " << step << endl;
+//                layout.printRaidsInfo();
             }
             placed = true;
         }

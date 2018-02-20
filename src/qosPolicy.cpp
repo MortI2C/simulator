@@ -68,11 +68,11 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                     valid && iw != it->compositions[i].assignedWorkloads.end(); ++iw) {
                     workload it2 = workloads[*iw];
                     int newTime = this->model.timeDistortion(
-                            it->compositions[i].volumes.size(),
-                            it->compositions[i].workloadsUsing);
+                            compositionTotalBw,
+                            (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
                     it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
                     int deadlineLeft = it2.deadline - step;
-                    if(step <= it2.deadline && it2.timeLeft > deadlineLeft)
+                    if(step > it2.deadline || it2.timeLeft > deadlineLeft)
                         valid = false;
                 }
 
@@ -161,36 +161,44 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
 bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
     int deadline = workloads[*(wloads.begin())].deadline;
-    int minBandwidth = 0;
+    int minBandwidth = -1;
     int capacity = 0;
     int bandwidth = 0;
+    bool scheduled = false;
+    Rack* scheduledRack = nullptr;
+    vector<rackFitness> fittingRacks;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
         capacity+=workloads[*it].nvmeCapacity;
         bandwidth+=workloads[*it].nvmeBandwidth;
     }
 
-    bool found = false;
-    for(int c = bandwidth; c<=layout.calculateMaxBandwidth(); ++c) {
-        if(this->model.timeDistortion(c,bandwidth) <= (deadline - step)) {
-            minBandwidth = c;
-            found = true;
+    for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+        vector<NvmeResource> res = it->resources;
+        vector<int> sortBw;
+        for(int i = 0; i<it->freeResources.size(); ++i) {
+            if(it->freeResources[i]) {
+                this->insertSortedBandwidth(it->resources, sortBw, i);
+            }
+        }
+        int resBw = 0;
+        bool found = false;
+        vector<int> tempSelection;
+        for(auto it2 = sortBw.begin(); !found && it2!=sortBw.end(); ++it2) {
+            resBw+=it->resources[*it2].getTotalBandwidth();
+            tempSelection.push_back(*it2);
+            if(this->model.timeDistortion(resBw,bandwidth) <= (deadline - step)) {
+                if(bandwidth <= resBw && (minBandwidth == -1 || minBandwidth  > resBw)) {
+                    minBandwidth = resBw;
+                    found = true;
+                    rackFitness element = {(it->numFreeResources - (int) tempSelection.size()), it->inUse(),
+                                           tempSelection, &(*it)
+                    };
+                    insertRackSorted(fittingRacks, element);
+                }
+            }
         }
     }
-    if(!found)
-        return false;
 
-    bool scheduled = false;
-    Rack* scheduledRack = nullptr;
-    vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
-        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, minBandwidth);
-        if (!selection.empty()) {
-            rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
-                                   selection, &(*it)
-            };
-            insertRackSorted(fittingRacks, element);
-        }
-    }
 
     if(!fittingRacks.empty()) {
         rackFitness element = *fittingRacks.begin();
