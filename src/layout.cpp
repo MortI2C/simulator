@@ -156,6 +156,19 @@ int Layout::getTotalCapacity() {
     return cap;
 }
 
+double Layout::averageCompositionSize() {
+    int totalCompositions = 0;
+    int compositionsSize = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(auto it2 = it->compositions.begin(); it2!=it->compositions.end(); ++it2) {
+            if(it2->used) {
+                compositionsSize += it2->volumes.size();
+                totalCompositions++;
+            }
+        }
+    }
+    return compositionsSize/totalCompositions;
+}
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();

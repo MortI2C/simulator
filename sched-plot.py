@@ -36,18 +36,31 @@ with open(args.s) as s:
 lastTime = sorted(schedule, key=lambda k: k['completion'])[-1]["step"]
 schedule = sorted(schedule, key=lambda k: k['step'], reverse=False)
 
+loadFactor = []
+arrivalsPlot = []
 resources = []
 labels = []
 completions = {}
-resourcesUsed = 0
 parsedSched = {}
 racks = {}
-previousResourcesUsed = -1
+resourcesUsed = 0
+arrivals = 0
+arrivalJson = {}
+lf = 0
 for i in schedule:
 	parsedSched[i["scheduled"][0]] = i
+        if i["arrival"][0] not in arrivalJson:
+            arrivalJson[i["arrival"][0]] = 1
+        else:
+            arrivalJson[i["arrival"][0]] += 1
 
+        if i["completion"] in arrivalJson:
+            arrivalJson[i["completion"]] -= 1
+        else:
+            arrivalJson[i["completion"]] = -1
 
 for i in range(0, lastTime+1):
+#        lf = -1
 	if i in completions:
 		for volume in completions[i]["volumes"]:
 			racks[completions[i]["rackid"][0]][volume] -= 1
@@ -57,6 +70,7 @@ for i in range(0, lastTime+1):
 
 	if i in parsedSched:
 		completions[parsedSched[i]["completion"]] = parsedSched[i]
+                lf = parsedSched[i]["loadFactor"]
 		for volume in parsedSched[i]["volumes"]:
 			if parsedSched[i]["rackid"][0] not in racks:
 				racks[parsedSched[i]["rackid"][0]] = {}
@@ -67,16 +81,21 @@ for i in range(0, lastTime+1):
 			else:
 				racks[parsedSched[i]["rackid"][0]][volume]+=1
 
-	if previousResourcesUsed != resourcesUsed:
-		labels.extend([i])
-		resources.extend([resourcesUsed])
-		previousResourcesUsed = resourcesUsed
+        if i in arrivalJson:
+            arrivals+=arrivalJson[i]
+
+	labels.extend([i])
+	resources.extend([resourcesUsed])
+        arrivalsPlot.extend([arrivals])
+        if lf != -1:
+            loadFactor.extend([lf])
 
 plt.xlabel("Execution time (s)")
 plt.title("NVMe used for job allocation over time")
 # plt.xticks(range(0,lastTime),rotation=90)
-p1 = plt.plot(labels, resources)
-plt.yticks(np.arange(11))
+p1 = plt.plot(labels, loadFactor)
+#plt.yticks(np.arange(len(schedule)))
+#plt.yticks(np.arange(11))
 plt.ylabel("NVMe used")
 plt.tight_layout()
 plt.savefig('plot.pdf', bbox_inches='tight')

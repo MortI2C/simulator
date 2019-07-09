@@ -21,14 +21,15 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
             ++it) {
         newVolume = newVolume + to_string(*it); //to_string(workloads[workloadId].allocation.allocatedRack->rackId) +
     }
+
     if(find(this->logger[workloadId]["volumes"].begin(),this->logger[workloadId]["volumes"].end(),newVolume) == this->logger[workloadId]["volumes"].end())
         this->logger[workloadId]["volumes"].push_back(newVolume);
-
     this->logger[workloadId]["step"] = step;
     this->logger[workloadId]["jobid"].push_back(workloadId);
     this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.allocatedRack->rackId);
     if(layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) > this->logger[workloadId]["loadFactor"])
         this->logger[workloadId]["loadFactor"] = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
+    this->logger[workloadId]["avgCompositionSize"] = layout.averageCompositionSize();
     this->logger[workloadId]["deadline"].push_back(workloads[workloadId].deadline);
     this->logger[workloadId]["arrival"].push_back(workloads[workloadId].arrival);
     this->logger[workloadId]["scheduled"].push_back(workloads[workloadId].scheduled);
