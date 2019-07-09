@@ -11,7 +11,7 @@ void insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime <= workloads[*it].deadline) {
+        if(completionTime > workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
         }

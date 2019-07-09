@@ -47,10 +47,7 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
 //            (it+1)->arrival++;
 //        }
         it->wlId = i;
-    }
-//
-//    for(auto it = workloads.begin(); it!=workloads.end(); ++it) {
 //        cout << it->arrival << " ";
-//    }
+    }
 //    cout << endl;
 }

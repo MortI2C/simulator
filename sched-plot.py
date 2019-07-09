@@ -27,13 +27,14 @@ ap = argparse.ArgumentParser()
 #ap.add_argument("-l", "--layout", dest="l", required=True,
 #                help="Layout ile (json format)")
 ap.add_argument("-s", "--schedule", dest="s", required=True,
-                help="JSON schedule file")
+				help="JSON schedule file")
 args = ap.parse_args()
 
 with open(args.s) as s:
-    schedule = json.load(s)
+	schedule = json.load(s)
 
-lastTime = schedule[-1]["scheduled"]
+lastTime = sorted(schedule, key=lambda k: k['completion'])[-1]["step"]
+schedule = sorted(schedule, key=lambda k: k['step'], reverse=False)
 
 resources = []
 labels = []
@@ -41,38 +42,42 @@ completions = {}
 resourcesUsed = 0
 parsedSched = {}
 racks = {}
+previousResourcesUsed = -1
 for i in schedule:
-    parsedSched[i["scheduled"]] = i
- 
+	parsedSched[i["scheduled"][0]] = i
+
+
 for i in range(0, lastTime+1):
-    if i in completions:
-	for volume in completions[i]["volumes"]:
-                racks[completions[i]["rackid"]][volume] -= 1
-		if racks[completions[i]["rackid"]][volume] == 0:
+	if i in completions:
+		for volume in completions[i]["volumes"]:
+			racks[completions[i]["rackid"][0]][volume] -= 1
+		if racks[completions[i]["rackid"][0]][volume] == 0:
 			resourcesUsed-=1
-			del racks[completions[i]["rackid"]][volume]
+			del racks[completions[i]["rackid"][0]][volume]
 
-    if i in parsedSched:
-	completions[parsedSched[i]["completion"]] = parsedSched[i]
-	for volume in parsedSched[i]["volumes"]:
-		if parsedSched[i]["rackid"] not in racks:
-			racks[parsedSched[i]["rackid"]] = {}
+	if i in parsedSched:
+		completions[parsedSched[i]["completion"]] = parsedSched[i]
+		for volume in parsedSched[i]["volumes"]:
+			if parsedSched[i]["rackid"][0] not in racks:
+				racks[parsedSched[i]["rackid"][0]] = {}
 
-		if volume not in racks[parsedSched[i]["rackid"]]:
-			racks[parsedSched[i]["rackid"]][volume] = 1
-			resourcesUsed+=1
-		else:
-			racks[parsedSched[i]["rackid"]][volume]+=1
+			if volume not in racks[parsedSched[i]["rackid"][0]]:
+				racks[parsedSched[i]["rackid"][0]][volume] = 1
+				resourcesUsed+=1
+			else:
+				racks[parsedSched[i]["rackid"][0]][volume]+=1
 
-	labels.extend([i])
-	resources.extend([resourcesUsed])
+	if previousResourcesUsed != resourcesUsed:
+		labels.extend([i])
+		resources.extend([resourcesUsed])
+		previousResourcesUsed = resourcesUsed
 
-plt.xlabel("New job scheduled (step)")
-plt.title("Volumes used by time of scheduling new jobs")
-plt.xticks(labels,rotation=45)
-p1 = plt.bar(labels, resources, width=50)
-plt.yticks(np.arange(10))
-plt.ylabel("Resources used")
+plt.xlabel("Execution time (s)")
+plt.title("NVMe used for job allocation over time")
+# plt.xticks(range(0,lastTime),rotation=90)
+p1 = plt.plot(labels, resources)
+plt.yticks(np.arange(11))
+plt.ylabel("NVMe used")
 plt.tight_layout()
 plt.savefig('plot.pdf', bbox_inches='tight')
 

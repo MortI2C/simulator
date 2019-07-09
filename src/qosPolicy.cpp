@@ -95,6 +95,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     if(!fittingCompositions.empty()) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
         this->updateRackWorkloads(workloads,wloadIt, it->rack, it->rack->compositions[it->composition], it->composition);
+//        cout << it->rack->compositions[it->composition].assignedWorkloads.size() << endl;
         scheduled = true;
     }
 

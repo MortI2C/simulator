@@ -63,7 +63,6 @@ void MinFragScheduler::insertOrderedByStep(vector<int>& vect, vector<workload>& 
         int currentCompletion = workloads[*it].executionTime+workloads[*it].scheduled;
         if(completionTime > currentCompletion) {
             inserted = true;
-
             vect.insert(it,wload);
         }
     }

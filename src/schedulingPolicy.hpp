@@ -5,7 +5,7 @@
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "placementPolicy.hpp"
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 using namespace std;
 using json = nlohmann::json;
 

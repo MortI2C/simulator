@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include <algorithm>
 #include <string>
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 #include "resources_structures.hpp"
 #include "schedulingPolicy.hpp"
 #include "placementPolicy.hpp"
@@ -56,23 +56,27 @@ double getAvgWaitingTime(int step, const vector<workload>& scheduledWorkloads) {
     return waitingTime;
 }
 
-void printStatistics(int step, const vector<workload>& scheduledWorkloads) {
+void printStatistics(int step, const vector<workload>& scheduledWorkloads, int stationaryStep = 0) {
     int waitingTime = 0;
     int exeTime = 0;
     int completionTime = 0;
     int missedDeadlines = 0;
+    int workloadsInStationary = 0;
     for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
-        waitingTime += (it->scheduled - it->arrival);
-        exeTime += (it->stepFinished-it->scheduled);
-        completionTime += (it->stepFinished-it->arrival);
-        if(it->stepFinished > it->deadline)
-            ++missedDeadlines;
+        if(stationaryStep <= it->arrival ) {
+            waitingTime += (it->scheduled - it->arrival);
+            exeTime += (it->stepFinished - it->scheduled);
+            completionTime += (it->stepFinished - it->arrival);
+            if (it->stepFinished > it->deadline)
+                ++missedDeadlines;
+            workloadsInStationary++;
+        }
     }
-    waitingTime/=scheduledWorkloads.size();
-    exeTime/=scheduledWorkloads.size();
-    completionTime/=scheduledWorkloads.size();
+    waitingTime/=workloadsInStationary;
+    exeTime/=workloadsInStationary;
+    completionTime/=workloadsInStationary;
 
-    cout << step << " " << waitingTime << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
+    cout << step << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
@@ -85,6 +89,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double resourcesUsed = 0;
     double loadFactor = 0;
     double actualLoadFactor = 0;
+    int stationaryStep = -1;
 
     vector<int> runningWorkloads;
     vector<int> pendingToSchedule;
@@ -99,7 +104,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //            if((run->executionTime+run->scheduled)<=step) {
             if(run->timeLeft<=0) {
                 workloads[*it].stepFinished = step;
-                scheduler->logger[workloads[*it].scheduled]["completion"].push_back(step);
+                scheduler->logger[*it]["completion"]=step;
+//                scheduler->logger[workloads[*it].scheduled]["completion"].push_back(step);
                 toFinish.push_back(*it);
 //                scheduledWorkloads.push_back(*run);/
 //                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
@@ -128,19 +134,26 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         int priorScheduler = pendingToSchedule.size();
         scheduler->scheduleWorkloads(workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
         processedPatients += (priorScheduler - pendingToSchedule.size());
+//        if(stationaryStep==-1 && priorScheduler > 0 && (priorScheduler - pendingToSchedule.size()) <= 0)
+//            stationaryStep = step;
+        if(stationaryStep==-1 && layout.resourcesUsed() >= 0.9 )
+            stationaryStep = step;
 
         double currResourcesUsed = layout.resourcesUsed();
         double currFrag = layout.calculateFragmentation();
         double currLoadFactor = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
         double currActLoadFactor = layout.actualLoadFactor(workloads,runningWorkloads);
-        frag+=currFrag;
-        resourcesUsed+=currResourcesUsed;
-        loadFactor+=currLoadFactor;
-        actualLoadFactor+=currActLoadFactor;
+        if(stationaryStep>=0) {
+            frag += currFrag;
+            resourcesUsed += currResourcesUsed;
+            loadFactor += currLoadFactor;
+            actualLoadFactor += currActLoadFactor;
+        }
 
         placementPolicy->loadFactor = currLoadFactor;
         int raids = layout.raidsUsed();
         double size = layout.avgRaidSize();
+//        cout << step << " " << currLoadFactor << endl;
 //        cout << step << " " << currLoadFactor << " " << currActLoadFactor << " " << currResourcesUsed << " " << pendingToSchedule.size() << " " << currFrag << endl;
 //        cout << step << " " << layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) <<
 //             " " << layout.actualLoadFactor(workloads,runningWorkloads) << endl;
@@ -150,7 +163,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
-//    cout << scheduler->logger.dump() << endl;
+    cout << scheduler->logger.dump() << endl;
 
     step--; //correction
 
@@ -158,8 +171,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
-    cout << loadFactor/step << " ";
-    printStatistics(step, workloads);
+//    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
+//    printStatistics(step, workloads, stationaryStep);
 }
 
 int main(int argc, char* argv[]) {
@@ -224,8 +237,8 @@ int main(int argc, char* argv[]) {
     simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
-    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
+//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+//    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    cout << "worst fit: ";
 //    simulator(fcfsSched, worstFit, workloads, patients, layout);
