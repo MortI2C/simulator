@@ -19,11 +19,12 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
     for(auto it =workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.begin();
             it!=workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.end();
             ++it) {
-        newVolume = newVolume + to_string(*it); //to_string(workloads[workloadId].allocation.allocatedRack->rackId) +
+//        newVolume = newVolume + to_string(*it); //to_string(workloads[workloadId].allocation.allocatedRack->rackId) +
+        this->logger[workloadId]["volumes"].push_back(to_string(*it));
     }
 
-    if(find(this->logger[workloadId]["volumes"].begin(),this->logger[workloadId]["volumes"].end(),newVolume) == this->logger[workloadId]["volumes"].end())
-        this->logger[workloadId]["volumes"].push_back(newVolume);
+//    if(find(this->logger[workloadId]["volumes"].begin(),this->logger[workloadId]["volumes"].end(),newVolume) == this->logger[workloadId]["volumes"].end())
+//        this->logger[workloadId]["volumes"].push_back(newVolume);
     this->logger[workloadId]["step"] = step;
     this->logger[workloadId]["jobid"].push_back(workloadId);
     this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.allocatedRack->rackId);

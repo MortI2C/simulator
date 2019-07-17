@@ -46,13 +46,34 @@ racks = {}
 resourcesUsed = 0
 arrivals = 0
 arrivalJson = {}
+avgCompositionPlot = []
+missedDeadlines = []
+avgCompSize = 0
+arrivalAccPlot = []
+departureAccPlot = []
+arrivalAccJson = {}
+departureAccJson = {}
+departureAccPlot = []
+arrivalsAcc = 0
+departuresAcc = 0
 lf = 0
+deadlines = 0
 for i in schedule:
 	parsedSched[i["scheduled"][0]] = i
         if i["arrival"][0] not in arrivalJson:
             arrivalJson[i["arrival"][0]] = 1
         else:
             arrivalJson[i["arrival"][0]] += 1
+
+        if i["arrival"][0] not in arrivalAccJson:
+            arrivalAccJson[i["arrival"][0]] = 1
+        else:
+            arrivalAccJson[i["arrival"][0]] += 1
+
+        if i["completion"] not in departureAccJson:
+            departureAccJson[i["completion"]] = 1
+        else:
+            departureAccJson[i["completion"]] += 1
 
         if i["completion"] in arrivalJson:
             arrivalJson[i["completion"]] -= 1
@@ -61,15 +82,23 @@ for i in schedule:
 
 for i in range(0, lastTime+1):
 #        lf = -1
-	if i in completions:
-		for volume in completions[i]["volumes"]:
-			racks[completions[i]["rackid"][0]][volume] -= 1
-		if racks[completions[i]["rackid"][0]][volume] == 0:
-			resourcesUsed-=1
-			del racks[completions[i]["rackid"][0]][volume]
+        if i in completions:
+            for p in completions[i]:
+                    if p["deadline"][0] < p["completion"]:
+                        deadlines += 1
+                    for volume in p["volumes"]:
+                            racks[p["rackid"][0]][volume] -= 1
+                    if racks[p["rackid"][0]][volume] == 0:
+                            resourcesUsed-=1
+                            del racks[p["rackid"][0]][volume]
 
 	if i in parsedSched:
-		completions[parsedSched[i]["completion"]] = parsedSched[i]
+                avgCompSize = parsedSched[i]["avgCompositionSize"]
+                if parsedSched[i]["completion"] in completions:
+		    completions[parsedSched[i]["completion"]].append(parsedSched[i])
+                else:
+                    completions[parsedSched[i]["completion"]] = [parsedSched[i]]
+
                 lf = parsedSched[i]["loadFactor"]
 		for volume in parsedSched[i]["volumes"]:
 			if parsedSched[i]["rackid"][0] not in racks:
@@ -83,20 +112,48 @@ for i in range(0, lastTime+1):
 
         if i in arrivalJson:
             arrivals+=arrivalJson[i]
+       
+        if i in arrivalAccJson:
+            arrivalsAcc+=arrivalAccJson[i]
+
+        if i in departureAccJson:
+            departuresAcc+=departureAccJson[i]
 
 	labels.extend([i])
 	resources.extend([resourcesUsed])
         arrivalsPlot.extend([arrivals])
+        arrivalAccPlot.extend([arrivalsAcc])
+        departureAccPlot.extend([departuresAcc])
+        avgCompositionPlot.extend([avgCompSize])
+        missedDeadlines.extend([deadlines])
+
         if lf != -1:
             loadFactor.extend([lf])
 
 plt.xlabel("Execution time (s)")
 plt.title("NVMe used for job allocation over time")
 # plt.xticks(range(0,lastTime),rotation=90)
-p1 = plt.plot(labels, loadFactor)
+p1 = plt.plot(labels, resources)
 #plt.yticks(np.arange(len(schedule)))
-#plt.yticks(np.arange(11))
+plt.yticks(np.arange(11))
 plt.ylabel("NVMe used")
 plt.tight_layout()
-plt.savefig('plot.pdf', bbox_inches='tight')
+plt.savefig('plots/nvmeUsed-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, arrivalsPlot)
+plt.savefig('plots/arrivals-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, avgCompositionPlot)
+plt.savefig('plots/avg-compositionSize-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, loadFactor)
+plt.savefig('plots/loadFactor-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, missedDeadlines)
+plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, arrivalAccPlot)
+plt.plot(labels, departureAccPlot)
+plt.savefig('plots/accumulatedArrivDepChart.pdf', bbox_inches='tight')
+plt.clf()
 

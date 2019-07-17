@@ -27,8 +27,9 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
     vector<int> toFinish;
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-        int maxDelay = workloads[*it].executionTime*4 + workloads[*it].arrival;
-        int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
+        int deadline = (step > workloads[*it].deadline) ? -1 : workloads[*it].deadline;
+//        int maxDelay = workloads[*it].executionTime*4 + workloads[*it].arrival;
+
 //        int deadline = -1; //step+1550;
 //        workloads[*it].deadline = (deadline != -1) ? step + deadline : step + 80000;
         if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {

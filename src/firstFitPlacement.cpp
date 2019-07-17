@@ -2,20 +2,14 @@
 #include <vector>
 #include <algorithm>
 #include "math.h"
-#include "qosPolicy.hpp"
+#include "firstFitPlacement.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
 
-bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
-    if( !this->placeWorkloadInComposition(workloads,wloadIt,layout,step,deadline) ) {
-        return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
-    } else
-        return true;
-}
 
-void QoSPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
+void FirstFitPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(!it->inUse && element.inUse) {
@@ -30,54 +24,27 @@ void QoSPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element
         vect.push_back(element);
 }
 
-void QoSPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
-    bool inserted = false;
-    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->ttlDifference > element.ttlDifference) {
-            vect.insert(it,element);
-            inserted = true;
-        } else if(it->ttlDifference = element.ttlDifference) {
-            if (it->fitness >= element.fitness) {
-                vect.insert(it, element);
-                inserted = true;
-            }
-        }
-    }
-    if(!inserted)
-        vect.push_back(element);
+bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    if( !this->placeWorkloadInComposition(workloads,wloadIt,layout,step,deadline) ) {
+        return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
+    } else
+        return true;
 }
 
-bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size(); ++i) {
+        for(int i = 0; !scheduled && i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
-//                int estimateTTL = this->model.timeDistortion(compositionTotalBw,
-//                                                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
-//                estimateTTL+=step;
 
-                bool valid = true;
-//                for(auto iw = it->compositions[i].assignedWorkloads.begin();
-//                    valid && iw != it->compositions[i].assignedWorkloads.end(); ++iw) {
-//                    workload it2 = workloads[*iw];
-//                    int newTime = this->model.timeDistortion(
-//                            compositionTotalBw,
-//                            (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
-//                    it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
-//                    int deadlineLeft = it2.deadline - step;
-//                    if(step <= it2.deadline && it2.timeLeft > deadlineLeft)
-//                        valid = false;
-//                }
-
-                if ((deadline == -1 || deadline >= wlTTL) && valid &&
-                    it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
                     nvmeFitness element = {
@@ -85,24 +52,20 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                              + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
                             wlTTL - compositionTTL, i, &(*it)
                     };
-//                    if(compositionTTL <= estimateTTL)
-                    this->insertSorted(fittingCompositions, element);
+                    this->updateRackWorkloads(workloads,wloadIt,
+                            element.rack,
+                            element.rack->compositions[element.composition],
+                            element.composition);
+                    scheduled = true;
                 }
             }
         }
     }
 
-    if(!fittingCompositions.empty()) {
-        vector<nvmeFitness>::iterator it = fittingCompositions.begin();
-        this->updateRackWorkloads(workloads,wloadIt, it->rack, it->rack->compositions[it->composition], it->composition);
-//        cout << it->rack->compositions[it->composition].assignedWorkloads.size() << endl;
-        scheduled = true;
-    }
-
     return scheduled;
 }
 
-bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     bool scheduled = false;
     workload* wload = &workloads[wloadIt];
     int capacity = wload->nvmeCapacity;
@@ -110,18 +73,17 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && fittingRacks.empty() && it!=layout.racks.end(); ++it) {
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
         int selectionBw = 0;
         for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
             selectionBw = it->resources[*it2].getTotalBandwidth();
         }
         if(!selection.empty()) {
-//        if (!selection.empty() && (deadline == -1 || deadline >= (wload->executionTime+step))) {
             rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
                                    selection, &(*it)
             };
-            insertRackSorted(fittingRacks, element);
+            fittingRacks.push_back(element);
         }
     }
 
@@ -160,7 +122,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     return scheduled;
 }
 
-bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
+bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
     int deadline = workloads[*(wloads.begin())].deadline;
     int minBandwidth = -1;
     int capacity = 0;

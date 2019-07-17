@@ -34,20 +34,6 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
 
     vector<int> toFinish;
 
-    //First try to place workloads in existing compositions
-    for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
-        int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
-        if(step <= maxDelay
-           && placementPolicy->placeWorkloadInComposition(workloads,*it,layout,step,workloads[*it].deadline)) {
-            workloads[*it].scheduled = step;
-            runningWorkloads.push_back(*it);
-//            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
-            toFinish.push_back(*it);
-            this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
-//            cout << "workload: " << *it << " step: " << step << endl;
-//            layout.printRaidsInfo();
-        }
-    }
     //Second place workloads starved for too long
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
         int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
@@ -61,6 +47,23 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
 //            layout.printRaidsInfo();
         }
     }
+
+    //First try to place workloads in existing compositions
+    for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
+        int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
+        int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
+        if(step <= maxDelay
+           && placementPolicy->placeWorkloadInComposition(workloads,*it,layout,step,workloads[*it].deadline)) {
+            workloads[*it].scheduled = step;
+            runningWorkloads.push_back(*it);
+//            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
+            toFinish.push_back(*it);
+            this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
+//            cout << "workload: " << *it << " step: " << step << endl;
+//            layout.printRaidsInfo();
+        }
+    }
+
 
     //Remove already placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {

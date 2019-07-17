@@ -21,6 +21,7 @@ class Layout {
     double avgRaidSize();
     double workloadsRaid();
     void printRaidsInfo();
+    double averageCompositionSize();
     double loadFactor(vector<workload>&, vector<int>&, vector<int>&);
     double actualLoadFactor(vector<workload>&, vector<int>&);
     int getTotalBandwidth();

@@ -41,19 +41,31 @@ void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& ele
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->ttlDifference > element.ttlDifference) {
+        if(it->fitness > element.fitness) {
             vect.insert(it,element);
             inserted = true;
-        } else if(it->ttlDifference = element.ttlDifference) {
-            if (it->fitness >= element.fitness) {
-                vect.insert(it, element);
-                inserted = true;
-            }
         }
     }
     if(!inserted)
         vect.push_back(element);
 }
+//
+//void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
+//    bool inserted = false;
+//    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+//        if(it->ttlDifference > element.ttlDifference) {
+//            vect.insert(it,element);
+//            inserted = true;
+//        } else if(it->ttlDifference = element.ttlDifference) {
+//            if (it->fitness >= element.fitness) {
+//                vect.insert(it, element);
+//                inserted = true;
+//            }
+//        }
+//    }
+//    if(!inserted)
+//        vect.push_back(element);
+//}
 
 bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
@@ -67,9 +79,9 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
-                int estimateTTL = this->model.timeDistortion(compositionTotalBw,
-                                                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
-                estimateTTL+=step;
+//                int estimateTTL = this->model.timeDistortion(compositionTotalBw,
+//                                                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
+                int estimateTTL = wlTTL + step;
 
                 if ((it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].volumes.size(),this->loadFactor) &&
                         compositionAvailBw >= wload->nvmeBandwidth &&
@@ -147,7 +159,7 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-        wload->executionTime = this->model.timeDistortion(selectionBw,bandwidth);
+//        wload->executionTime = this->model.timeDistortion(selectionBw,bandwidth);
         wload->timeLeft = wload->executionTime;
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
@@ -205,7 +217,7 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
-            wload->executionTime = this->model.timeDistortion(composedBandwidth, bandwidth);
+//            wload->executionTime = this->model.timeDistortion(composedBandwidth, bandwidth);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;

@@ -45,10 +45,11 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     //if no more workloads in comopsition, free composition
     if((--wload->allocation.allocatedRack->compositions[wload->allocation.composition].workloadsUsing)==0) {
         wload->allocation.allocatedRack->freeComposition(wload->allocation.allocatedRack, wload->allocation.composition);
-    } else {
-        //Update other workloads times
-        this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
     }
+//    else {
+//        //Update other workloads times
+//        this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
+//    }
     wload->allocation = {};
 }
 
@@ -155,11 +156,12 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.composition = compositionId;
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
-    wload->timeLeft = this->model.timeDistortion(
-            composition.composedNvme.getTotalBandwidth(),
-            composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
-    wload->executionTime = wload->timeLeft;
-    this->updateRackWorkloadsTime(workloads, composition);
+    wload->timeLeft = wload->executionTime;
+//    wload->timeLeft = this->model.timeDistortion(
+//            composition.composedNvme.getTotalBandwidth(),
+//            composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
+//    wload->executionTime = wload->timeLeft;
+//    this->updateRackWorkloadsTime(workloads, composition);
     composition.assignedWorkloads.push_back(wloadIt);
 }
 

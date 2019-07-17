@@ -1,4 +1,6 @@
+*.pdf
 *.idea
+*,txt
 obj/*
 obj
 cmake-build-debug/*
