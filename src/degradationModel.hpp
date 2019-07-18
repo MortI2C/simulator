@@ -6,14 +6,9 @@ using namespace std;
 
 class DegradationModel {
    public:
-    struct distortionValues {
-        float a;
-        float b;
-        float c;
-    };
-    distortionValues distortion;
-    DegradationModel();
-    int timeDistortion(int, int);
+
+    DegradationModel() {};
+    int timeDistortion(int, int, double, int = 2000);
 };
 
 #endif

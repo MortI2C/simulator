@@ -213,19 +213,21 @@ int main(int argc, char* argv[]) {
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].nvmeCapacity = 43;
             workloads[i].wlId = i;
+            workloads[i].performanceMultiplier=0.98;
         } else {
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 341;
             workloads[i].wlId = i;
+            workloads[i].performanceMultiplier=1;
         }
     }
 
 //    ArrivalUniformModel* arrival = new ArrivalUniformModel();
 //    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
 //    ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform();
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,50,0.1,2 );
-    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,70,0.1,2 );
+    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,50,0.1,2 );
+//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,70,0.1,2 );
 
 //    ArrivalRegularModel* arrival = new ArrivalRegularModel();
     //cluster experiments
@@ -255,11 +257,11 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-//    simulator(fcfsSched, firstFit, copyWL, patients, layout);
+    simulator(fcfsSched, firstFit, copyWL, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
-    simulator(earliestSched, firstFit, copyWL, patients, layout);
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+//    simulator(earliestSched, firstFit, copyWL, patients, layout);
+//    simulator(earliestsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, minFrag, copyWL, patients, layout);//
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

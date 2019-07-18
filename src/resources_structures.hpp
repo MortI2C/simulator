@@ -43,6 +43,7 @@ struct workload {
     int stepFinished;
     int cyclesDelayed=0;
     int wlId;
+    double performanceMultiplier;
 };
 
 #endif

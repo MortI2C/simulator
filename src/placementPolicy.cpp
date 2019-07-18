@@ -46,10 +46,10 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     if((--wload->allocation.allocatedRack->compositions[wload->allocation.composition].workloadsUsing)==0) {
         wload->allocation.allocatedRack->freeComposition(wload->allocation.allocatedRack, wload->allocation.composition);
     }
-//    else {
-//        //Update other workloads times
-//        this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
-//    }
+    else {
+        //Update other workloads times
+        this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
+    }
     wload->allocation = {};
 }
 
@@ -157,10 +157,9 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
     wload->timeLeft = wload->executionTime;
-//    wload->timeLeft = this->model.timeDistortion(
-//            composition.composedNvme.getTotalBandwidth(),
-//            composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
-//    wload->executionTime = wload->timeLeft;
+    wload->timeLeft = this->model.timeDistortion(
+            composition.composedNvme.getAvailableBandwidth() + wload->nvmeBandwidth, wload->timeLeft, wload->performanceMultiplier);
+    wload->executionTime = wload->timeLeft;
 //    this->updateRackWorkloadsTime(workloads, composition);
     composition.assignedWorkloads.push_back(wloadIt);
 }
@@ -170,8 +169,7 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
         iw != composition.assignedWorkloads.end(); ++iw) {
         workload it2 = workloads[*iw];
         int newTime = this->model.timeDistortion(
-                composition.composedNvme.getTotalBandwidth(),
-                composition.composedNvme.getTotalBandwidth() - composition.composedNvme.getAvailableBandwidth());
+                composition.composedNvme.getAvailableBandwidth(),it2.executionTime,it2.performanceMultiplier);
         it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
         it2.executionTime = newTime;
     }
