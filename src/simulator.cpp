@@ -144,9 +144,9 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     }
     step--; //correction
 
-//    printStatistics(step, workloads, stationaryStep);
+    printStatistics(step, workloads, stationaryStep);
     //To output simulation trace (to generate plots)
-    cout << scheduler->logger.dump() << endl;
+//    cout << scheduler->logger.dump() << endl;
 }
 
 int main(int argc, char* argv[]) {
