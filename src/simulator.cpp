@@ -211,15 +211,19 @@ int main(int argc, char* argv[]) {
         if(number > 0.4) {
             workloads[i].executionTime = 1500;
             workloads[i].nvmeBandwidth = 1800;
+            workloads[i].baseBandwidth=2000;
             workloads[i].nvmeCapacity = 43;
             workloads[i].wlId = i;
             workloads[i].performanceMultiplier=0.98;
+            workloads[i].limitPeakBandwidth=6000;
         } else {
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 341;
+            workloads[i].baseBandwidth=160;
             workloads[i].wlId = i;
             workloads[i].performanceMultiplier=1;
+            workloads[i].limitPeakBandwidth=160;
         }
     }
 
@@ -236,7 +240,7 @@ int main(int argc, char* argv[]) {
 //    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1500.37) / lambdaCoefficient, prio_threshold);
-//    arrival->generate_arrivals(workloads, 135000 / 1.4, prio_threshold);
+//    arrival->generate_arrivals(workloads, 40, prio_threshold);
     arrival->generate_arrivals(workloads, 14, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
@@ -258,10 +262,10 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
     simulator(fcfsSched, firstFit, copyWL, patients, layout);
-//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+//    simulator(fcfsSched, minFrag, copy/WL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, firstFit, copyWL, patients, layout);
-//    simulator(earliestsSched, qosPolicy, copyWL, patients, layout);
+//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, minFrag, copyWL, patients, layout);//
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

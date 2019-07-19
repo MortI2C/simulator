@@ -44,6 +44,8 @@ struct workload {
     int cyclesDelayed=0;
     int wlId;
     double performanceMultiplier;
+    int baseBandwidth;
+    int limitPeakBandwidth;
 };
 
 #endif

@@ -130,6 +130,7 @@ for i in range(0, lastTime+1):
         if lf != -1:
             loadFactor.extend([lf])
 
+print(missedDeadlines[-1])
 plt.xlabel("Execution time (s)")
 plt.title("NVMe used for job allocation over time")
 # plt.xticks(range(0,lastTime),rotation=90)

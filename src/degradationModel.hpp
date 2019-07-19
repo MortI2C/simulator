@@ -8,7 +8,7 @@ class DegradationModel {
    public:
 
     DegradationModel() {};
-    int timeDistortion(int, int, double, int = 2000);
+    int timeDistortion(int, int, double, int, int);
 };
 
 #endif

@@ -5,9 +5,12 @@
 #include "degradationModel.hpp"
 using namespace std;
 
-int DegradationModel::timeDistortion(int availableBandwidth, int baseExecutionTime, double performanceMultiplier, int baseBandwidth = 2000) {
+int DegradationModel::timeDistortion(int availableBandwidth, int baseExecutionTime, double performanceMultiplier, int baseBandwidth, int limitPeakBandwidth) {
+    if(availableBandwidth>limitPeakBandwidth)
+        return (limitPeakBandwidth/baseBandwidth)*baseExecutionTime;
+
     double extraBandwidth = availableBandwidth/baseBandwidth;
-    double multiplier = performanceMultiplier*extraBandwidth;
+    double multiplier = pow(performanceMultiplier,extraBandwidth);
 
     return ceil(baseExecutionTime*multiplier);
 }

@@ -37,7 +37,7 @@ void MarkovModulatedpoissonProcess2::generate_arrivals(vector<workload>& workloa
     this->timeToArrival = 1/lambdaDist(generator);
     std::exponential_distribution<double> omegaDist(this->omega[state]);
     this->timeToTransition = 1/omegaDist(generator);
-    cerr << this->timeToArrival << " " << this->timeToTransition << endl;
+//    cerr << this->timeToArrival << " " << this->timeToTransition << endl;
     vector<workload>::iterator it = workloads.begin();
     int step = this->timeToArrival;
     for(int i = 0; i<workloads.size();) {
@@ -68,11 +68,11 @@ void MarkovModulatedpoissonProcess2::generate_arrivals(vector<workload>& workloa
         uniform_real_distribution<double> distribution(0.0, 1.0);
         double number = distribution(generator);
         if (number <= prio_threshold) {
-            double completion = it->executionTime * 1.05 + it->arrival;
+            double completion = it->executionTime * 1.45 + it->arrival;
             it->highprio = true;
             it->deadline = (int) completion;
         } else {
-            double completion = it->executionTime * 1.85 + it->arrival; //1.5, 1.25, 1.85
+            double completion = it->executionTime * 2.85 + it->arrival; //1.5, 1.25, 1.85
             it->highprio = false;
             it->deadline = (int) completion;
         }
