@@ -26,6 +26,7 @@ class Layout {
     int getTotalBandwidth();
     int getTotalCapacity();
     int calculateMaxBandwidth();
+    double averageCompositionSize();
 };
 
 #endif

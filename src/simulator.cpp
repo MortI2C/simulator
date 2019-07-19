@@ -9,15 +9,12 @@
 #include "resources_structures.hpp"
 #include "schedulingPolicy.hpp"
 #include "placementPolicy.hpp"
+#include "mmpp-2.hpp"
 //#include "bestFitPolicy.hpp"
 #include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
 #include "minFragSchedulePolicy.hpp"
-#include "arrivalUniformModel.hpp"
-#include "arrivalPoissonModel.hpp"
-#include "arrivalRegularModel.hpp"
-#include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
 #include "earliestSetDeadlinePolicy.hpp"
 #include "degradationModel.hpp"
@@ -76,7 +73,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     exeTime/=workloadsInStationary;
     completionTime/=workloadsInStationary;
 
-    cout << step << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
+    cout << step << " " << exeTime << " " << completionTime << " " << waitingTime << " " << missedDeadlines << endl;
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
@@ -93,7 +90,6 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 
     vector<int> runningWorkloads;
     vector<int> pendingToSchedule;
-//    vector<workload> scheduledWorkloads(patients);
     vector<workload>::iterator wlpointer = workloads.begin();
     while(processedPatients < patients || !runningWorkloads.empty()) {
         //1st Check Workloads running finishing in this step
@@ -101,14 +97,10 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end(); ++it) {
             workload* run = &workloads[*it];
             run->timeLeft--;
-//            if((run->executionTime+run->scheduled)<=step) {
             if(run->timeLeft<=0) {
                 workloads[*it].stepFinished = step;
                 scheduler->logger[*it]["completion"]=step;
-//                scheduler->logger[workloads[*it].scheduled]["completion"].push_back(step);
                 toFinish.push_back(*it);
-//                scheduledWorkloads.push_back(*run);/
-//                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
                 placementPolicy->freeResources(workloads,*it);
                 scheduler->logger[*it]["completionLoadFactor"] = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
             }
@@ -135,8 +127,6 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         int priorScheduler = pendingToSchedule.size();
         scheduler->scheduleWorkloads(workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
         processedPatients += (priorScheduler - pendingToSchedule.size());
-//        if(stationaryStep==-1 && priorScheduler > 0 && (priorScheduler - pendingToSchedule.size()) <= 0)
-//            stationaryStep = step;
         if(stationaryStep==-1 && layout.resourcesUsed() >= 0.9 )
             stationaryStep = step;
 
@@ -154,35 +144,18 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         placementPolicy->loadFactor = currLoadFactor;
         int raids = layout.raidsUsed();
         double size = layout.avgRaidSize();
-//        cout << step << " " << currLoadFactor << endl;
-//        cout << step << " " << currLoadFactor << " " << currActLoadFactor << " " << currResourcesUsed << " " << pendingToSchedule.size() << " " << currFrag << endl;
-//        cout << step << " " << layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) <<
-//             " " << layout.actualLoadFactor(workloads,runningWorkloads) << endl;
-//        layout.printRaidsInfo();
-//        cout << step << " " << raids << " " << size << " " << size*raids << " " << layout.workloadsRaid() << endl;
-//        cout << step << " " << layout.resourcesUsed() << " " << layout.calculateFragmentation() << endl;
-//        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
-    cout << scheduler->logger.dump() << endl;
-
     step--; //correction
 
-//    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
-//    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
-//    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
-
-//    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
 //    printStatistics(step, workloads, stationaryStep);
+    //To output simulation trace (to generate plots)
+    cout << scheduler->logger.dump() << endl;
 }
 
 int main(int argc, char* argv[]) {
     int patients=atoi(argv[1]);
-    double lambdaCoefficient=1;
     double prio_threshold = 0.2;
-    int starvCoefficient = 4;
-//    if(argc>2)
-//        prio_threshold=atof(argv[2]);
 
     string layoutPath = "layouts/layout-1.json";
     if(argc>2)
@@ -191,15 +164,7 @@ int main(int argc, char* argv[]) {
     if(argc>3)
         prio_threshold=atof(argv[3]);
 
-    if(argc>4)
-        lambdaCoefficient = atof(argv[4]);
-
-    if(argc>5)
-        starvCoefficient = atoi(argv[5]);
-
-
-    WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
-//    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
+//    WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
     vector<workload> workloads(patients);
     for(int i = 0; i<patients; ++i) {
         workloads[i].executionTime = 1590;
@@ -208,43 +173,17 @@ int main(int argc, char* argv[]) {
         workloads[i].wlId = i;
     }
 
-//    ArrivalUniformModel* arrival = new ArrivalUniformModel();
-    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
-//    ArrivalRegularModel* arrival = new ArrivalRegularModel();
-    //cluster experiments
-//    arrival->generate_arrivals(workloads, 99*patients, prio_threshold);
-//    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
-//    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
-    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
-//    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
+    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,50,0.1,2 );
+    arrival->generate_arrivals(workloads, 14, prio_threshold);
+
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
     DegradationModel* model = new DegradationModel();
-//    BestFitPolicy* bestFit = new BestFitPolicy();
-    MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
-//    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
-    EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
-//    cout << "bestfit: ";
-//    simulator(scheduler, bestFit, workloads, patients, layout);
-//    cout << "worstfit: ";
-//    simulator(scheduler, worstFit, workloads, patients, layout);
-//    cout << "randomfit: ";
-//    simulator(scheduler, randomFit, workloads, patients, layout);
-//    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
-//    simulator(fcfsSched, reverseQoS, copyWL, patients, layout);
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
-//    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
-//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
-//    cout << "worst fit: ";
-//    simulator(fcfsSched, worstFit, workloads, patients, layout);
-//    cout << "bestfit fcfs: ";
-//    simulator(fcfsSched, bestFit, workloads, patients, layout);
 
     return 0;
 }
