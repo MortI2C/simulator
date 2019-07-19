@@ -10,13 +10,8 @@
 #include "schedulingPolicy.hpp"
 #include "placementPolicy.hpp"
 #include "mmpp-2.hpp"
-//#include "bestFitPolicy.hpp"
-#include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
-#include "minFragSchedulePolicy.hpp"
-#include "earliestDeadlinePolicy.hpp"
-#include "earliestSetDeadlinePolicy.hpp"
 #include "degradationModel.hpp"
 #include "layout.hpp"
 using namespace std;
