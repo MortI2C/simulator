@@ -11,6 +11,7 @@
 #include "placementPolicy.hpp"
 #include "mmpp-2.hpp"
 #include "qosPolicy.hpp"
+#include "firstFit.hpp"
 #include "fcfsSchedulePolicy.hpp"
 #include "degradationModel.hpp"
 #include "layout.hpp"
@@ -175,10 +176,11 @@ int main(int argc, char* argv[]) {
     layout.generateLayout(layoutPath);
     DegradationModel* model = new DegradationModel();
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
+    FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
     FcfsScheduler* fcfsSched = new FcfsScheduler();
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
+    simulator(fcfsSched, firstFit, copyWL, patients, layout);
 
     return 0;
 }
