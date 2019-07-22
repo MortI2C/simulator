@@ -25,6 +25,7 @@
 #include "firstFitPlacement.hpp"
 #include "layout.hpp"
 #include "mmpp-2.hpp"
+#include "EDFStarv.hpp"
 using namespace std;
 
 const int BASE_TIME = 1587;
@@ -167,7 +168,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
-    cout << scheduler->logger.dump() << endl;
+//    cout << scheduler->logger.dump() << endl;
     step--; //correction
 
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
@@ -175,7 +176,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
 //    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
-//    printStatistics(step, workloads, stationaryStep);
+    printStatistics(step, workloads, stationaryStep);
 }
 
 int main(int argc, char* argv[]) {
@@ -251,6 +252,7 @@ int main(int argc, char* argv[]) {
     FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
+    EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
     EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    cout << "bestfit: ";
@@ -261,11 +263,12 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, firstFit, copyWL, patients, layout);
+//    simulator(fcfsSched, firstFit, copyWL, patients, layout);
 //    simulator(fcfsSched, minFrag, copy/WL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, firstFit, copyWL, patients, layout);
 //    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+    simulator(starvedf, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, minFrag, copyWL, patients, layout);//
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

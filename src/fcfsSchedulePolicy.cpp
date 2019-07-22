@@ -28,17 +28,10 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
     vector<int> toFinish;
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         int deadline = (step > workloads[*it].deadline) ? -1 : workloads[*it].deadline;
-//        int maxDelay = workloads[*it].executionTime*4 + workloads[*it].arrival;
-
-//        int deadline = -1; //step+1550;
-//        workloads[*it].deadline = (deadline != -1) ? step + deadline : step + 80000;
         if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
-//            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
             toFinish.push_back(*it);
-//            cout << step << endl;
-//            layout.printRaidsInfo();
             this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
         }
     }

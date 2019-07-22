@@ -105,20 +105,15 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                 int newTime = pow(wload->performanceMultiplier,wload->limitPeakBandwidth/wload->baseBandwidth)*wload->executionTime;
                 if((step+newTime) <= deadline ) {
                     bandwidth = wload->limitPeakBandwidth;
-//                    cerr << bandwidth << endl;
-//                    cerr << wloadIt << " " << newTime << " " << deadline << " " << step + newTime << " " << wload->arrival << " " << step << endl;
                 }
             } else {
                 int newTime = pow(wload->performanceMultiplier,bwExtra/wload->baseBandwidth)*wload->executionTime;
                 if((step+newTime) <= deadline ) {
                     bandwidth = wload->baseBandwidth*bwExtra;
-//                    cerr << bandwidth << endl;
-//                    cerr << wloadIt << " " << newTime << " " << deadline << " " << step + newTime << " " << wload->arrival << " " << step << endl;
                 }
             }
         }
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
-        if(bandwidth>2000 && selection.empty()) cerr << "empty selection" << endl;
         int selectionBw = 0;
         for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
             selectionBw = it->resources[*it2].getTotalBandwidth();
