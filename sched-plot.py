@@ -58,8 +58,16 @@ arrivalsAcc = 0
 departuresAcc = 0
 lf = 0
 deadlines = 0
+interArrivalTimes = 0
+previousTime = -1
+arrivalsJson = {}
 for i in schedule:
-	parsedSched[i["scheduled"][0]] = i
+        arrivalsJson[i["arrival"][0]] = i
+        if i["scheduled"][0] in parsedSched:
+            parsedSched[i["scheduled"][0]].append(i)
+        else:
+            parsedSched[i["scheduled"][0]] = [i]
+
         if i["arrival"][0] not in arrivalJson:
             arrivalJson[i["arrival"][0]] = 1
         else:
@@ -75,10 +83,10 @@ for i in schedule:
         else:
             departureAccJson[i["completion"]] += 1
 
-        if i["completion"] in arrivalJson:
-            arrivalJson[i["completion"]] -= 1
-        else:
-            arrivalJson[i["completion"]] = -1
+#        if i["completion"] in arrivalJson:
+#            arrivalJson[i["completion"]] -= 1
+#        else:
+#            arrivalJson[i["completion"]] = -1
 
 for i in range(0, lastTime+1):
 #        lf = -1
@@ -92,26 +100,38 @@ for i in range(0, lastTime+1):
                             resourcesUsed-=1
                             del racks[p["rackid"][0]][volume]
 
-	if i in parsedSched:
-                avgCompSize = parsedSched[i]["avgCompositionSize"]
-                if parsedSched[i]["completion"] in completions:
-		    completions[parsedSched[i]["completion"]].append(parsedSched[i])
+        if i in arrivalsJson:
+                if previousTime == -1:
+                        interArrivalTimes+=i
+                        previousTime=i
                 else:
-                    completions[parsedSched[i]["completion"]] = [parsedSched[i]]
+                        interArrivalTimes+=(i-previousTime)
+                        previousTime=i
 
-                lf = parsedSched[i]["loadFactor"]
-		for volume in parsedSched[i]["volumes"]:
-			if parsedSched[i]["rackid"][0] not in racks:
-				racks[parsedSched[i]["rackid"][0]] = {}
+	if i in parsedSched:
+            for job in parsedSched[i]:
+                avgCompSize = job["avgCompositionSize"]
+                if job["completion"] in completions:
+		    completions[job["completion"]].append(job)
+                else:
+                    completions[job["completion"]] = [job]
 
-			if volume not in racks[parsedSched[i]["rackid"][0]]:
-				racks[parsedSched[i]["rackid"][0]][volume] = 1
+                lf = job["loadFactor"]
+		for volume in job["volumes"]:
+			if job["rackid"][0] not in racks:
+				racks[job["rackid"][0]] = {}
+
+			if volume not in racks[job["rackid"][0]]:
+				racks[job["rackid"][0]][volume] = 1
 				resourcesUsed+=1
 			else:
-				racks[parsedSched[i]["rackid"][0]][volume]+=1
+				racks[job["rackid"][0]][volume]+=1
 
         if i in arrivalJson:
-            arrivals+=arrivalJson[i]
+        #    arrivals+=arrivalJson[i]
+            arrivalsPlot.extend([arrivalJson[i]])
+        else:
+            arrivalsPlot.extend([0])
        
         if i in arrivalAccJson:
             arrivalsAcc+=arrivalAccJson[i]
@@ -121,7 +141,7 @@ for i in range(0, lastTime+1):
 
 	labels.extend([i])
 	resources.extend([resourcesUsed])
-        arrivalsPlot.extend([arrivals])
+       # arrivalsPlot.extend([arrivals])
         arrivalAccPlot.extend([arrivalsAcc])
         departureAccPlot.extend([departuresAcc])
         avgCompositionPlot.extend([avgCompSize])
@@ -131,6 +151,7 @@ for i in range(0, lastTime+1):
             loadFactor.extend([lf])
 
 print(missedDeadlines[-1])
+print(interArrivalTimes/len(schedule))
 plt.xlabel("Execution time (s)")
 plt.title("NVMe used for job allocation over time")
 # plt.xticks(range(0,lastTime),rotation=90)
