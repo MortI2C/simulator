@@ -31,7 +31,7 @@ void MarkovModulatedpoissonProcess2::generate_arrivals(vector<workload>& workloa
     std::mt19937 generator(5);
     std::uniform_int_distribution<int> distribution(0,1);
     //Determine start state (according to state probabilities)
-    int state = !(distribution(generator));
+    int state = 0;
     //Initialize times
     std::exponential_distribution<double> lambdaDist(this->lambda[state]);
     this->timeToArrival = 1/lambdaDist(generator);
@@ -80,7 +80,7 @@ void MarkovModulatedpoissonProcess2::generate_arrivals(vector<workload>& workloa
 //            (it+1)->arrival++;
 //        }
         it->wlId = i;
-//        cerr << it->arrival << " ";
+//        cerr << "{" << it->arrival << "," << it->executionTime << "}" << endl;
     }
 //    cerr << "finish" << endl;
 //    cerr << endl;

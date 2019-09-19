@@ -41,7 +41,7 @@ void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& ele
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->fitness > element.fitness) {
+        if(it->fitness < element.fitness) {
             vect.insert(it,element);
             inserted = true;
         }
@@ -83,8 +83,7 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
 //                                                             (compositionTotalBw - compositionAvailBw) + wload->nvmeBandwidth);
                 int estimateTTL = wlTTL + step;
 
-                if ((it->compositions[i].workloadsUsing < maxConcurrency(it->compositions[i].volumes.size(),this->loadFactor) &&
-                        compositionAvailBw >= wload->nvmeBandwidth &&
+                if ((deadline==-1 || estimateTTL <= deadline) && (compositionAvailBw >= wload->nvmeBandwidth &&
                      it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)) {
 
                     nvmeFitness element = {
@@ -118,13 +117,17 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
-        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth);
+        vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
         if(!selection.empty()) {
-            rackFitness element = {(it->numFreeResources - (int)selection.size()), it->inUse(),
+            rackFitness element = {((int) selection.size()), it->inUse(),
                                    selection, &(*it)
             };
             insertRackSorted(fittingRacks, element);
         }
+//        } else if(wloadIt == 7) {
+//            cerr << "yES" << " " << layout.resourcesUsed() << endl;
+//            layout.printRaidsInfo();
+//        }
     }
 
     if(!fittingRacks.empty()) {
@@ -159,6 +162,12 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        wload->executionTime = this->model.timeDistortion(composedBandwidth,
+              wload->executionTime,
+              wload->performanceMultiplier,
+              wload->baseBandwidth,
+              wload->limitPeakBandwidth
+        );
 //        wload->executionTime = this->model.timeDistortion(selectionBw,bandwidth);
         wload->timeLeft = wload->executionTime;
         wload->allocation.composition = freeComposition;
@@ -180,9 +189,9 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
-        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, capacity, bandwidth);
+        vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
         if (!selection.empty()) {
-            rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
+            rackFitness element = {((int) selection.size()), it->inUse(),
                                    selection, &(*it)
             };
             insertRackSorted(fittingRacks, element);
@@ -217,7 +226,12 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
-//            wload->executionTime = this->model.timeDistortion(composedBandwidth, bandwidth);
+            wload->executionTime = this->model.timeDistortion(composedBandwidth,
+                    wload->executionTime,
+                    wload->performanceMultiplier,
+                    wload->baseBandwidth,
+                    wload->limitPeakBandwidth
+            );
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;

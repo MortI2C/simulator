@@ -11,9 +11,27 @@ void EarliestDeadlineScheduler::insertOrderedByDeadline(vector<workload>& worklo
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime > workloads[*it].deadline) {
+        if(completionTime <= workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
+        }
+    }
+    if(!inserted)
+        vect.push_back(i);
+}
+
+void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity) {
+    int completionTime = wload.deadline;
+    bool inserted = false;
+    int alpha = ((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)*wload.executionTime;
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+        int alphaVect = (workloads[*it].nvmeBandwidth/layoutTotalBw+workloads[*it].nvmeCapacity/layoutTotalCapacity)*workloads[*it].executionTime;
+        if(alphaVect > alpha) {
+            inserted = true;
+            vect.insert(it,i);
+        } else if(alphaVect == alpha && wload.deadline < workloads[*it].deadline) {
+            inserted = true;
+            vect.insert(it, i);
         }
     }
     if(!inserted)
@@ -25,9 +43,12 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
     vector<int> orderedWorkloads;
+    int layoutTotalBw = layout.getTotalBandwidth();
+    int layoutTotalCapacity = layout.getTotalCapacity();
+
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-        this->insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity );
     }
 
     vector<int> toFinish;

@@ -119,7 +119,11 @@ double Layout::workloadsRaid() {
 void Layout::printRaidsInfo() {
     int rack = 0;
     for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
-        cout << "Rack: " << rack++ << endl;
+        int usedResources = 0;
+        for(int i = 0; i<it->freeResources.size(); ++i)
+            if(!it->freeResources[i]) usedResources++;
+
+        cout << "Rack: " << it->rackId << " used resources: " << usedResources << endl;
         for(int i = 0; i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
                 cout << "Total: " << it->compositions[i].composedNvme.getTotalBandwidth() << "/" <<
@@ -197,6 +201,26 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
     for(auto it = running.begin(); it!=running.end(); ++it) {
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
+    }
+
+    return max((double)bwRequested/availBw,(double)capRequested/availCap);
+}
+
+double Layout::calculateLoadFactor() {
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
+
+    int bwRequested = 0;
+    int capRequested = 0;
+    for(auto it = this->racks.begin(); it!=racks.end(); ++it) {
+        for(int i = 0; i < it->freeResources.size(); ++i) {
+            if(!it->freeResources[i]) {
+                bwRequested += (it->resources[i].getTotalBandwidth() -
+                        it->resources[i].getAvailableBandwidth());
+                capRequested += (it->resources[i].getTotalCapacity() -
+                                it->resources[i].getAvailableCapacity());
+            }
+        }
     }
 
     return max((double)bwRequested/availBw,(double)capRequested/availCap);

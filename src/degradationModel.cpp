@@ -9,7 +9,7 @@ int DegradationModel::timeDistortion(int availableBandwidth, int baseExecutionTi
     if(availableBandwidth>limitPeakBandwidth)
         return (limitPeakBandwidth/baseBandwidth)*baseExecutionTime;
 
-    double extraBandwidth = availableBandwidth/baseBandwidth;
+    double extraBandwidth = (availableBandwidth/baseBandwidth) - 1;
     double multiplier = pow(performanceMultiplier,extraBandwidth);
 
     return ceil(baseExecutionTime*multiplier);

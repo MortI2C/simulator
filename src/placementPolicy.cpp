@@ -50,7 +50,7 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
         //Update other workloads times
         this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
     }
-    wload->allocation = {};
+    wload->allocation = allocatedResources();
 }
 
 vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, vector<int> freeResources, int bw, int cap) {
@@ -96,18 +96,98 @@ vector<int> PlacementPolicy::MinSetHeuristic(vector<NvmeResource>& resources, ve
         return candidatesCap;
 
     if(candidatesBw.size() >= candidatesCap.size()) {
-        for(auto it = sortCap.begin(); bCap < cap && it!=sortCap.end(); ++it) {
+        for(auto it = sortCap.begin(); (bBw < bw || bCap < cap) && it!=sortCap.end(); ++it) {
             if(find(candidatesBw.begin(),candidatesBw.end(),*it) == candidatesBw.end()) {
                 bCap += resources[*it].getTotalCapacity();
+                bBw += resources[*it].getTotalBandwidth();
                 candidatesBw.push_back(*it);
             }
         }
 
         return candidatesBw;
     } else {
-        for(auto it = sortBw.begin(); cBw < bw && it!=sortBw.end(); ++it) {
+        for(auto it = sortBw.begin(); (cCap < cap || cBw < bw) && it!=sortBw.end(); ++it) {
             if(find(candidatesCap.begin(),candidatesCap.end(),*it) == candidatesCap.end()) {
                 cBw += resources[*it].getTotalBandwidth();
+                cCap += resources[*it].getTotalCapacity();
+                candidatesCap.push_back(*it);
+            }
+        }
+
+        return candidatesCap;
+    }
+}
+
+vector<int> PlacementPolicy::MinFragHeuristic(vector<NvmeResource>& resources, vector<int> freeResources, int bw, int cap) {
+    vector<int> sortBw;
+    vector<int> sortCap;
+    int totalBandwidth = 0;
+    int totalCapacity = 0;
+    int resourceBw = -1;
+    int resourceCap = -1;
+    for(int i = 0; i<freeResources.size(); ++i) {
+        if(freeResources[i]) {
+            this->insertSortedBandwidth(resources, sortBw, i);
+            this->insertSortedCapacity(resources, sortCap, i);
+            totalBandwidth += resources[i].getTotalBandwidth();
+            totalCapacity += resources[i].getTotalCapacity();
+            if(resourceBw == -1 && resources[i].getTotalBandwidth() >= bw) {
+                resourceBw = i;
+            }
+            if(resourceCap == -1 && resources[i].getTotalCapacity() >= cap) {
+                resourceCap = i;
+            }
+        }
+    }
+
+    if(totalBandwidth < bw || totalCapacity < cap) {
+        return vector<int>();
+    }
+
+
+    int bBw = 0;
+    int bCap = 0;
+    vector<int> candidatesBw;
+    for(auto it = sortBw.begin(); bBw < bw && it!=sortBw.end(); ++it) {
+        if(resourceBw == -1 || (resourceBw != -1 && resources[*it].getTotalBandwidth() >= bw)) {
+            candidatesBw.push_back(*it);
+            bBw += resources[*it].getTotalBandwidth();
+            bCap += resources[*it].getTotalCapacity();
+        }
+    }
+
+    if(bCap >= cap && bBw >= bw)
+        return candidatesBw;
+
+    int cBw = 0;
+    int cCap = 0;
+    vector<int> candidatesCap;
+    for(auto it = sortCap.begin(); cCap < cap && it!=sortCap.end(); ++it) {
+        if(resourceCap == -1 || (resourceCap != -1 && resources[*it].getTotalCapacity() >= cap)) {
+            candidatesCap.push_back(*it);
+            cBw += resources[*it].getTotalBandwidth();
+            cCap += resources[*it].getTotalCapacity();
+        }
+    }
+
+    if(cBw >= bw && cCap >= cap)
+        return candidatesCap;
+
+    if(candidatesBw.size() >= candidatesCap.size()) {
+        for(auto it = sortCap.begin(); (bBw < bw || bCap < cap) && it!=sortCap.end(); ++it) {
+            if(find(candidatesBw.begin(),candidatesBw.end(),*it) == candidatesBw.end()) {
+                bCap += resources[*it].getTotalCapacity();
+                bBw += resources[*it].getTotalBandwidth();
+                candidatesBw.push_back(*it);
+            }
+        }
+
+        return candidatesBw;
+    } else {
+        for(auto it = sortBw.begin(); (cCap < cap || cBw < bw) && it!=sortBw.end(); ++it) {
+            if(find(candidatesCap.begin(),candidatesCap.end(),*it) == candidatesCap.end()) {
+                cBw += resources[*it].getTotalBandwidth();
+                cCap += resources[*it].getTotalCapacity();
                 candidatesCap.push_back(*it);
             }
         }
@@ -121,7 +201,7 @@ void PlacementPolicy::insertSortedBandwidth(vector<NvmeResource>& resources, vec
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         NvmeResource current = resources[*it];
-        if(resource.getTotalBandwidth() > current.getTotalBandwidth()) {
+        if(resource.getTotalBandwidth() < current.getTotalBandwidth()) {
             vect.insert(it,element);
             inserted = true;
         }
@@ -135,7 +215,7 @@ void PlacementPolicy::insertSortedCapacity(vector<NvmeResource>& resources, vect
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         NvmeResource current = resources[*it];
-        if(resource.getTotalCapacity() > current.getTotalCapacity()) {
+        if(resource.getTotalCapacity() < current.getTotalCapacity()) {
             vect.insert(it,element);
             inserted = true;
         }

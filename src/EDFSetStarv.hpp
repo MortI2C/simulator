@@ -1,5 +1,5 @@
-#ifndef EARLIEST_SCHEDULING_POLICY_H
-#define EARLIEST_SCHEDULING_POLICY_H
+#ifndef EARLIEST_STARV_SET_SCHEDULING_POLICY_H
+#define EARLIEST_STARV_SET_SCHEDULING_POLICY_H
 #include <iostream>
 #include <vector>
 #include "layout.hpp"
@@ -7,14 +7,13 @@
 #include "schedulingPolicy.hpp"
 using namespace std;
 
-class EarliestDeadlineScheduler : public SchedulingPolicy {
+class EarliestDeadlineStarvationSetsScheduler : public SchedulingPolicy {
    public:
       int starvCoefficient;
-      EarliestDeadlineScheduler(int starvCoefficient = 4) {
+    EarliestDeadlineStarvationSetsScheduler(int starvCoefficient = 4) {
           this->starvCoefficient = starvCoefficient;
       };
       void insertOrderedByDeadline(vector<workload>&, vector<int>&, int, workload&);
-      void insertOrderedByAlpha(vector<workload>&, vector<int>&, int, workload&, int, int);
       bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };

@@ -46,6 +46,7 @@ void Rack::freeComposition(Rack* rack, int composition) {
                it!=rack->compositions[composition].volumes.end(); ++it) {
            rack->freeResources[*it] = 1;
        }
+
        rack->compositions[composition].used = false;
        rack->numFreeResources+=rack->compositions[composition].volumes.size();
        rack->compositions[composition].volumes.erase(
@@ -56,6 +57,8 @@ void Rack::freeComposition(Rack* rack, int composition) {
                rack->compositions[composition].assignedWorkloads.begin(),
                rack->compositions[composition].assignedWorkloads.end()
        );
+       rack->compositions[composition].volumes = vector<int>(0);
+       rack->compositions[composition].composedNvme = NvmeResource(0,0);
 }
 
 double Rack::calculateFragmentation() {
@@ -126,12 +129,22 @@ bool Rack::inUse() {
 
 double Rack::resourcesUsed() {
     double resourcesUsed = 0;
-    for(auto i = this->compositions.begin(); i!=this->compositions.end(); ++i) {
-        if(i->used)
-            resourcesUsed+=i->volumes.size();
+    for(auto i = this->freeResources.begin(); i!=this->freeResources.end(); ++i) {
+        if(!*i)
+            resourcesUsed++;
     }
 
     return resourcesUsed/this->resources.size();
+}
+
+double Rack::getAvailableBandwidth() {
+    double availBandwidth = 0;
+    for(int i = 0; i<this->freeResources.size(); ++i) {
+        if(this->freeResources[i])
+           availBandwidth += resources[i].getAvailableBandwidth();
+    }
+
+    return availBandwidth;
 }
 
 int Rack::compositionTTL(vector<workload>& workloads, int composition, int step) {

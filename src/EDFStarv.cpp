@@ -8,10 +8,11 @@ using namespace std;
 
 //Insert into vector ordered by deadline step, worst-case O(n)
 void EarliestDeadlineStarvationScheduler::insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
-    int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime > workloads[*it].deadline) {
+        int maxDelay = (wload.deadline - wload.executionTime) * (1 - this->starvCoefficient);
+        if (wload.highprio) maxDelay = wload.deadline - wload.executionTime;
+        if(maxDelay < workloads[*it].deadline) {
             inserted = true;
             vect.insert(it,i);
         }
@@ -32,9 +33,12 @@ bool EarliestDeadlineStarvationScheduler::scheduleWorkloads(vector<workload>& wo
 
     vector<int> toFinish;
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
-        int maxDelay = workloads[*it].executionTime * this->starvCoefficient + workloads[*it].arrival;
-        int deadline = (step > maxDelay) ? -1 : workloads[*it].deadline;
-        if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
+        int maxDelay = workloads[*it].deadline - workloads[*it].executionTime;
+//        if(workloads[*it].highprio) maxDelay = workloads[*it].deadline;
+////        int maxDelay = workloads[*it].executionTime * this->starvCoefficient + workloads[*it].arrival;
+//        int deadline = (step >= maxDelay) ? -1 : workloads[*it].deadline;
+        if(((step >= maxDelay) || layout.resourcesUsed() <= 0.7)
+            && placementPolicy->placeWorkload(workloads,*it,layout,step,workloads[*it].deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);

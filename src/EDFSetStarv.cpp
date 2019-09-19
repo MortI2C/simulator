@@ -4,16 +4,19 @@
 #include <cmath>
 #include "layout.hpp"
 #include "resources_structures.hpp"
-#include "earliestSetDeadlinePolicy.hpp"
+#include "EDFSetStarv.hpp"
 #include "placementPolicy.hpp"
 using namespace std;
 
 //Insert into vector ordered by deadline step, worst-case O(n)
-void EarliestSetDeadlineScheduler::insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
+void EarliestDeadlineStarvationSetsScheduler::insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(completionTime < workloads[*it].deadline) {
+        int maxDelay = wload.deadline - wload.executionTime;
+//        int maxDelay = wload.deadline * (1 - this->starvCoefficient);
+//        if (wload.highprio) maxDelay = wload.deadline;
+        if(maxDelay < (workloads[*it].deadline - workloads[*it].executionTime)) {
             inserted = true;
             vect.insert(it,i);
         }
@@ -22,7 +25,7 @@ void EarliestSetDeadlineScheduler::insertOrderedByDeadline(vector<workload>& wor
         vect.push_back(i);
 }
 
-bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
+bool EarliestDeadlineStarvationSetsScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& pendingToSchedule,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
@@ -32,14 +35,16 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
         insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
     }
 
+    int prior = pendingToSchedule.size();
     vector<int> toFinish;
     bool placed = false;
     int groupsSize = 5;
-    for(int i = groupsSize; !placed && i<orderedWorkloads.size(); ++i) {
+    for(int i = groupsSize; !placed && i<orderedWorkloads.size() && layout.resourcesUsed() <= 0.8; ++i) {
         vector<int> wset(i);
         std::copy(orderedWorkloads.begin()+(i-groupsSize), orderedWorkloads.begin() + i+1, wset.begin());
-//        std::copy(orderedWorkloads.begin(), orderedWorkloads.begin() + i, wset.begin());
-        if (placementPolicy->placeWorkloadsNewComposition(workloads, wset, layout, step)) {
+        workload wload = workloads[*(wset.begin())];
+        int delay = wload.deadline - wload.executionTime;
+        if ( placementPolicy->placeWorkloadsNewComposition(workloads, wset, layout, step)) {
             for (auto it = wset.begin(); it != wset.end(); ++it) {
                 workloads[*it].scheduled = step;
                 runningWorkloads.push_back(*it);
@@ -72,7 +77,9 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
 //        int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
         int deadline = (step > deadline) ? -1 : workloads[*it].deadline;
-        if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
+        int maxDelay = workloads[*it].deadline - workloads[*it].executionTime;
+        if(((step >= maxDelay) || layout.resourcesUsed() <= 0.7) &&
+          placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);
 //            insertOrderedByStep(workloads, runningWorkloads,*it,workloads[*it]);
@@ -109,6 +116,5 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
             }
         }
     }
-
 
 }

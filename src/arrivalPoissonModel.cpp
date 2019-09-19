@@ -26,9 +26,10 @@ void ArrivalPoissonModel::generate_arrivals(vector<workload>& workloads, float t
     //lambda(t) = 3.1 - 8.5 t + 24.7 t2 + 130.8 t3 + 107.7 t4 - 804.2 t5 - 2038.5 t6 + 1856.8 t7 + 4618.6 t8
     int curStep = 0;
     for(vector<workload>::iterator it = workloads.begin(); it!=workloads.end(); ++it) {
-//        curStep += (int)nextTime(1/timeInterval);
-//        curStep += poisson(generator);
-        it->arrival = 1/poisson(generator);
+//        curStep += (int)nextTime(timeInterval);
+//        it->arrival = curStep;
+        curStep += poisson(generator);
+        it->arrival = curStep; //poisson(generator);
 //        cout << it->arrival << " ";
         double number = distribution(generator);
         if (number <= prio_threshold) {

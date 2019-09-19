@@ -33,10 +33,11 @@ args = ap.parse_args()
 with open(args.s) as s:
 	schedule = json.load(s)
 
-lastTime = sorted(schedule, key=lambda k: k['completion'])[-1]["step"]
+lastTime = sorted(schedule, key=lambda k: k['completion'])[-1]["completion"]
 schedule = sorted(schedule, key=lambda k: k['step'], reverse=False)
 
 loadFactor = []
+responseTime = []
 arrivalsPlot = []
 resources = []
 labels = []
@@ -61,6 +62,8 @@ deadlines = 0
 interArrivalTimes = 0
 previousTime = -1
 arrivalsJson = {}
+jobs = 0
+jobsPlot = []
 for i in schedule:
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
@@ -83,49 +86,53 @@ for i in schedule:
         else:
             departureAccJson[i["completion"]] += 1
 
+        responseTime.append(i["scheduled"][0] - i["arrival"][0])
+
 #        if i["completion"] in arrivalJson:
 #            arrivalJson[i["completion"]] -= 1
 #        else:
 #            arrivalJson[i["completion"]] = -1
 
 for i in range(0, lastTime+1):
-#        lf = -1
+        lf = -1
         if i in completions:
             for p in completions[i]:
-                    if p["deadline"][0] < p["completion"]:
-                        deadlines += 1
-                    for volume in p["volumes"]:
-                            racks[p["rackid"][0]][volume] -= 1
-                    if racks[p["rackid"][0]][volume] == 0:
-                            resourcesUsed-=1
-                            del racks[p["rackid"][0]][volume]
+                jobs -= 1
+                if p["deadline"][0] < p["completion"]:
+                    deadlines += 1
+                for volume in p["volumes"]:
+                    racks[p["rackid"][0]][volume] -= 1
+                if racks[p["rackid"][0]][volume] == 0:
+                    resourcesUsed -= 1
+                    del racks[p["rackid"][0]][volume]
 
         if i in arrivalsJson:
-                if previousTime == -1:
-                        interArrivalTimes+=i
-                        previousTime=i
-                else:
-                        interArrivalTimes+=(i-previousTime)
-                        previousTime=i
+            if previousTime == -1:
+                interArrivalTimes+=i
+                previousTime=i
+            else:
+                interArrivalTimes+=(i-previousTime)
+                previousTime=i
 
-	if i in parsedSched:
+        if i in parsedSched:
             for job in parsedSched[i]:
+                jobs += 1
                 avgCompSize = job["avgCompositionSize"]
                 if job["completion"] in completions:
-		    completions[job["completion"]].append(job)
+		            completions[job["completion"]].append(job)
                 else:
                     completions[job["completion"]] = [job]
 
                 lf = job["loadFactor"]
 		for volume in job["volumes"]:
-			if job["rackid"][0] not in racks:
-				racks[job["rackid"][0]] = {}
+		    if job["rackid"][0] not in racks:
+		        racks[job["rackid"][0]] = {}
 
-			if volume not in racks[job["rackid"][0]]:
-				racks[job["rackid"][0]][volume] = 1
-				resourcesUsed+=1
-			else:
-				racks[job["rackid"][0]][volume]+=1
+		    if volume not in racks[job["rackid"][0]]:
+		        racks[job["rackid"][0]][volume] = 1
+		        resourcesUsed+=1
+		    else:
+		        racks[job["rackid"][0]][volume]+=1
 
         if i in arrivalJson:
         #    arrivals+=arrivalJson[i]
@@ -139,28 +146,28 @@ for i in range(0, lastTime+1):
         if i in departureAccJson:
             departuresAcc+=departureAccJson[i]
 
-	labels.extend([i])
-	resources.extend([resourcesUsed])
+        labels.extend([i])
+        resources.extend([resourcesUsed])
        # arrivalsPlot.extend([arrivals])
         arrivalAccPlot.extend([arrivalsAcc])
         departureAccPlot.extend([departuresAcc])
         avgCompositionPlot.extend([avgCompSize])
         missedDeadlines.extend([deadlines])
-
+        jobsPlot.extend([jobs])
         if lf != -1:
-            loadFactor.extend([lf])
+            lf = round(lf, 1)
+            loadFactor.append(lf)
 
 print(missedDeadlines[-1])
-print(interArrivalTimes/len(schedule))
+#print(interArrivalTimes/len(schedule))
 plt.xlabel("Execution time (s)")
-plt.title("NVMe used for job allocation over time")
+# plt.title("NVMe used for job allocation over time")
 # plt.xticks(range(0,lastTime),rotation=90)
-p1 = plt.plot(labels, resources)
-#plt.yticks(np.arange(len(schedule)))
-plt.yticks(np.arange(11))
-plt.ylabel("NVMe used")
-plt.tight_layout()
-plt.savefig('plots/nvmeUsed-over-time.pdf', bbox_inches='tight')
+# pl = plt.hist(resources, 100, density=True, facecolor='g', alpha=0.75, cumulative=True, histtype='step')
+# plt.xlabel('NVMe used')
+# plt.ylim(0,1)
+# plt.xticks(np.arange(0, max(resources)+1, 1), rotation='vertical')
+# plt.savefig('plots/nvmeUsed.pdf', bbox_inches='tight')
 plt.clf()
 pl = plt.plot(labels, arrivalsPlot)
 plt.savefig('plots/arrivals-over-time.pdf', bbox_inches='tight')
@@ -168,14 +175,26 @@ plt.clf()
 pl = plt.plot(labels, avgCompositionPlot)
 plt.savefig('plots/avg-compositionSize-over-time.pdf', bbox_inches='tight')
 plt.clf()
-pl = plt.plot(labels, loadFactor)
+pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75, cumulative=False, histtype='step')
+plt.ylabel('Probability')
+plt.xlabel('Load factor')
+plt.ylim(0,1)
+plt.xticks(np.arange(0, max(loadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/loadFactor-over-time.pdf', bbox_inches='tight')
-plt.clf()
-pl = plt.plot(labels, missedDeadlines)
-plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
+# plt.clf()
+# pl = plt.plot(labels, missedDeadlines)
+# plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
 plt.clf()
 pl = plt.plot(labels, arrivalAccPlot)
 plt.plot(labels, departureAccPlot)
 plt.savefig('plots/accumulatedArrivDepChart.pdf', bbox_inches='tight')
+# plt.clf()
+# pl = plt.plot(labels, jobsPlot)
+# plt.savefig('plots/jobsOverTime.pdf', bbox_inches='tight')
 plt.clf()
-
+pl = plt.hist(responseTime, 100, density=True, facecolor='g', alpha=0.75, cumulative=True, histtype='step')
+plt.ylabel('Probability')
+plt.xlabel('Response time')
+plt.ylim(0,1)
+plt.xticks(np.arange(0, max(responseTime)+1, 500), rotation='vertical')
+plt.savefig('plots/responseTime.pdf', bbox_inches='tight')

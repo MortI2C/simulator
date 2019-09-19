@@ -36,7 +36,7 @@ void QoSPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
         if(it->ttlDifference > element.ttlDifference) {
             vect.insert(it,element);
             inserted = true;
-        } else if(it->ttlDifference = element.ttlDifference) {
+        } else if(it->ttlDifference == element.ttlDifference) {
             if (it->fitness >= element.fitness) {
                 vect.insert(it, element);
                 inserted = true;
@@ -99,28 +99,47 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
-        double bwExtra = (deadline == -1) ? 0 : log((deadline-step)/wload->executionTime) / log(wload->performanceMultiplier);
-        if(deadline != -1 && bwExtra >= 1 ) {
-            if(wload->baseBandwidth*bwExtra > wload->limitPeakBandwidth) {
-                int newTime = pow(wload->performanceMultiplier,wload->limitPeakBandwidth/wload->baseBandwidth)*wload->executionTime;
+        float bwExtra = (deadline == -1) ? 0 : (
+                (log((float)((float)(deadline-step)/(float)wload->executionTime)) / log((float)wload->performanceMultiplier)  ) + 1
+                ) * wload->baseBandwidth;
+//        if(bwExtra>wload->baseBandwidth) cerr << bwExtra << " " << deadline << " " << step << " " << wload->executionTime << " " << wload->performanceMultiplier << " " << wload->baseBandwidth << endl;
+        if(deadline != -1 && bwExtra >= 1 && bwExtra >= wload->nvmeBandwidth) {
+            if(bwExtra > wload->limitPeakBandwidth) {
+                int newTime = pow(wload->performanceMultiplier,(wload->limitPeakBandwidth/wload->baseBandwidth)-1)*wload->executionTime;
                 if((step+newTime) <= deadline ) {
                     bandwidth = wload->limitPeakBandwidth;
                 }
             } else {
-                int newTime = pow(wload->performanceMultiplier,bwExtra/wload->baseBandwidth)*wload->executionTime;
+                int newTime = pow(wload->performanceMultiplier,bwExtra/wload->baseBandwidth-1)*wload->executionTime;
                 if((step+newTime) <= deadline ) {
-                    bandwidth = wload->baseBandwidth*bwExtra;
+                    bandwidth = bwExtra;
                 }
             }
         }
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
-        int selectionBw = 0;
-        for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
-            selectionBw = it->resources[*it2].getTotalBandwidth();
+        if(selection.empty() && bandwidth > wload->nvmeBandwidth) {
+            //try new selection
+            bandwidth = wload->nvmeBandwidth;
+            vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, wload->nvmeBandwidth, capacity );
+//            if(selection.empty() && it->resourcesUsed() < 1) cerr << wload->nvmeBandwidth << " " << wloadIt << endl;
+//            if(selection.empty() && it->resourcesUsed() < 1) cerr << step << " " << it->getAvailableBandwidth() << endl;
+//            if(selection.empty() && it->resourcesUsed() < 1) {
+//                cerr << step << endl; layout.printRaidsInfo();
+//            }
         }
         if(!selection.empty()) {
+            int bwSel = 0;
+            for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
+                bwSel += it->resources[*it2].getAvailableBandwidth();
+            }
+            int ttl = this->model.timeDistortion(bwSel,
+                                             wload->executionTime,
+                                             wload->performanceMultiplier,
+                                             wload->baseBandwidth,
+                                             wload->limitPeakBandwidth);
+
 //        if (!selection.empty() && (deadline == -1 || deadline >= (wload->executionTime+step))) {
-            rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
+            rackFitness element = {ttl, it->inUse(),
                                    selection, &(*it)
             };
             insertRackSorted(fittingRacks, element);
@@ -187,23 +206,46 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
                 this->insertSortedBandwidth(it->resources, sortBw, i);
             }
         }
-        int resBw = 0;
-        int resCap = 0;
-        bool found = false;
-        vector<int> tempSelection;
-        for(auto it2 = sortBw.begin(); !found && it2!=sortBw.end(); ++it2) {
-            resBw+=it->resources[*it2].getTotalBandwidth();
-            resCap+=it->resources[*it2].getTotalCapacity();
-            tempSelection.push_back(*it2);
-            if((resBw >= bandwidth && resCap >= capacity) && (minBandwidth == -1 || minBandwidth > resBw)) {
-                minBandwidth = resBw;
-                found = true;
-                rackFitness element = {(it->numFreeResources - (int) tempSelection.size()), it->inUse(),
-                                       tempSelection, &(*it)
-                };
-                insertRackSorted(fittingRacks, element);
+        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
+        if(!selection.empty()) {
+            int bwSel = 0;
+            for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
+                bwSel += it->resources[*it2].getAvailableBandwidth();
             }
+            int ttl = 0;
+            for(auto it3 = wloads.begin(); it3!=wloads.end(); ++it3) {
+                workload* wload = &workloads[*it3];
+//                int wlTTL = this->model.timeDistortion(bwSel,
+//                                                     wload->executionTime,
+//                                                     wload->performanceMultiplier,
+//                                                     wload->baseBandwidth,
+//                                                     wload->limitPeakBandwidth);
+                if(ttl < wload->executionTime)
+                    ttl = wload->executionTime;
+            }
+
+            rackFitness element = {ttl, it->inUse(),
+                                   selection, &(*it)
+            };
+            insertRackSorted(fittingRacks, element);
         }
+//        int resBw = 0;
+//        int resCap = 0;
+//        bool found = false;
+//        vector<int> tempSelection;
+//        for(auto it2 = sortBw.begin(); !found && it2!=sortBw.end(); ++it2) {
+//            resBw+=it->resources[*it2].getTotalBandwidth();
+//            resCap+=it->resources[*it2].getTotalCapacity();
+//            tempSelection.push_back(*it2);
+//            if((resBw >= bandwidth && resCap >= capacity) && (minBandwidth == -1 || minBandwidth > resBw)) {
+//                minBandwidth = resBw;
+//                found = true;
+//                rackFitness element = {(it->numFreeResources - (int) tempSelection.size()), it->inUse(),
+//                                       tempSelection, &(*it)
+//                };
+//                insertRackSorted(fittingRacks, element);
+//            }
+//        }
     }
 
 
@@ -235,11 +277,11 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
-            wload->executionTime = this->model.timeDistortion(composedBandwidth,
-                    wload->executionTime,
-                    wload->performanceMultiplier,
-                    wload->baseBandwidth,
-                    wload->limitPeakBandwidth);
+//            wload->executionTime = this->model.timeDistortion(composedBandwidth,
+//                    wload->executionTime,
+//                    wload->performanceMultiplier,
+//                    wload->baseBandwidth,
+//                    wload->limitPeakBandwidth);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;

@@ -9,10 +9,11 @@ using namespace std;
 //class NvmeResource;
 
 struct raid {
+    raid() : composedNvme(NvmeResource(0,0)), volumes(vector<int>(0)), used(false), workloadsUsing(0), assignedWorkloads(vector<int>(0)) {}
     NvmeResource composedNvme;
     vector<int> volumes;
-    bool used = false;
-    int workloadsUsing = 0;
+    bool used;
+    int workloadsUsing;
     vector<int> assignedWorkloads;
 };
 
@@ -40,6 +41,7 @@ class Rack {
     int getTotalBandwidthUsed();
     bool inUse();
     double resourcesUsed();
+    double getAvailableBandwidth();
     double workloadsRaid();
     int compositionTTL(vector<workload>&, int, int);
     void setTotalBandwidth(int);

@@ -36,6 +36,8 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
         }
     }
 
+//    if(toFinish.empty() && !pendingToSchedule.empty() && layout.resourcesUsed() < 1)
+//        cerr << "ERROR" << " " << layout.resourcesUsed() << endl;
     //Remove already placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
         for(auto it2 = pendingToSchedule.begin(); it2!=pendingToSchedule.end(); ++it2) {
