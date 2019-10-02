@@ -31,7 +31,9 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
     if(layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) > this->logger[workloadId]["loadFactor"])
         this->logger[workloadId]["loadFactor"] = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
     this->logger[workloadId]["avgCompositionSize"] = layout.averageCompositionSize();
+    this->logger[workloadId]["avgWorkloadsSharing"] = layout.averageWorkloadsSharing();
     this->logger[workloadId]["deadline"].push_back(workloads[workloadId].deadline);
     this->logger[workloadId]["arrival"].push_back(workloads[workloadId].arrival);
     this->logger[workloadId]["scheduled"].push_back(workloads[workloadId].scheduled);
+    this->logger[workloadId]["cores"].push_back(workloads[workloadId].cores);
 }

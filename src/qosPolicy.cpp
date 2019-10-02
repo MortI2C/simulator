@@ -51,7 +51,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); it->freeCores >= wload->cores && it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
@@ -85,6 +85,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
         this->updateRackWorkloads(workloads,wloadIt, it->rack, it->rack->compositions[it->composition], it->composition);
 //        cout << it->rack->compositions[it->composition].assignedWorkloads.size() << endl;
         scheduled = true;
+        it->rack->freeCores -= wload->cores;
     }
 
     return scheduled;
@@ -98,7 +99,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it->freeCores >= wload->cores && it!=layout.racks.end(); ++it) {
         float bwExtra = (deadline == -1) ? 0 : (
                 (log((float)((float)(deadline-step)/(float)wload->executionTime)) / log((float)wload->performanceMultiplier)  ) + 1
                 ) * wload->baseBandwidth;
@@ -173,6 +174,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        scheduledRack->freeCores -= wload->cores;
         wload->executionTime = this->model.timeDistortion(composedBandwidth,
                 wload->executionTime, wload->performanceMultiplier, wload->baseBandwidth, wload->limitPeakBandwidth);
         wload->timeLeft = wload->executionTime;
@@ -188,6 +190,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
     int minBandwidth = -1;
     int capacity = 0;
     int bandwidth = 0;
+    int cores = 0;
     int totalExecutionTime = 0;
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
@@ -196,6 +199,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         capacity+=workloads[*it].nvmeCapacity;
         bandwidth+=workloads[*it].nvmeBandwidth;
         totalExecutionTime+=workloads[*it].executionTime;
+        cores+=workloads[*it].cores;
     }
 
     for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
@@ -274,6 +278,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = wloads.size();
+        scheduledRack->freeCores -= cores;
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);

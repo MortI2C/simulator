@@ -20,10 +20,11 @@ void EarliestDeadlineScheduler::insertOrderedByDeadline(vector<workload>& worklo
         vect.push_back(i);
 }
 
-void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity) {
+void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity, int layoutFreeCores) {
     int completionTime = wload.deadline;
     bool inserted = false;
-    int alpha = ((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)*wload.executionTime;
+    double percFreecores = (int)(wload.cores/layoutFreeCores)*100;
+    int alpha = (((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)/percFreecores)*wload.executionTime;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         int alphaVect = (workloads[*it].nvmeBandwidth/layoutTotalBw+workloads[*it].nvmeCapacity/layoutTotalCapacity)*workloads[*it].executionTime;
         if(alphaVect > alpha) {
@@ -45,10 +46,11 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
     vector<int> orderedWorkloads;
     int layoutTotalBw = layout.getTotalBandwidth();
     int layoutTotalCapacity = layout.getTotalCapacity();
+    int layoutFreeCores = layout.getFreeCores();
 
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity );
+        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
     }
 
     vector<int> toFinish;

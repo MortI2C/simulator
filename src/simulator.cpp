@@ -82,7 +82,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
         exeTime /= workloadsInStationary;
         completionTime /= workloadsInStationary;
     }
-    cout << step << " " << workloadsInStationary << " " << waitingTime << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
+    cerr << step << " " << workloadsInStationary << " " << waitingTime << " " << exeTime << " " << completionTime << " " << missedDeadlines << endl;
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout) {
@@ -143,7 +143,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         processedPatients += (priorScheduler - pendingToSchedule.size());
 //        if(stationaryStep==-1 && priorScheduler > 0 && (priorScheduler - pendingToSchedule.size()) <= 0)
 //            stationaryStep = step;
-        if(stationaryStep==-1 && layout.resourcesUsed() >= 0.9 )
+        if(stationaryStep==-1 && layout.loadFactor(workloads, pendingToSchedule, runningWorkloads) >= 0.9 )
             stationaryStep = step;
 
         double currResourcesUsed = layout.resourcesUsed();
@@ -172,13 +172,14 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     }
 //    cout << scheduler->logger.dump() << endl;
     step--; //correction
-
+    printStatistics(step, workloads, stationaryStep);
+    step = step - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
-//    cout << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
+    cerr << stationaryStep << " " << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
 //    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
-    printStatistics(step, workloads, stationaryStep);
+
 }
 
 int main(int argc, char* argv[]) {
@@ -189,7 +190,7 @@ int main(int argc, char* argv[]) {
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
 
-    string layoutPath = "layouts/layout-1.json";
+    string layoutPath = "layouts/layout-7.json";
     if(argc>2)
        layoutPath = argv[2];
 
@@ -205,7 +206,8 @@ int main(int argc, char* argv[]) {
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
 //    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
     vector<workload> workloads(patients);
-    std::random_device rand_dev;
+//    std::random_device generate(5);
+//    std::default_random_engine generate(5);
     std::mt19937 generate(5);
     uniform_real_distribution<double> distribution(0.0, 1.0);
 //    for(int i = 0; i<patients; ++i) {
@@ -229,9 +231,10 @@ int main(int argc, char* argv[]) {
 //        }
 //    }
     uniform_int_distribution<int> executionTimes(100,1800);
-    uniform_int_distribution<int> bandwidths(80,2000);
-    uniform_int_distribution<int> capacity(40,1600);
-    std::uniform_real_distribution<double> performanceMult(0.90,1.0);
+    uniform_int_distribution<int> bandwidths(0,2000);
+    uniform_int_distribution<int> capacity(0,1600);
+    uniform_int_distribution<int> numCores(1,20);
+    std::uniform_real_distribution<double> performanceMult(0.9,1.0);
 
     vector<workload> workloadsType(20);
     for(int i = 0; i<20; ++i) {
@@ -241,8 +244,9 @@ int main(int argc, char* argv[]) {
         workloadsType[i].nvmeCapacity = capacity(generate);
         workloadsType[i].wlId = i;
         workloadsType[i].performanceMultiplier=performanceMult(generate);
-        uniform_int_distribution<int> limitsBw(workloads[i].nvmeBandwidth, 10000);
+        uniform_int_distribution<int> limitsBw(workloadsType[i].nvmeBandwidth, 10000);
         workloadsType[i].limitPeakBandwidth=limitsBw(generate);
+        workloadsType[i].cores = numCores(generate);
     }
 //    json workloadsDistribution;
     uniform_int_distribution<int> typeGenerator(0, 19);
@@ -255,6 +259,7 @@ int main(int argc, char* argv[]) {
         workloads[i].wlId = i;
         workloads[i].performanceMultiplier=workloadsType[wlType].performanceMultiplier;
         workloads[i].limitPeakBandwidth=workloadsType[wlType].limitPeakBandwidth;
+        workloads[i].cores = workloadsType[wlType].cores;
 
 //        workloadsDistribution[i]["executionTime"] = workloadsType[wlType].executionTime;
 //        workloadsDistribution[i]["nvmeBandwidth"] = workloadsType[wlType].nvmeBandwidth;
@@ -264,20 +269,21 @@ int main(int argc, char* argv[]) {
 
 //    ArrivalUniformModel* arrival = new ArrivalUniformModel();
 //    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
-//    ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform();
+    ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform();
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(950,1200,0.1,0.9 );
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(325,455,0.2,0.6 );
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(20,50,0.1,2 );
-    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(155.33,180,0.2,0.4 ); //PREFERRED
+//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(200,350,0.1,0.8 );
+//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(155.33,180,0.2,0.4 ); //PREFERRED
 //    ArrivalRegularModel* arrival = new ArrivalRegularModel();
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 86400/patients, prio_threshold);
-//    arrival->generate_arrivals(workloads, 132.29, prio_threshold);
+//    arrival->generate_arrivals(workloads, 3600/patients, prio_threshold);
+    arrival->generate_arrivals(workloads, 72*60*60/patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1500.37) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, 40, prio_threshold);
-    arrival->generate_arrivals(workloads, 14, prio_threshold);
+//    arrival->generate_arrivals(workloads, 14, prio_threshold);
     //    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
@@ -300,7 +306,7 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout);
-    simulator(fcfsSched, minFrag, copyWL, patients, layout);
+//    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, firstFit, copyWL, patients, layout);
 //    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
@@ -308,7 +314,7 @@ int main(int argc, char* argv[]) {
 //    simulator(setStarved, qosPolicy, copyWL, patients, layout);
 //    simulator(starvedf, qosPolicy, copyWL, patients, layout);
 //    simulator(setStarved, minFrag, copyWL, patients, layout);
-//    simulator(earliestSched, minFrag, copyWL, patients, layout);//
+    simulator(earliestSched, minFrag, copyWL, patients, layout);//
 //    simulator(earliestSetSched, minFrag, workloads, patients, layout);
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

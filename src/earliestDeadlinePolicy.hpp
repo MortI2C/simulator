@@ -14,7 +14,7 @@ class EarliestDeadlineScheduler : public SchedulingPolicy {
           this->starvCoefficient = starvCoefficient;
       };
       void insertOrderedByDeadline(vector<workload>&, vector<int>&, int, workload&);
-      void insertOrderedByAlpha(vector<workload>&, vector<int>&, int, workload&, int, int);
+      void insertOrderedByAlpha(vector<workload>&, vector<int>&, int, workload&, int, int, int);
       bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };

@@ -87,8 +87,8 @@ for key,value in layout.items():
 
     for p in value["nvmes"]:
         label=str(p["bandwidth"])+","+str(p["capacity"])
-        if label not in ytickslabels:
-            ytickslabels.append(label)
+        #if label not in ytickslabels:
+        ytickslabels.append(label)
 
 colorsList = {}
 patternsList = {}

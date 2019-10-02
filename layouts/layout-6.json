@@ -7,26 +7,56 @@
 			{
 				"bandwidth": 2000,
 				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
 			}
-		]
+		],
+		"cores": 50
 	},
 	"rack1": {
 		"nvmes": [{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
+			"bandwidth": 2000,
+			"capacity": 1600
 			},
 			{
 				"bandwidth": 2000,
 				"capacity": 1600
 			}
-		]
+		],
+		"cores": 50
+	},
+	"rack2": {
+		"nvmes": [{
+			"bandwidth": 2000,
+			"capacity": 1600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 1600
+			}
+		],
+		"cores": 50
+	},
+	"rack3": {
+		"nvmes": [{
+			"bandwidth": 2000,
+			"capacity": 1600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 1600
+			}
+		],
+		"cores": 50
+	},
+	"rack4": {
+		"nvmes": [{
+			"bandwidth": 2000,
+			"capacity": 1600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 1600
+			}
+		],
+		"cores": 50
 	}
 }

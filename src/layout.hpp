@@ -22,10 +22,12 @@ class Layout {
     double workloadsRaid();
     void printRaidsInfo();
     double averageCompositionSize();
+    double averageWorkloadsSharing();
     double loadFactor(vector<workload>&, vector<int>&, vector<int>&);
     double actualLoadFactor(vector<workload>&, vector<int>&);
     int getTotalBandwidth();
     int getTotalCapacity();
+    int getFreeCores();
     int calculateMaxBandwidth();
     double calculateLoadFactor();
 };

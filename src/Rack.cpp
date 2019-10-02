@@ -170,3 +170,7 @@ void Rack::setTotalBandwidth(int bandwidth) {
 void Rack::setTotalCapacity(int capacity) {
     this->totalCapacity = capacity;
 }
+
+void Rack::setFreeCores(int freeCores) {
+    this->freeCores = freeCores;
+}

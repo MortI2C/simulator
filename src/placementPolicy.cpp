@@ -28,6 +28,7 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
                                   [wload->allocation.composition].composedNvme
                                           .getAvailableCapacity()+wload->nvmeCapacity);
 
+    wload->allocation.allocatedRack->freeCores += wload->cores;
     //Remove Workload from assigned compositions Wloads
     bool found = false;
     for(auto i = wload->allocation.allocatedRack->

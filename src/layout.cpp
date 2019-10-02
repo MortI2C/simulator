@@ -29,6 +29,7 @@ void Layout::generateLayout(string filePath) {
             totalBandwith += (int)it2.value()["bandwidth"];
             totalCapacity += (int)it2.value()["capacity"];
         }
+        newRack.setFreeCores((int)newArray["cores"]);
         newRack.addNvmeResourceVector(nvmes);
         newRack.setTotalBandwidth(totalBandwith);
         newRack.setTotalCapacity(totalCapacity);
@@ -70,10 +71,12 @@ double Layout::calculateFragmentation() {
 
 double Layout::resourcesUsed() {
     double resourcesUsed = 0;
+    int totalResources = 0;
     for(auto i = this->racks.begin(); i!=this->racks.end(); ++i) {
-        resourcesUsed+=i->resourcesUsed();
+        resourcesUsed+=(i->resourcesUsed()*i->resources.size());
+        totalResources+=i->resources.size();
     }
-    return resourcesUsed/this->racks.size();
+    return resourcesUsed/totalResources;
 }
 
 int Layout::raidsUsed() {
@@ -160,6 +163,14 @@ int Layout::getTotalCapacity() {
     return cap;
 }
 
+int Layout::getFreeCores() {
+    int freeCores = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        freeCores+=it->freeCores;
+    }
+    return freeCores;
+}
+
 double Layout::averageCompositionSize() {
     int totalCompositions = 0;
     int compositionsSize = 0;
@@ -173,23 +184,47 @@ double Layout::averageCompositionSize() {
     }
     return compositionsSize/totalCompositions;
 }
+
+double Layout::averageWorkloadsSharing() {
+    int totalResources = 0;
+    int workloadsComposition = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        for(auto it2 = it->compositions.begin(); it2!=it->compositions.end(); ++it2) {
+            if(it2->used) {
+                workloadsComposition += it2->workloadsUsing;
+                totalResources++;
+            }
+        }
+    }
+    return workloadsComposition/totalResources;
+}
+
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
+    int availCores = 0;
 
     int bwRequested = 0;
     int capRequested = 0;
+    int coresRequested = 0;
     for(auto it = queued.begin(); it!=queued.end(); ++it) {
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
     }
 
     for(auto it = running.begin(); it!=running.end(); ++it) {
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
     }
 
-    return max((double)bwRequested/availBw,(double)capRequested/availCap);
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        availCores+=it->freeCores;
+    }
+    availCores+=coresRequested;
+
+    return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores);
 }
 
 double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& running) {

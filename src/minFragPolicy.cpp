@@ -71,7 +71,7 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); it->freeCores >= wload->cores && it!=layout.racks.end(); ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
             if(it->compositions[i].used) {
@@ -103,6 +103,7 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition],
                                   it->composition);
         scheduled = true;
+        it->rack->freeCores-=wload->cores;
     }
 
     return scheduled;
@@ -116,7 +117,7 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
 
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it->freeCores >= wload->cores && it!=layout.racks.end(); ++it) {
         vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
         if(!selection.empty()) {
             rackFitness element = {((int) selection.size()), it->inUse(),
@@ -155,19 +156,20 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
 
         scheduledRack->numFreeResources-=element.selection.size();
         scheduledRack->compositions[freeComposition].used = true;
-        scheduledRack->compositions[freeComposition].used = true;
         scheduledRack->compositions[freeComposition].composedNvme = NvmeResource(composedBandwidth,composedCapacity);
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableBandwidth(composedBandwidth-bandwidth);
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        scheduledRack->freeCores -= wload->cores;
         wload->executionTime = this->model.timeDistortion(composedBandwidth,
               wload->executionTime,
               wload->performanceMultiplier,
               wload->baseBandwidth,
               wload->limitPeakBandwidth
         );
+
 //        wload->executionTime = this->model.timeDistortion(selectionBw,bandwidth);
         wload->timeLeft = wload->executionTime;
         wload->allocation.composition = freeComposition;
@@ -180,15 +182,17 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
 bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
     int capacity = 0;
     int bandwidth = 0;
+    int cores = 0;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
         capacity+=workloads[*it].nvmeCapacity;
         bandwidth+=workloads[*it].nvmeBandwidth;
+        cores+=workloads[*it].cores;
     }
 
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); it->freeCores >= cores && it!=layout.racks.end(); ++it) {
         vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
         if (!selection.empty()) {
             rackFitness element = {((int) selection.size()), it->inUse(),
@@ -223,6 +227,7 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = wloads.size();
+        scheduledRack->freeCores -= cores;
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);

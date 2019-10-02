@@ -47,6 +47,7 @@ struct workload {
     double performanceMultiplier;
     int baseBandwidth;
     int limitPeakBandwidth;
+    int cores;
 };
 
 #endif

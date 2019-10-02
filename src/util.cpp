@@ -7,7 +7,8 @@
 
 inline float nextTime(float rateParameter)
 {
-    return -logf(1.0f - (float) random() / (RAND_MAX)) / rateParameter;
+    srand(5);
+    return -logf(1.0f - (float) rand() / (RAND_MAX)) / rateParameter;
 }
 
 #endif

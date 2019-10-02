@@ -50,6 +50,8 @@ arrivalJson = {}
 avgCompositionPlot = []
 missedDeadlines = []
 avgCompSize = 0
+avgWorkloadsSharing = 0
+avgWorkloadsSharingPlot = []
 arrivalAccPlot = []
 departureAccPlot = []
 arrivalAccJson = {}
@@ -118,8 +120,9 @@ for i in range(0, lastTime+1):
             for job in parsedSched[i]:
                 jobs += 1
                 avgCompSize = job["avgCompositionSize"]
+                avgWorkloadsSharing = job["avgWorkloadsSharing"] 
                 if job["completion"] in completions:
-		            completions[job["completion"]].append(job)
+		    completions[job["completion"]].append(job)
                 else:
                     completions[job["completion"]] = [job]
 
@@ -152,6 +155,7 @@ for i in range(0, lastTime+1):
         arrivalAccPlot.extend([arrivalsAcc])
         departureAccPlot.extend([departuresAcc])
         avgCompositionPlot.extend([avgCompSize])
+        avgWorkloadsSharingPlot.extend([avgWorkloadsSharing])
         missedDeadlines.extend([deadlines])
         jobsPlot.extend([jobs])
         if lf != -1:
@@ -175,22 +179,28 @@ plt.clf()
 pl = plt.plot(labels, avgCompositionPlot)
 plt.savefig('plots/avg-compositionSize-over-time.pdf', bbox_inches='tight')
 plt.clf()
-pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75, cumulative=False, histtype='step')
-plt.ylabel('Probability')
+pl = plt.plot(labels, avgWorkloadsSharingPlot)
+plt.savefig('plots/avg-wlSharing-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75) #,  histtype='step')
+plt.ylabel('# Events')
 plt.xlabel('Load factor')
-plt.ylim(0,1)
+#plt.ylim(0,1)
 plt.xticks(np.arange(0, max(loadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/loadFactor-over-time.pdf', bbox_inches='tight')
 # plt.clf()
 # pl = plt.plot(labels, missedDeadlines)
 # plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
-plt.clf()
-pl = plt.plot(labels, arrivalAccPlot)
-plt.plot(labels, departureAccPlot)
-plt.savefig('plots/accumulatedArrivDepChart.pdf', bbox_inches='tight')
+
+#plt.clf()
+#pl = plt.plot(labels, arrivalAccPlot)
+#plt.plot(labels, departureAccPlot)
+#plt.savefig('plots/accumulatedArrivDepChart.pdf', bbox_inches='tight')
+
 # plt.clf()
 # pl = plt.plot(labels, jobsPlot)
 # plt.savefig('plots/jobsOverTime.pdf', bbox_inches='tight')
+
 plt.clf()
 pl = plt.hist(responseTime, 100, density=True, facecolor='g', alpha=0.75, cumulative=True, histtype='step')
 plt.ylabel('Probability')
