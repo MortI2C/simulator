@@ -59,7 +59,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
-                int estimateTTL = this->model.timeDistortion(
+                int estimateTTL = (wload->nvmeBandwidth == 0) ? wload->executionTime+step : this->model.timeDistortion(
                         compositionAvailBw,wload->executionTime,wload->performanceMultiplier,
                         wload->baseBandwidth, wload->limitPeakBandwidth
                         ) + step;
@@ -100,7 +100,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it->freeCores >= wload->cores && it!=layout.racks.end(); ++it) {
-        float bwExtra = (deadline == -1) ? 0 : (
+        float bwExtra = (deadline == -1 || bandwidth == 0) ? 0 : (
                 (log((float)((float)(deadline-step)/(float)wload->executionTime)) / log((float)wload->performanceMultiplier)  ) + 1
                 ) * wload->baseBandwidth;
 //        if(bwExtra>wload->baseBandwidth) cerr << bwExtra << " " << deadline << " " << step << " " << wload->executionTime << " " << wload->performanceMultiplier << " " << wload->baseBandwidth << endl;

@@ -22,14 +22,37 @@ void EarliestSetDeadlineScheduler::insertOrderedByDeadline(vector<workload>& wor
         vect.push_back(i);
 }
 
+void EarliestSetDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity, int layoutFreeCores) {
+    int completionTime = wload.deadline;
+    bool inserted = false;
+    double percFreecores = (int)(wload.cores/layoutFreeCores)*100;
+    int alpha = (((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)/percFreecores)*wload.executionTime;
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+        int alphaVect = (workloads[*it].nvmeBandwidth/layoutTotalBw+workloads[*it].nvmeCapacity/layoutTotalCapacity)*workloads[*it].executionTime;
+        if(alphaVect > alpha) {
+            inserted = true;
+            vect.insert(it,i);
+        } else if(alphaVect == alpha && wload.deadline < workloads[*it].deadline) {
+            inserted = true;
+            vect.insert(it, i);
+        }
+    }
+    if(!inserted)
+        vect.push_back(i);
+}
+
 bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& pendingToSchedule,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
     vector<int> orderedWorkloads;
+    int layoutTotalBw = layout.getTotalBandwidth();
+    int layoutTotalCapacity = layout.getTotalCapacity();
+    int layoutFreeCores = layout.getFreeCores();
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+//        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
     }
 
     vector<int> toFinish;
@@ -65,7 +88,8 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
     //Finally try to place sets of workloads in new compositions
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+//        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
     }
 
     //Second place workloads starved for too long

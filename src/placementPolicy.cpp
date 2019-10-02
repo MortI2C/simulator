@@ -235,12 +235,14 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
     wload->timeLeft = wload->executionTime;
-    wload->timeLeft = this->model.timeDistortion(
-            composition.composedNvme.getAvailableBandwidth(),
-            wload->timeLeft,
-            wload->performanceMultiplier,
-            wload->baseBandwidth,
-            wload->limitPeakBandwidth);
+    if(wload->nvmeBandwidth > 0) {
+        wload->timeLeft = this->model.timeDistortion(
+                composition.composedNvme.getAvailableBandwidth(),
+                wload->timeLeft,
+                wload->performanceMultiplier,
+                wload->baseBandwidth,
+                wload->limitPeakBandwidth);
+    }
     wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
     wload->executionTime = wload->timeLeft;
     composition.composedNvme.setAvailableBandwidth(
@@ -254,13 +256,15 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
     for(auto iw = composition.assignedWorkloads.begin();
         iw != composition.assignedWorkloads.end(); ++iw) {
         workload it2 = workloads[*iw];
-        int newTime = this->model.timeDistortion(
-                composition.composedNvme.getAvailableBandwidth(),
-                it2.executionTime,
-                it2.performanceMultiplier,
-                it2.baseBandwidth,
-                it2.limitPeakBandwidth);
-        it2.timeLeft = ((float)it2.timeLeft/it2.executionTime)*newTime;
-        it2.executionTime = newTime;
+        if(it2.nvmeBandwidth > 0) {
+            int newTime = this->model.timeDistortion(
+                    composition.composedNvme.getAvailableBandwidth(),
+                    it2.executionTime,
+                    it2.performanceMultiplier,
+                    it2.baseBandwidth,
+                    it2.limitPeakBandwidth);
+            it2.timeLeft = ((float) it2.timeLeft / it2.executionTime) * newTime;
+            it2.executionTime = newTime;
+        }
     }
 }
