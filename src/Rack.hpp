@@ -27,6 +27,7 @@ class Rack {
     vector<raid> compositions;
     int rackId;
     int freeCores = 0;
+    int cores = 0;
 
     Rack() {
 
@@ -43,11 +44,14 @@ class Rack {
     bool inUse();
     double resourcesUsed();
     double getAvailableBandwidth();
+    double getAvailableCapacity();
     double workloadsRaid();
     int compositionTTL(vector<workload>&, int, int);
     void setTotalBandwidth(int);
     void setTotalCapacity(int);
     void setFreeCores(int);
+    void setTotalCores(int);
+    int getTotalCores();
 };
 
 #endif

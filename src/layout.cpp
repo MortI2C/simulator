@@ -29,6 +29,7 @@ void Layout::generateLayout(string filePath) {
             totalBandwith += (int)it2.value()["bandwidth"];
             totalCapacity += (int)it2.value()["capacity"];
         }
+        newRack.setTotalCores((int)newArray["cores"]);
         newRack.setFreeCores((int)newArray["cores"]);
         newRack.addNvmeResourceVector(nvmes);
         newRack.setTotalBandwidth(totalBandwith);
@@ -163,6 +164,14 @@ int Layout::getTotalCapacity() {
     return cap;
 }
 
+int Layout::getTotalCores() {
+    int cores = 0;
+    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
+        cores+=it->getTotalCores();
+    }
+    return cores;
+}
+
 int Layout::getFreeCores() {
     int freeCores = 0;
     for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
@@ -202,7 +211,7 @@ double Layout::averageWorkloadsSharing() {
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
-    int availCores = 0;
+    int availCores = this->getTotalCores();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -219,26 +228,25 @@ double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vect
         coresRequested += workloads[*it].cores;
     }
 
-    for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
-        availCores+=it->freeCores;
-    }
-    availCores+=coresRequested;
-
     return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores);
 }
 
 double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& running) {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
+    int coresCap = this->getTotalCores();
 
     int bwRequested = 0;
     int capRequested = 0;
+    int coresRequested = 0;
     for(auto it = running.begin(); it!=running.end(); ++it) {
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
     }
+    coresCap+=coresRequested;
 
-    return max((double)bwRequested/availBw,(double)capRequested/availCap);
+    return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/coresCap);
 }
 
 double Layout::calculateLoadFactor() {

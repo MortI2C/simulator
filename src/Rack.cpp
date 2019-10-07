@@ -147,6 +147,16 @@ double Rack::getAvailableBandwidth() {
     return availBandwidth;
 }
 
+double Rack::getAvailableCapacity() {
+    double availCapacity = 0;
+    for(int i = 0; i<this->freeResources.size(); ++i) {
+        if(this->freeResources[i])
+            availCapacity += resources[i].getAvailableCapacity();
+    }
+
+    return availCapacity;
+}
+
 int Rack::compositionTTL(vector<workload>& workloads, int composition, int step) {
     int ttl = -1;
     for(auto it = this->compositions[composition].assignedWorkloads.begin();
@@ -173,4 +183,12 @@ void Rack::setTotalCapacity(int capacity) {
 
 void Rack::setFreeCores(int freeCores) {
     this->freeCores = freeCores;
+}
+
+void Rack::setTotalCores(int cores) {
+    this->cores = cores;
+}
+
+int Rack::getTotalCores() {
+    return this->cores;
 }

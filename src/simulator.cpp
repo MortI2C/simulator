@@ -170,12 +170,12 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
-    cout << scheduler->logger.dump() << endl;
+//    cout << scheduler->logger.dump() << endl;
     step--; //correction
-//    printStatistics(step, workloads, stationaryStep);
+    printStatistics(step, workloads, stationaryStep);
     step = step - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
-//    cerr << stationaryStep << " " << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
+    cerr << stationaryStep << " " << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
 //    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
@@ -210,72 +210,72 @@ int main(int argc, char* argv[]) {
 //    std::default_random_engine generate(5);
     std::mt19937 generate(5);
     uniform_real_distribution<double> distribution(0.0, 1.0);
-//    for(int i = 0; i<patients; ++i) {
-//        double number = distribution(generate);
-//        if(number < 0.3) { //0.4
-//            workloads[i].executionTime = 1500;
-//            workloads[i].nvmeBandwidth = 1800;
-//            workloads[i].baseBandwidth=1800;
-//            workloads[i].nvmeCapacity = 43;
-//            workloads[i].wlId = i;
-//            workloads[i].performanceMultiplier=0.98;
-//            workloads[i].limitPeakBandwidth=6000;
-//            workloads[i].cores = 1;
-//        } else if (number < 0.6) {
-//            workloads[i].executionTime = 320;
-//            workloads[i].nvmeBandwidth = 160;
-//            workloads[i].nvmeCapacity = 341;
-//            workloads[i].baseBandwidth = 160;
-//            workloads[i].wlId = i;
-//            workloads[i].performanceMultiplier = 1;
-//            workloads[i].limitPeakBandwidth = 160;
-//            workloads[i].cores = 1;
-//        } else {
-//            workloads[i].executionTime = 500;
-//            workloads[i].nvmeBandwidth = 0;
-//            workloads[i].nvmeCapacity = 0;
-//            workloads[i].baseBandwidth = 0;
-//            workloads[i].wlId = i;
-//            workloads[i].performanceMultiplier = 1;
-//            workloads[i].limitPeakBandwidth = 0;
-//            workloads[i].cores = 4;
-//        }
-//    }
-    uniform_int_distribution<int> executionTimes(100,1800);
-    uniform_int_distribution<int> bandwidths(0,2000);
-    uniform_int_distribution<int> capacity(0,1600);
-    uniform_int_distribution<int> numCores(1,20);
-    std::uniform_real_distribution<double> performanceMult(0.9,1.0);
-
-    vector<workload> workloadsType(20);
-    for(int i = 0; i<20; ++i) {
-        workloadsType[i].executionTime = executionTimes(generate);
-        workloadsType[i].nvmeBandwidth = bandwidths(generate);
-        workloadsType[i].baseBandwidth= workloadsType[i].nvmeBandwidth;
-        workloadsType[i].nvmeCapacity = capacity(generate);
-        workloadsType[i].wlId = i;
-        workloadsType[i].performanceMultiplier=performanceMult(generate);
-        uniform_int_distribution<int> limitsBw(workloadsType[i].nvmeBandwidth, 10000);
-        workloadsType[i].limitPeakBandwidth=limitsBw(generate);
-        workloadsType[i].cores = numCores(generate);
-    }
-//    json workloadsDistribution;
-    uniform_int_distribution<int> typeGenerator(0, 19);
     for(int i = 0; i<patients; ++i) {
-        int wlType = typeGenerator(generate);
-        workloads[i].executionTime = workloadsType[wlType].executionTime;
-        workloads[i].nvmeBandwidth = workloadsType[wlType].nvmeBandwidth;
-        workloads[i].baseBandwidth=  workloadsType[wlType].baseBandwidth;
-        workloads[i].nvmeCapacity = workloadsType[wlType].nvmeCapacity;
-        workloads[i].wlId = i;
-        workloads[i].performanceMultiplier=workloadsType[wlType].performanceMultiplier;
-        workloads[i].limitPeakBandwidth=workloadsType[wlType].limitPeakBandwidth;
-        workloads[i].cores = workloadsType[wlType].cores;
-
-//        workloadsDistribution[i]["executionTime"] = workloadsType[wlType].executionTime;
-//        workloadsDistribution[i]["nvmeBandwidth"] = workloadsType[wlType].nvmeBandwidth;
-//        workloadsDistribution[i]["nvmeCapacity"] = workloadsType[wlType].nvmeCapacity;
+        double number = distribution(generate);
+        if(number < 0.4) { //0.4
+            workloads[i].executionTime = 1500;
+            workloads[i].nvmeBandwidth = 1800;
+            workloads[i].baseBandwidth=1800;
+            workloads[i].nvmeCapacity = 43;
+            workloads[i].wlId = i;
+            workloads[i].performanceMultiplier=0.98;
+            workloads[i].limitPeakBandwidth=6000;
+            workloads[i].cores = 1;
+        } else if (number < 0.6) {
+            workloads[i].executionTime = 320;
+            workloads[i].nvmeBandwidth = 160;
+            workloads[i].nvmeCapacity = 341;
+            workloads[i].baseBandwidth = 160;
+            workloads[i].wlId = i;
+            workloads[i].performanceMultiplier = 1;
+            workloads[i].limitPeakBandwidth = 160;
+            workloads[i].cores = 4;
+        } else {
+            workloads[i].executionTime = 500;
+            workloads[i].nvmeBandwidth = 0;
+            workloads[i].nvmeCapacity = 0;
+            workloads[i].baseBandwidth = 0;
+            workloads[i].wlId = i;
+            workloads[i].performanceMultiplier = 1;
+            workloads[i].limitPeakBandwidth = 0;
+            workloads[i].cores = 8;
+        }
     }
+//    uniform_int_distribution<int> executionTimes(100,1800);
+//    uniform_int_distribution<int> bandwidths(0,2000);
+//    uniform_int_distribution<int> capacity(0,1600);
+//    uniform_int_distribution<int> numCores(1,20);
+//    std::uniform_real_distribution<double> performanceMult(0.9,1.0);
+//
+//    vector<workload> workloadsType(20);
+//    for(int i = 0; i<20; ++i) {
+//        workloadsType[i].executionTime = executionTimes(generate);
+//        workloadsType[i].nvmeBandwidth = bandwidths(generate);
+//        workloadsType[i].baseBandwidth= workloadsType[i].nvmeBandwidth;
+//        workloadsType[i].nvmeCapacity = capacity(generate);
+//        workloadsType[i].wlId = i;
+//        workloadsType[i].performanceMultiplier=performanceMult(generate);
+//        uniform_int_distribution<int> limitsBw(workloadsType[i].nvmeBandwidth, 10000);
+//        workloadsType[i].limitPeakBandwidth=limitsBw(generate);
+//        workloadsType[i].cores = numCores(generate);
+//    }
+////    json workloadsDistribution;
+//    uniform_int_distribution<int> typeGenerator(0, 19);
+//    for(int i = 0; i<patients; ++i) {
+//        int wlType = typeGenerator(generate);
+//        workloads[i].executionTime = workloadsType[wlType].executionTime;
+//        workloads[i].nvmeBandwidth = workloadsType[wlType].nvmeBandwidth;
+//        workloads[i].baseBandwidth=  workloadsType[wlType].baseBandwidth;
+//        workloads[i].nvmeCapacity = workloadsType[wlType].nvmeCapacity;
+//        workloads[i].wlId = i;
+//        workloads[i].performanceMultiplier=workloadsType[wlType].performanceMultiplier;
+//        workloads[i].limitPeakBandwidth=workloadsType[wlType].limitPeakBandwidth;
+//        workloads[i].cores = workloadsType[wlType].cores;
+//
+////        workloadsDistribution[i]["executionTime"] = workloadsType[wlType].executionTime;
+////        workloadsDistribution[i]["nvmeBandwidth"] = workloadsType[wlType].nvmeBandwidth;
+////        workloadsDistribution[i]["nvmeCapacity"] = workloadsType[wlType].nvmeCapacity;
+//    }
     //cout << workloadsDistribution.dump() << endl;
 
 //    ArrivalUniformModel* arrival = new ArrivalUniformModel();
@@ -319,13 +319,13 @@ int main(int argc, char* argv[]) {
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
-    simulator(earliestSched, firstFit, copyWL, patients, layout);
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
-//    simulator(setStarved, minFrag, copyWL, patients, layout);
+//    simulator(earliestSched, firstFit, copyWL, patients, layout);
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+//    simulator(setStarved, minFrag, copysWL, patients, layout);
 //    simulator(setStarved, qosPolicy, copyWL, patients, layout);
 //    simulator(starvedf, qosPolicy, copyWL, patients, layout);
-//    simulator(setStarved, minFrag, copyWL, patients, layout);
-//    simulator(earliestSched, minFrag, copyWL, patients, layout);//
+//    simulator(setStarvsed, minFrag, copyWL, patients, layout);
+//    simulator(earliestSched, minFrag, copyWL, patients, layout);//0.
 //    simulator(earliestSetSched, minFrag, workloads, patients, layout);
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

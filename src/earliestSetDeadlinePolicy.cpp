@@ -133,6 +133,4 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
             }
         }
     }
-
-
 }

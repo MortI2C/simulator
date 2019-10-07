@@ -66,6 +66,7 @@ previousTime = -1
 arrivalsJson = {}
 jobs = 0
 jobsPlot = []
+labelsArrivals = []
 for i in schedule:
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
@@ -140,8 +141,9 @@ for i in range(0, lastTime+1):
         if i in arrivalJson:
         #    arrivals+=arrivalJson[i]
             arrivalsPlot.extend([arrivalJson[i]])
-        else:
-            arrivalsPlot.extend([0])
+            labelsArrivals.extend([i])
+#        else:
+#            arrivalsPlot.extend([0])
        
         if i in arrivalAccJson:
             arrivalsAcc+=arrivalAccJson[i]
@@ -173,7 +175,7 @@ plt.xlabel("Execution time (s)")
 # plt.xticks(np.arange(0, max(resources)+1, 1), rotation='vertical')
 # plt.savefig('plots/nvmeUsed.pdf', bbox_inches='tight')
 plt.clf()
-pl = plt.plot(labels, arrivalsPlot)
+pl = plt.plot(labelsArrivals, arrivalsPlot, '^')
 plt.savefig('plots/arrivals-over-time.pdf', bbox_inches='tight')
 plt.clf()
 pl = plt.plot(labels, avgCompositionPlot)
@@ -182,7 +184,7 @@ plt.clf()
 pl = plt.plot(labels, avgWorkloadsSharingPlot)
 plt.savefig('plots/avg-wlSharing-over-time.pdf', bbox_inches='tight')
 plt.clf()
-pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75) #,  histtype='step')
+pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75)#,  histtype='step')
 plt.ylabel('# Events')
 plt.xlabel('Load factor')
 #plt.ylim(0,1)
