@@ -48,6 +48,7 @@ struct workload {
     int baseBandwidth;
     int limitPeakBandwidth;
     int cores;
+    string wlName;
 };
 
 #endif

@@ -243,7 +243,7 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
                 wload->baseBandwidth,
                 wload->limitPeakBandwidth);
     }
-    wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
+//    wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
     wload->executionTime = wload->timeLeft;
     composition.composedNvme.setAvailableBandwidth(
             (composition.composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)

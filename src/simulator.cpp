@@ -95,16 +95,27 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double resourcesUsed = 0;
     double loadFactor = 0;
     double actualLoadFactor = 0;
+    double normLoadFactor = 0;
     int stationaryStep = -1;
+    int finalStep = -1;
 
     vector<int> runningWorkloads;
     vector<int> pendingToSchedule;
+    vector<int> perfectSchedulerQueue;
 //    vector<workload> scheduledWorkloads(patients);
     vector<workload>::iterator wlpointer = workloads.begin();
     while(processedPatients < patients || !runningWorkloads.empty()) {
-        //1st Check Workloads running finishing in this step
+        //Pre-stage: empty perfectscheudler jobs
         vector<int> toFinish;
-        for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end(); ++it) {
+        for(auto it = perfectSchedulerQueue.begin(); it!=perfectSchedulerQueue.end();) {
+            if((workloads[*it].arrival + workloads[*it].executionTime) <= step) {
+                perfectSchedulerQueue.erase(it);
+            } else
+                ++it;
+        }
+
+        //1st Check Workloads running finishing in this step
+        for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end();) {
             workload* run = &workloads[*it];
             run->timeLeft--;
 //            if((run->executionTime+run->scheduled)<=step) {
@@ -112,27 +123,20 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 workloads[*it].stepFinished = step;
                 scheduler->logger[*it]["completion"]=step;
 //                scheduler->logger[workloads[*it].scheduled]["completion"].push_back(step);
-                toFinish.push_back(*it);
 //                scheduledWorkloads.push_back(*run);/
 //                cout << "free " << workloads[*it].arrival << " step " << step << " total exe time: " << step-workloads[*it].arrival << endl;
                 placementPolicy->freeResources(workloads,*it);
                 scheduler->logger[*it]["completionLoadFactor"] = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
-            }
-        }
-
-        //Remove already placed workloads
-        for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
-            for(auto it2 = runningWorkloads.begin(); it2!=runningWorkloads.end(); ++it2) {
-                if(*it2 == *it) {
-                    runningWorkloads.erase(it2);
-                    break;
-                }
-            }
+                scheduler->logger[*it]["abstractLoadFactorCompletion"] = layout.abstractLoadFactor(workloads, perfectSchedulerQueue);
+                runningWorkloads.erase(it);
+            } else
+                ++it;
         }
 
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
             pendingToSchedule.push_back(wlpointer->wlId);
+            perfectSchedulerQueue.push_back(wlpointer->wlId);
             ++wlpointer;
         }
 
@@ -143,19 +147,23 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         processedPatients += (priorScheduler - pendingToSchedule.size());
 //        if(stationaryStep==-1 && priorScheduler > 0 && (priorScheduler - pendingToSchedule.size()) <= 0)
 //            stationaryStep = step;
-        if(stationaryStep==-1 && layout.loadFactor(workloads, pendingToSchedule, runningWorkloads) >= 0.9 )
-            stationaryStep = step;
 
         double currResourcesUsed = layout.resourcesUsed();
         double currFrag = layout.calculateFragmentation();
         double currLoadFactor = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
         double currActLoadFactor = layout.actualLoadFactor(workloads,runningWorkloads);
-        if(stationaryStep>=0) {
+        double abstractLoadFactor = layout.abstractLoadFactor(workloads, perfectSchedulerQueue);
+        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
+            stationaryStep = step;
+
+        if(stationaryStep>=0 && finalStep == -1 && (wlpointer!=workloads.end() || !perfectSchedulerQueue.empty())) {
             frag += currFrag;
             resourcesUsed += currResourcesUsed;
             loadFactor += currLoadFactor;
             actualLoadFactor += currActLoadFactor;
-        }
+            normLoadFactor += abstractLoadFactor;
+        } else if(stationaryStep>=0 && finalStep==-1)
+            finalStep = step;
 
         placementPolicy->loadFactor = currLoadFactor;
         int raids = layout.raidsUsed();
@@ -173,13 +181,12 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << scheduler->logger.dump() << endl;
     step--; //correction
     printStatistics(step, workloads, stationaryStep);
-    step = step - stationaryStep;
+    step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
-    cerr << stationaryStep << " " << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << endl;
+    cerr << stationaryStep << " " << loadFactor/step << " " << step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << frag/step << " " << normLoadFactor/step << endl;
 //    cout << step << " " << frag/step << " " << resourcesUsed/step << endl;
 
 //    cout << loadFactor/step << " " << getAvgExeTime(step,workloads) << endl;
-
 }
 
 int main(int argc, char* argv[]) {
@@ -221,6 +228,7 @@ int main(int argc, char* argv[]) {
             workloads[i].performanceMultiplier=0.98;
             workloads[i].limitPeakBandwidth=6000;
             workloads[i].cores = 1;
+            workloads[i].wlName = "smufin";
         } else if (number < 0.6) {
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
@@ -230,6 +238,7 @@ int main(int argc, char* argv[]) {
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
             workloads[i].cores = 4;
+            workloads[i].wlName = "tpcx-iot";
         } else {
             workloads[i].executionTime = 500;
             workloads[i].nvmeBandwidth = 0;
@@ -239,6 +248,7 @@ int main(int argc, char* argv[]) {
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 0;
             workloads[i].cores = 8;
+            workloads[i].wlName = "execOnly";
         }
     }
 //    uniform_int_distribution<int> executionTimes(100,1800);
@@ -271,6 +281,7 @@ int main(int argc, char* argv[]) {
 //        workloads[i].performanceMultiplier=workloadsType[wlType].performanceMultiplier;
 //        workloads[i].limitPeakBandwidth=workloadsType[wlType].limitPeakBandwidth;
 //        workloads[i].cores = workloadsType[wlType].cores;
+//        workloads[i].wlName = wlType;
 //
 ////        workloadsDistribution[i]["executionTime"] = workloadsType[wlType].executionTime;
 ////        workloadsDistribution[i]["nvmeBandwidth"] = workloadsType[wlType].nvmeBandwidth;
@@ -320,12 +331,12 @@ int main(int argc, char* argv[]) {
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, firstFit, copyWL, patients, layout);
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
-//    simulator(setStarved, minFrag, copysWL, patients, layout);
+//    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
+//    simulator(setStarved, minFrag, copyWL, patients, layout);
 //    simulator(setStarved, qosPolicy, copyWL, patients, layout);
 //    simulator(starvedf, qosPolicy, copyWL, patients, layout);
-//    simulator(setStarvsed, minFrag, copyWL, patients, layout);
-//    simulator(earliestSched, minFrag, copyWL, patients, layout);//0.
+//    simulator(setStarved, minFrag, copyWL, patients, layout);
+//    simulator(earliestSched, minFrag, copyWL, patients, layout);
 //    simulator(earliestSetSched, minFrag, workloads, patients, layout);
 //    simulator(earliestSetSched, qosPolicy, workloads, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);

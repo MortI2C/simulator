@@ -25,6 +25,7 @@ class Layout {
     double averageWorkloadsSharing();
     double loadFactor(vector<workload>&, vector<int>&, vector<int>&);
     double actualLoadFactor(vector<workload>&, vector<int>&);
+    double abstractLoadFactor(vector<workload>&, vector<int>&);
     int getTotalBandwidth();
     int getTotalCapacity();
     int getTotalCores();

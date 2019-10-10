@@ -249,6 +249,23 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
     return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/coresCap);
 }
 
+double Layout::abstractLoadFactor(vector <workload> & workloads, vector<int> & queued){
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
+    int availCores = this->getTotalCores();
+
+    int bwRequested = 0;
+    int capRequested = 0;
+    int coresRequested = 0;
+    for(auto it = queued.begin(); it!=queued.end(); ++it) {
+        bwRequested += workloads[*it].baseBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
+    }
+
+    return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores);
+}
+
 double Layout::calculateLoadFactor() {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
