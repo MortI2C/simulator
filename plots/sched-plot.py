@@ -67,6 +67,7 @@ arrivalsJson = {}
 jobs = 0
 jobsPlot = []
 labelsArrivals = []
+abstractLoadFactor = []
 for i in schedule:
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
@@ -98,6 +99,7 @@ for i in schedule:
 
 for i in range(0, lastTime+1):
         lf = -1
+        abstractLf = -1
         if i in completions:
             for p in completions[i]:
                 jobs -= 1
@@ -128,6 +130,7 @@ for i in range(0, lastTime+1):
                     completions[job["completion"]] = [job]
 
                 lf = job["loadFactor"]
+                abstractLf = job["abstractLoadFactorCompletion"]
 		for volume in job["volumes"]:
 		    if job["rackid"][0] not in racks:
 		        racks[job["rackid"][0]] = {}
@@ -161,8 +164,8 @@ for i in range(0, lastTime+1):
         missedDeadlines.extend([deadlines])
         jobsPlot.extend([jobs])
         if lf != -1:
-            lf = round(lf, 1)
-            loadFactor.append(lf)
+            loadFactor.append(round(lf,1))
+            abstractLoadFactor.append(round(abstractLf,1))
 
 print(missedDeadlines[-1])
 #print(interArrivalTimes/len(schedule))
@@ -174,15 +177,19 @@ plt.xlabel("Execution time (s)")
 # plt.ylim(0,1)
 # plt.xticks(np.arange(0, max(resources)+1, 1), rotation='vertical')
 # plt.savefig('plots/nvmeUsed.pdf', bbox_inches='tight')
+
 plt.clf()
 pl = plt.plot(labelsArrivals, arrivalsPlot, '^')
 plt.savefig('plots/arrivals-over-time.pdf', bbox_inches='tight')
+
 plt.clf()
 pl = plt.plot(labels, avgCompositionPlot)
 plt.savefig('plots/avg-compositionSize-over-time.pdf', bbox_inches='tight')
+
 plt.clf()
 pl = plt.plot(labels, avgWorkloadsSharingPlot)
 plt.savefig('plots/avg-wlSharing-over-time.pdf', bbox_inches='tight')
+
 plt.clf()
 pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75)#,  histtype='step')
 plt.ylabel('# Events')
@@ -190,6 +197,15 @@ plt.xlabel('Load factor')
 #plt.ylim(0,1)
 plt.xticks(np.arange(0, max(loadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/loadFactor-over-time.pdf', bbox_inches='tight')
+
+plt.clf()
+pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75)#,  histtype='step')
+plt.ylabel('# Events')
+plt.xlabel('Abstract Load factor')
+#plt.ylim(0,1)
+plt.xticks(np.arange(0, max(abstractLoadFactor)+1, 0.5), rotation='vertical')
+plt.savefig('plots/abstractloadFactor-over-time.pdf', bbox_inches='tight')
+
 # plt.clf()
 # pl = plt.plot(labels, missedDeadlines)
 # plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
