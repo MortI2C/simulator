@@ -14,6 +14,7 @@ class QoSPolicy : public PlacementPolicy {
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int);
+    bool placeExecOnlyWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int);
 };

@@ -31,7 +31,7 @@ void ArrivalPoissonModelUniform::generate_arrivals(vector<workload>& workloads, 
 //      cout << it->arrival << " ";
         double number = distribution(generator);
         if (number <= prio_threshold) {
-            double completion = it->executionTime * 1.05 + it->arrival;
+            double completion = it->executionTime * 1.55 + it->arrival;
             it->highprio = true;
             it->deadline = (int) completion;
         } else {

@@ -15,13 +15,15 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
                            PlacementPolicy* placementPolicy, int step, Layout& layout) {
 //    if(this->logger[workloadId]["step"] != nullptr)
 //        cerr << "exists!" << endl;
-    string newVolume = "";
-    for(auto it =workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.begin();
-            it!=workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.end();
-            ++it) {
-//        newVolume = newVolume + to_string(*it); //to_string(workloads[workloadId].allocation.allocatedRack->rackId) +
-        this->logger[workloadId]["volumes"].push_back(to_string(*it));
-    }
+    if(workloads[workloadId].allocation.composition != -1) {
+        for (auto it = workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.begin();
+             it !=
+             workloads[workloadId].allocation.allocatedRack->compositions[workloads[workloadId].allocation.composition].volumes.end();
+             ++it) {
+            this->logger[workloadId]["volumes"].push_back(to_string(*it));
+        }
+    } else
+        this->logger[workloadId]["volumes"].push_back("");
 
 //    if(find(this->logger[workloadId]["volumes"].begin(),this->logger[workloadId]["volumes"].end(),newVolume) == this->logger[workloadId]["volumes"].end())
 //        this->logger[workloadId]["volumes"].push_back(newVolume);

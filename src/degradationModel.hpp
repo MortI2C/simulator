@@ -2,6 +2,7 @@
 #define DEGRADATION_MODEL_H
 #include <iostream>
 #include <vector>
+#include "resources_structures.hpp"
 using namespace std;
 
 class DegradationModel {
@@ -13,8 +14,8 @@ class DegradationModel {
     };
 
     distortionValues distortion;
-    DegradationModel() {};
-    int timeDistortion(int, int, double, int, int);
+    DegradationModel();
+    int timeDistortion(raid&, workload&);
     int smufinModel(int, int);
 };
 

@@ -26,13 +26,20 @@ void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads
     double percFreecores = (int)(wload.cores/layoutFreeCores)*100;
     int alpha = (((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)/percFreecores)*wload.executionTime;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        int alphaVect = (workloads[*it].nvmeBandwidth/layoutTotalBw+workloads[*it].nvmeCapacity/layoutTotalCapacity)*workloads[*it].executionTime;
-        if(alphaVect > alpha) {
-            inserted = true;
-            vect.insert(it,i);
-        } else if(alphaVect == alpha && wload.deadline < workloads[*it].deadline) {
-            inserted = true;
+        if(!workloads[*it].highprio && wload.highprio) {
             vect.insert(it, i);
+            inserted = true;
+        } else if(!workloads[*it].highprio) {
+            int alphaVect =
+                    (workloads[*it].nvmeBandwidth / layoutTotalBw + workloads[*it].nvmeCapacity / layoutTotalCapacity) *
+                    workloads[*it].executionTime;
+            if (alphaVect > alpha) {
+                inserted = true;
+                vect.insert(it, i);
+            } else if (alphaVect == alpha && wload.deadline < workloads[*it].deadline) {
+                inserted = true;
+                vect.insert(it, i);
+            }
         }
     }
     if(!inserted)
@@ -56,7 +63,7 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
     vector<int> toFinish;
     for(auto it = orderedWorkloads.begin(); it!=orderedWorkloads.end(); ++it) {
 //        int maxDelay = workloads[*it].executionTime*this->starvCoefficient + workloads[*it].arrival;
-        int deadline = (step > deadline) ? -1 : workloads[*it].deadline;
+        int deadline = (step > workloads[*it].deadline) ? -1 : workloads[*it].deadline;
         if(placementPolicy->placeWorkload(workloads,*it,layout,step,deadline)) {
             workloads[*it].scheduled = step;
             runningWorkloads.push_back(*it);

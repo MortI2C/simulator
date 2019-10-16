@@ -9,7 +9,15 @@
 using namespace std;
 
 class Rack;
-struct raid;
+
+struct raid {
+    raid() : composedNvme(NvmeResource(0,0)), volumes(vector<int>(0)), used(false), workloadsUsing(0), assignedWorkloads(vector<int>(0)) {}
+    NvmeResource composedNvme;
+    vector<int> volumes;
+    bool used = false;
+    int workloadsUsing;
+    vector<int> assignedWorkloads;
+};
 
 struct rackFitness {
     int fitness;
@@ -34,6 +42,7 @@ struct allocatedResources {
 struct workload {
     allocatedResources allocation;
     int executionTime;
+    int baseExecutionTime;
     int timeLeft;
     int nvmeBandwidth;
     int nvmeCapacity;

@@ -2,20 +2,12 @@
 #define RACK_H
 #include <iostream>
 #include <vector>
-//#include "resources_structures.hpp"
+#include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
 
 //class NvmeResource;
 
-struct raid {
-    raid() : composedNvme(NvmeResource(0,0)), volumes(vector<int>(0)), used(false), workloadsUsing(0), assignedWorkloads(vector<int>(0)) {}
-    NvmeResource composedNvme;
-    vector<int> volumes;
-    bool used;
-    int workloadsUsing;
-    vector<int> assignedWorkloads;
-};
 
 class Rack {
    public:
@@ -30,7 +22,6 @@ class Rack {
     int cores = 0;
 
     Rack() {
-
     }
     void addNvmeResource(NvmeResource&);
     void deleteNvmeResource (NvmeResource*);
@@ -52,6 +43,7 @@ class Rack {
     void setFreeCores(int);
     void setTotalCores(int);
     int getTotalCores();
+    bool possibleToColocate(vector<workload>&, int, int);
 };
 
 #endif

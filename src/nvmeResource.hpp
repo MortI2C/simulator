@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include "resources_structures.hpp"
 
 struct Nvme {
     int availableBandwidth;

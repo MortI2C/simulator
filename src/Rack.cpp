@@ -192,3 +192,15 @@ void Rack::setTotalCores(int cores) {
 int Rack::getTotalCores() {
     return this->cores;
 }
+
+bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition) {
+    workload* wload = &workloads[wloadId];
+
+    for(auto it2 = this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
+        if(workloads[*it2].wlName == "smufin" && wload->wlName != "smufin")
+            return false;
+        else if(wload->wlName != "smufin")
+            return true;
+    }
+    return true;
+}

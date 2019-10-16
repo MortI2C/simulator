@@ -19,6 +19,7 @@ class PlacementPolicy {
     virtual bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int) =0;
     virtual bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int) =0;
     virtual bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int) =0;
+    virtual bool placeExecOnlyWorkload(vector<workload>&, int, Layout&, int, int) =0;
     void freeResources(vector<workload>&, int);
     vector<int> MinFragHeuristic(vector<NvmeResource>&, vector<int>, int, int);
     vector<int> MinSetHeuristic(vector<NvmeResource>&, vector<int>, int, int);

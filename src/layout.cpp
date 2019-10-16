@@ -191,7 +191,7 @@ double Layout::averageCompositionSize() {
             }
         }
     }
-    return compositionsSize/totalCompositions;
+    return (totalCompositions == 0) ? 0 : compositionsSize/totalCompositions;
 }
 
 double Layout::averageWorkloadsSharing() {
@@ -205,7 +205,7 @@ double Layout::averageWorkloadsSharing() {
             }
         }
     }
-    return workloadsComposition/totalResources;
+    return (totalResources == 0)  ? 0 : workloadsComposition/totalResources;
 }
 
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {

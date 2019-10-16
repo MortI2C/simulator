@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include "degradationModel.hpp"
+#include "resources_structures.hpp"
 using namespace std;
 
 DegradationModel::DegradationModel() {
@@ -10,15 +11,23 @@ DegradationModel::DegradationModel() {
     this->distortion = distortionValues({-0.021875,97.9734,1276.36});
 }
 
-int DegradationModel::timeDistortion(int availableBandwidth, int baseExecutionTime, double performanceMultiplier, int baseBandwidth, int limitPeakBandwidth) {
-    double extraBandwidth = (availableBandwidth/baseBandwidth) - 1;
-    if(availableBandwidth>limitPeakBandwidth)
-        extraBandwidth = (limitPeakBandwidth/baseBandwidth) - 1;
-    double multiplier = pow(performanceMultiplier,extraBandwidth);
+int DegradationModel::timeDistortion(raid& composition, workload& wload) {
+    if(wload.wlName == "smufin")
+        return this->smufinModel(composition.composedNvme.getAvailableBandwidth(), composition.workloadsUsing);
 
-    return ceil(baseExecutionTime*multiplier);
+    if(wload.nvmeBandwidth == 0)
+        return wload.executionTime;
+
+    int availableBandwidth = composition.composedNvme.getAvailableBandwidth();
+    double extraBandwidth = (availableBandwidth/wload.baseBandwidth) - 1;
+    if(availableBandwidth>wload.limitPeakBandwidth)
+        extraBandwidth = (wload.limitPeakBandwidth/wload.baseBandwidth) - 1;
+    double multiplier = pow(wload.performanceMultiplier,extraBandwidth);
+
+    return ceil(wload.executionTime*multiplier);
 }
 
 int DegradationModel::smufinModel(int totalBandwidth, int totalRuns) {
     return ceil(this->distortion.a*totalBandwidth+this->distortion.b*totalRuns+this->distortion.c);
 }
+

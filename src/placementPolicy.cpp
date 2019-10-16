@@ -16,41 +16,45 @@ PlacementPolicy::PlacementPolicy(DegradationModel degradationModel) {
 void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     workload* wload = &workloads[wloadIt];
 
-    wload->allocation.allocatedRack->compositions
-    [wload->allocation.composition].composedNvme
-            .setAvailableBandwidth(wload->allocation.allocatedRack->compositions
-                                   [wload->allocation.composition].composedNvme
-                                           .getAvailableBandwidth()+wload->nvmeBandwidth);
+    assert(wload->allocation.composition != -1 || (wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0));
+    if(wload->allocation.composition != -1) {
+        wload->allocation.allocatedRack->compositions
+        [wload->allocation.composition].composedNvme
+                .setAvailableBandwidth(wload->allocation.allocatedRack->compositions
+                                       [wload->allocation.composition].composedNvme
+                                               .getAvailableBandwidth() + wload->nvmeBandwidth);
 
-    wload->allocation.allocatedRack->compositions
-    [wload->allocation.composition].composedNvme
-            .setAvailableCapacity(wload->allocation.allocatedRack->compositions
-                                  [wload->allocation.composition].composedNvme
-                                          .getAvailableCapacity()+wload->nvmeCapacity);
+        wload->allocation.allocatedRack->compositions
+        [wload->allocation.composition].composedNvme
+                .setAvailableCapacity(wload->allocation.allocatedRack->compositions
+                                      [wload->allocation.composition].composedNvme
+                                              .getAvailableCapacity() + wload->nvmeCapacity);
 
-    wload->allocation.allocatedRack->freeCores += wload->cores;
-    //Remove Workload from assigned compositions Wloads
-    bool found = false;
-    for(auto i = wload->allocation.allocatedRack->
-            compositions[wload->allocation.composition].assignedWorkloads.begin();
-        !found && i!=wload->allocation.allocatedRack->
-                compositions[wload->allocation.composition].assignedWorkloads.end();
-        ++i) {
-        workload ptWload = workloads[*i];
-        if(ptWload.wlId == wload->wlId) {
-            found = true;
-            wload->allocation.allocatedRack->compositions[wload->allocation.composition].assignedWorkloads.erase(i);
+        //Remove Workload from assigned compositions Wloads
+        bool found = false;
+        for (auto i = wload->allocation.allocatedRack->
+                compositions[wload->allocation.composition].assignedWorkloads.begin();
+             !found && i != wload->allocation.allocatedRack->
+                     compositions[wload->allocation.composition].assignedWorkloads.end();
+             ++i) {
+            workload ptWload = workloads[*i];
+            if (ptWload.wlId == wload->wlId) {
+                found = true;
+                wload->allocation.allocatedRack->compositions[wload->allocation.composition].assignedWorkloads.erase(i);
+            }
+        }
+
+        //if no more workloads in comopsition, free composition
+        if ((--wload->allocation.allocatedRack->compositions[wload->allocation.composition].workloadsUsing) == 0) {
+            wload->allocation.allocatedRack->freeComposition(wload->allocation.allocatedRack,
+                                                             wload->allocation.composition);
+        } else {
+            //Update other workloads times
+            this->updateRackWorkloadsTime(workloads,
+                                          wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
         }
     }
-
-    //if no more workloads in comopsition, free composition
-    if((--wload->allocation.allocatedRack->compositions[wload->allocation.composition].workloadsUsing)==0) {
-        wload->allocation.allocatedRack->freeComposition(wload->allocation.allocatedRack, wload->allocation.composition);
-    }
-    else {
-        //Update other workloads times
-        this->updateRackWorkloadsTime(workloads, wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
-    }
+    wload->allocation.allocatedRack->freeCores += wload->cores;
     wload->allocation = allocatedResources();
 }
 
@@ -235,19 +239,15 @@ void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloa
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
     wload->timeLeft = wload->executionTime;
-    if(wload->nvmeBandwidth > 0) {
-        wload->timeLeft = this->model.timeDistortion(
-                composition.composedNvme.getAvailableBandwidth(),
-                wload->timeLeft,
-                wload->performanceMultiplier,
-                wload->baseBandwidth,
-                wload->limitPeakBandwidth);
-    }
-//    wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
-    wload->executionTime = wload->timeLeft;
     composition.composedNvme.setAvailableBandwidth(
             (composition.composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
     );
+    if(wload->nvmeBandwidth > 0) {
+        wload->timeLeft = this->model.timeDistortion(composition,workloads[wloadIt]);
+    }
+
+//    wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
+    wload->executionTime = wload->timeLeft;
 //    this->updateRackWorkloadsTime(workloads, composition);
     composition.assignedWorkloads.push_back(wloadIt);
 }
@@ -257,12 +257,7 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
         iw != composition.assignedWorkloads.end(); ++iw) {
         workload it2 = workloads[*iw];
         if(it2.nvmeBandwidth > 0) {
-            int newTime = this->model.timeDistortion(
-                    composition.composedNvme.getAvailableBandwidth(),
-                    it2.executionTime,
-                    it2.performanceMultiplier,
-                    it2.baseBandwidth,
-                    it2.limitPeakBandwidth);
+            int newTime = this->model.timeDistortion(composition,it2);
             it2.timeLeft = ((float) it2.timeLeft / it2.executionTime) * newTime;
             it2.executionTime = newTime;
         }

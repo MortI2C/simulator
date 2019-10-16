@@ -25,20 +25,40 @@ void FirstFitPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& el
 }
 
 bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    workload* wload = &workloads[wloadIt];
+    if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
+        return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    }
+
     if( !this->placeWorkloadInComposition(workloads,wloadIt,layout,step,deadline) ) {
         return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
     } else
         return true;
 }
 
+bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    workload* wload = &workloads[wloadIt];
+    bool scheduled = false;
+    for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() && !scheduled; ++it) {
+        if(it->freeCores >= wload->cores)
+        {
+            it->freeCores -= wload->cores;
+            scheduled=true;
+            wload->timeLeft = wload->executionTime;
+            wload->allocation.allocatedRack = &(*it);
+        }
+    }
+    return scheduled;
+}
+
 bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() && !scheduled; ++it) {
         int position = 0;
         for(int i = 0; !scheduled && it->freeCores >= wload->cores && i<it->compositions.size(); ++i) {
-            if(it->compositions[i].used) {
+            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i)) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
@@ -74,7 +94,8 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
 
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it->freeCores >= wload->cores && fittingRacks.empty() && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() &&
+      !scheduled && it->freeCores >= wload->cores && fittingRacks.empty(); ++it) {
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
         int selectionBw = 0;
         for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
@@ -116,11 +137,8 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
         scheduledRack->freeCores -= wload->cores;
-        wload->timeLeft = this->model.timeDistortion(composedBandwidth,
-                wload->executionTime,
-                wload->performanceMultiplier,
-                wload->baseBandwidth,
-                wload->limitPeakBandwidth );
+        wload->timeLeft = this->model.timeDistortion(scheduledRack->compositions[freeComposition],
+                *wload);
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
     }
@@ -199,12 +217,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
-            wload->executionTime = this->model.timeDistortion(
-                    composedBandwidth,
-                    wload->executionTime,
-                    wload->performanceMultiplier,
-                    wload->baseBandwidth,
-                    wload->limitPeakBandwidth);
+            wload->executionTime = this->model.timeDistortion(scheduledRack->compositions[freeComposition],*wload);
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
