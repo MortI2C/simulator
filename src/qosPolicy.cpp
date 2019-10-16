@@ -75,7 +75,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
       it->freeCores >= wload->cores; ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i)) {
+            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();

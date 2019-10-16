@@ -87,15 +87,15 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
       it->freeCores >= wload->cores; ++it) {
         int position = 0;
         for(int i = 0; i<it->compositions.size(); ++i) {
-            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i)) {
+            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
                 int estimateTTL = wlTTL + step;
 
-                if ((deadline==-1 || estimateTTL <= deadline) && (compositionAvailBw >= wload->nvmeBandwidth &&
-                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)) {
+                if ((deadline==-1 || estimateTTL <= deadline) && (wload->wlName == "smufin" || (compositionAvailBw >= wload->nvmeBandwidth &&
+                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
                     double percFreecores = (int)(wload->cores/it->freeCores)*100;
                     int alpha = (((wload->nvmeBandwidth/compositionTotalBw)*100

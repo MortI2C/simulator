@@ -4,6 +4,7 @@
 #include <vector>
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
+#include "degradationModel.hpp"
 using namespace std;
 
 //class NvmeResource;
@@ -43,7 +44,7 @@ class Rack {
     void setFreeCores(int);
     void setTotalCores(int);
     int getTotalCores();
-    bool possibleToColocate(vector<workload>&, int, int);
+    bool possibleToColocate(vector<workload>&, int, int, int, DegradationModel&);
 };
 
 #endif

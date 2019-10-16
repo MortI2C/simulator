@@ -58,7 +58,7 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
     for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() && !scheduled; ++it) {
         int position = 0;
         for(int i = 0; !scheduled && it->freeCores >= wload->cores && i<it->compositions.size(); ++i) {
-            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i)) {
+            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();

@@ -193,7 +193,7 @@ int Rack::getTotalCores() {
     return this->cores;
 }
 
-bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition) {
+bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition, int step, DegradationModel& model) {
     workload* wload = &workloads[wloadId];
 
     for(auto it2 = this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
@@ -201,6 +201,14 @@ bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int comp
             return false;
         else if(wload->wlName != "smufin")
             return true;
+    }
+    //ALL of them are smufin
+    for(auto it2=this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
+        int newTime = model.smufinModel(this->compositions[composition].composedNvme.getTotalBandwidth(),this->compositions[composition].workloadsUsing+1);
+        workload* assigned = &workloads[*it2];
+        int timeLeft = ((float) assigned->timeLeft / assigned->executionTime) * newTime;
+        if((step+timeLeft) >= assigned->deadline)
+            return false;
     }
     return true;
 }
