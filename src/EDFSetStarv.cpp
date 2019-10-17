@@ -25,30 +25,21 @@ void EarliestDeadlineStarvationSetsScheduler::insertOrderedByDeadline(vector<wor
         vect.push_back(i);
 }
 
-bool EarliestDeadlineStarvationSetsScheduler::scheduleWorkloads(vector<workload>& workloads,
-                                     vector <int>& pendingToSchedule,
-                                     vector <int>& runningWorkloads,
-                                     PlacementPolicy* placementPolicy, int step, Layout& layout) {
-    vector<int> orderedWorkloads;
-    for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
-        workload wload = workloads[*it];
-        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
-    }
-
-    int prior = pendingToSchedule.size();
-    vector<int> toFinish;
+void EarliestDeadlineStarvationSetsScheduler::placeEDFSetStarvWorkloads(vector<workload>& workloads, vector<int>& pendingToSchedule,
+                          vector<int>& scheduled, vector<int>& runningWorkloads,
+                          PlacementPolicy* placementPolicy, int step, Layout& layout) {
     bool placed = false;
-    int groupsSize = (orderedWorkloads.size() >= 5) ? 5 : orderedWorkloads.size();
-    for(int i = groupsSize; !placed && i<orderedWorkloads.size() && layout.resourcesUsed() <= 0.8; ++i) {
+    int groupsSize = (pendingToSchedule.size() >= 5) ? 5 : pendingToSchedule.size();
+    for(int i = groupsSize; !placed && i<pendingToSchedule.size() && layout.resourcesUsed() <= 0.8; ++i) {
         vector<int> wset(groupsSize);
-        std::copy(orderedWorkloads.begin()+(i-groupsSize), orderedWorkloads.begin() + i, wset.begin());
+        std::copy(pendingToSchedule.begin()+(i-groupsSize), pendingToSchedule.begin() + i, wset.begin());
         workload wload = workloads[*(wset.begin())];
         int delay = wload.deadline - wload.executionTime;
         if ( placementPolicy->placeWorkloadsNewComposition(workloads, wset, layout, step)) {
             for (auto it = wset.begin(); it != wset.end(); ++it) {
                 workloads[*it].scheduled = step;
                 runningWorkloads.push_back(*it);
-                toFinish.push_back(*it);
+                scheduled.push_back(*it);
                 this->log(*it, workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
 //                cout << "big compo workload: " << *it << " step: " << step << endl;
 //                layout.printRaidsInfo();
@@ -56,6 +47,26 @@ bool EarliestDeadlineStarvationSetsScheduler::scheduleWorkloads(vector<workload>
             placed = true;
         }
     }
+}
+
+bool EarliestDeadlineStarvationSetsScheduler::scheduleWorkloads(vector<workload>& workloads,
+                                     vector <int>& pendingToSchedule,
+                                     vector <int>& runningWorkloads,
+                                     PlacementPolicy* placementPolicy, int step, Layout& layout) {
+    vector<int> orderedWorkloads;
+    vector<int> orderedSmufinWLs;
+    for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
+        workload wload = workloads[*it];
+        if(wload.wlName != "smufin")
+            insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+        else
+            insertOrderedByDeadline(workloads,orderedSmufinWLs,*it,wload);
+    }
+
+    vector<int> toFinish;
+    placeEDFSetStarvWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
+    placeEDFSetStarvWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
+
     //Remove placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
         for(auto it2 = pendingToSchedule.begin(); it2!=pendingToSchedule.end(); ++it2) {

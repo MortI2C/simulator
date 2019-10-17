@@ -15,6 +15,7 @@ class EarliestDeadlineStarvationSetsScheduler : public SchedulingPolicy {
       };
       void insertOrderedByDeadline(vector<workload>&, vector<int>&, int, workload&);
       bool scheduleWorkloads(vector<workload>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
+      void placeEDFSetStarvWorkloads(vector<workload>&, vector<int>&, vector<int>&, vector<int>&, PlacementPolicy*, int, Layout&);
 //    virtual void freeResources(vector<workload>::iterator) =0;
 };
 

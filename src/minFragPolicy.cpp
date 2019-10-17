@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <assert.h>
 #include "math.h"
 #include "minFragPolicy.hpp"
 #include "layout.hpp"
@@ -197,29 +198,66 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
     int capacity = 0;
     int bandwidth = 0;
     int cores = 0;
+    bool smufin = false;
+    int shortestDeadline = -1;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
+        smufin = (workloads[*it].wlName == "smufin");
         capacity+=workloads[*it].nvmeCapacity;
         bandwidth+=workloads[*it].nvmeBandwidth;
         cores+=workloads[*it].cores;
+        if(shortestDeadline == -1 || workloads[*it].deadline < shortestDeadline)
+            shortestDeadline = workloads[*it].deadline;
     }
+    assert(shortestDeadline != -1);
 
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end() && it->freeCores >= cores; ++it) {
-        vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
-        if (!selection.empty()) {
-            double percFreecores = (int)(cores/it->freeCores)*100;
-            int alpha = (((bandwidth/it->totalBandwidth)*100
-                          +(capacity/it->totalCapacity)*100)/percFreecores);
+        if(smufin) {
+            int minBw = workloads[*wloads.begin()].nvmeBandwidth;
+            if((this->model.smufinModel(minBw,wloads.size())+step)<=shortestDeadline) {
+                bandwidth = minBw;
+            } else {
+                //Assuming all NVMe equal
+                int bwMultiple = it->resources.begin()->getTotalBandwidth();
+                bool found = false;
+                for(int i = bwMultiple; !found && i>0; i+=bwMultiple) {
+                    int modelTime = this->model.smufinModel(i,wloads.size()) + step;
+                    if(modelTime<=shortestDeadline) {
+                        found = true;
+                        bandwidth = i;
+                    }
+                }
+            }
 
-            rackFitness element = {alpha, it->inUse(),
-                                   selection, &(*it)
-            };
+            vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
+            if (!selection.empty()) {
+                double percFreecores = (int) (cores / it->freeCores) * 100;
+                int alpha = (((bandwidth / it->totalBandwidth) * 100
+                        + (capacity / it->totalCapacity) * 100) / percFreecores);
+
+                rackFitness element = {alpha, it->inUse(),
+                                       selection, &(*it)
+                };
+
+                insertRackSorted(fittingRacks, element);
+            }
+        } else {
+            vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
+            if (!selection.empty()) {
+                double percFreecores = (int) (cores / it->freeCores) * 100;
+                int alpha = (((bandwidth / it->totalBandwidth) * 100
+                              + (capacity / it->totalCapacity) * 100) / percFreecores);
+
+                rackFitness element = {alpha, it->inUse(),
+                                       selection, &(*it)
+                };
 //            rackFitness element = {((int) selection.size()), it->inUse(),
 //                                   selection, &(*it)
 //            };
-            insertRackSorted(fittingRacks, element);
+                insertRackSorted(fittingRacks, element);
+            }
         }
     }
 

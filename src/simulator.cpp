@@ -327,12 +327,12 @@ int main(int argc, char* argv[]) {
     vector<workload> copyWL = workloads;
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout);
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout);
-//    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
+    simulator(fcfsSched, qosPolicy, copyWL, patients, layout);
 //    simulator(earliestSched, firstFit, copyWL, patients, layout);
 //    simulator(earliestSched, qosPolicy, copyWL, patients, layout);
 //    simulator(setStarved, minFrag, copyWL, patients, layout);
 //    simulator(setStarved, qosPolicy, copyWL, patients, layout);
-    simulator(starvedf, qosPolicy, copyWL, patients, layout);
+//    simulator(starvedf, qosPolicy, copyWL, patients, layout);
 //    simulator(setStarved, minFrag, copyWL, patients, layout);
 //    simulator(earliestSched, minFrag, copyWL, patients, layout);
 //    simulator(earliestSetSched, minFrag, workloads, patients, layout);
