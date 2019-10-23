@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "assert.h"
 #include "math.h"
 #include "qosPolicy.hpp"
 #include "layout.hpp"
@@ -118,24 +119,49 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end() && !scheduled && it->freeCores >= wload->cores; ++it) {
-        float bwExtra = (deadline == -1 || bandwidth == 0) ? 0 : (
-                (log((float)((float)(deadline-step)/(float)wload->executionTime)) / log((float)wload->performanceMultiplier)  ) + 1
-                ) * wload->baseBandwidth;
-//        if(bwExtra>wload->baseBandwidth) cerr << bwExtra << " " << deadline << " " << step << " " << wload->executionTime << " " << wload->performanceMultiplier << " " << wload->baseBandwidth << endl;
-        if(deadline != -1 && bwExtra >= 1 && bwExtra >= wload->nvmeBandwidth) {
-            if(bwExtra > wload->limitPeakBandwidth) {
-                int newTime = pow(wload->performanceMultiplier,(wload->limitPeakBandwidth/wload->baseBandwidth)-1)*wload->executionTime;
-                if((step+newTime) <= deadline ) {
-                    bandwidth = wload->limitPeakBandwidth;
+    for(vector<Rack>::iterator it = layout.racks.begin();
+        it!=layout.racks.end() && !scheduled && it->freeCores >= wload->cores;
+        ++it) {
+
+        if(wload->wlName == "smufin") {
+            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
+                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
+                //Assuming all NVMe equal
+                int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
+                bool found = false;
+                for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+                    int modelTime = this->model.smufinModel(i, 1) + step;
+                    if (modelTime <= deadline) {
+                        found = true;
+                        bandwidth = i;
+                    }
                 }
-            } else {
-                int newTime = pow(wload->performanceMultiplier,bwExtra/wload->baseBandwidth-1)*wload->executionTime;
-                if((step+newTime) <= deadline ) {
-                    bandwidth = bwExtra;
+            }
+        } else {
+            float bwExtra = (deadline == -1 || bandwidth == 0) ? 0 : (
+                    (log((float) ((float) (deadline - step) /
+                    (float) wload->executionTime)) /
+                    log((float) wload->performanceMultiplier)) + 1
+                    ) * wload->baseBandwidth;
+//        if(bwExtra>wload->baseBandwidth) cerr << bwExtra << " " << deadline << " " << step << " " << wload->executionTime << " " << wload->performanceMultiplier << " " << wload->baseBandwidth << endl;
+            if (deadline != -1 && bwExtra >= 1 && bwExtra >= wload->nvmeBandwidth) {
+                if (bwExtra > wload->limitPeakBandwidth) {
+                    int newTime =
+                            pow(wload->performanceMultiplier, (wload->limitPeakBandwidth / wload->baseBandwidth) - 1) *
+                            wload->executionTime;
+                    if ((step + newTime) <= deadline) {
+                        bandwidth = wload->limitPeakBandwidth;
+                    }
+                } else {
+                    int newTime = pow(wload->performanceMultiplier, bwExtra / wload->baseBandwidth - 1) *
+                                  wload->executionTime;
+                    if ((step + newTime) <= deadline) {
+                        bandwidth = bwExtra;
+                    }
                 }
             }
         }
+
         vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
         if(selection.empty() && bandwidth > wload->nvmeBandwidth) {
             //try new selection
@@ -208,11 +234,34 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
+    bool smufin = false;
+    int shortestDeadline = -1;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
+        smufin = (workloads[*it].wlName == "smufin");
         capacity+=workloads[*it].nvmeCapacity;
         bandwidth+=workloads[*it].nvmeBandwidth;
-        totalExecutionTime+=workloads[*it].executionTime;
         cores+=workloads[*it].cores;
+        if(shortestDeadline == -1 || workloads[*it].deadline < shortestDeadline)
+            shortestDeadline = workloads[*it].deadline;
+    }
+    assert(shortestDeadline != -1);
+
+    if(smufin) {
+        int minBw = workloads[*wloads.begin()].nvmeBandwidth;
+        if ((this->model.smufinModel(minBw, wloads.size()) + step) <= shortestDeadline) {
+            bandwidth = minBw;
+        } else {
+            //Assuming all NVMe equal
+            int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
+            bool found = false;
+            for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
+                if (modelTime <= shortestDeadline) {
+                    found = true;
+                    bandwidth = i;
+                }
+            }
+        }
     }
 
     for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {

@@ -232,16 +232,17 @@ void PlacementPolicy::insertSortedCapacity(vector<NvmeResource>& resources, vect
 void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloadIt, Rack* rack, raid& composition, int compositionId) {
     workload* wload = &workloads[wloadIt];
     composition.composedNvme.setAvailableCapacity(
-            (composition.composedNvme.getAvailableCapacity()-wload->nvmeCapacity)
-    );
+            (composition.composedNvme.getAvailableCapacity() - wload->nvmeCapacity));
+    if(wload->wlName != "smufin")
+        composition.composedNvme.setAvailableBandwidth(
+                (composition.composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
+        );
 
     wload->allocation.composition = compositionId;
     wload->allocation.allocatedRack = rack;
     composition.workloadsUsing++;
     wload->timeLeft = wload->executionTime;
-    composition.composedNvme.setAvailableBandwidth(
-            (composition.composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
-    );
+
     if(wload->nvmeBandwidth > 0) {
         wload->timeLeft = this->model.timeDistortion(composition,workloads[wloadIt]);
     }

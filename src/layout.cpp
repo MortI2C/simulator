@@ -44,16 +44,19 @@ double Layout::calculateFragmentation() {
     double racksFragAccumulated = 0;
     int totalBwRack = this->racks.begin()->resources.begin()->getTotalBandwidth()*this->racks.begin()->resources.size();
     int totalCapRack = this->racks.begin()->resources.begin()->getTotalCapacity()*this->racks.begin()->resources.size();
+    int totalCoresRack = this->racks.begin()->cores*this->racks.size();
     int totalBwUsed = 0;
     int totalCapUsed = 0;
+    int totalCoresUsed = 0;
     int totalRacksUsed = 0;
     double f_nvme = 0;
     for(vector<Rack>::iterator it = this->racks.begin(); it!=this->racks.end(); ++it) {
         int rackBw = it->getTotalBandwidthUsed();
         int rackCap = it->getTotalCapacityUsed();
-        if(rackBw > 0 || rackCap > 0)
+        if(rackBw > 0 || rackCap > 0 || it->freeCores < it->cores)
             ++totalRacksUsed;
 
+        totalCoresUsed += (it->cores - it->freeCores);
         totalBwUsed += rackBw;
         totalCapUsed += rackCap;
 
@@ -61,10 +64,10 @@ double Layout::calculateFragmentation() {
     }
     f_nvme /= this->racks.size();
 
-    int minResources = max(ceil((double)totalBwUsed/totalBwRack),ceil((double)totalCapUsed/totalCapRack));
+    int minResources = max((double)totalCoresUsed/totalCoresRack,max(ceil((double)totalBwUsed/totalBwRack),ceil((double)totalCapUsed/totalCapRack)));
     double f_rack = (double)(totalRacksUsed-minResources)/this->racks.size();
 
-    if(f_rack == 0)
+    if(f_rack == 0 && (totalBwUsed > 0 || totalCapUsed > 0))
         return f_nvme;
     else
         return f_rack;

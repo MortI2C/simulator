@@ -142,15 +142,8 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
             rackFitness element = {alpha, it->inUse(),
                                    selection, &(*it)
             };
-//            rackFitness element = {((int) selection.size()), it->inUse(),
-//                                   selection, &(*it)
-//            };
             insertRackSorted(fittingRacks, element);
         }
-//        } else if(wloadIt == 7) {
-//            cerr << "yES" << " " << layout.resourcesUsed() << endl;
-//            layout.printRaidsInfo();
-//        }
     }
 
     if(!fittingRacks.empty()) {
@@ -210,54 +203,39 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
     }
     assert(shortestDeadline != -1);
 
+    if(smufin) {
+        int minBw = workloads[*wloads.begin()].nvmeBandwidth;
+        if ((this->model.smufinModel(minBw, wloads.size()) + step) <= shortestDeadline) {
+            bandwidth = minBw;
+        } else {
+            //Assuming all NVMe equal
+            int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
+            bool found = false;
+            for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
+                if (modelTime <= shortestDeadline) {
+                    found = true;
+                    bandwidth = i;
+                }
+            }
+        }
+    }
+
     bool scheduled = false;
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end() && it->freeCores >= cores; ++it) {
-        if(smufin) {
-            int minBw = workloads[*wloads.begin()].nvmeBandwidth;
-            if((this->model.smufinModel(minBw,wloads.size())+step)<=shortestDeadline) {
-                bandwidth = minBw;
-            } else {
-                //Assuming all NVMe equal
-                int bwMultiple = it->resources.begin()->getTotalBandwidth();
-                bool found = false;
-                for(int i = bwMultiple; !found && i>0; i+=bwMultiple) {
-                    int modelTime = this->model.smufinModel(i,wloads.size()) + step;
-                    if(modelTime<=shortestDeadline) {
-                        found = true;
-                        bandwidth = i;
-                    }
-                }
-            }
+        vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
+        if (!selection.empty()) {
+            double percFreecores = (int) (cores / it->freeCores) * 100;
+            int alpha = (((bandwidth / it->totalBandwidth) * 100
+                    + (capacity / it->totalCapacity) * 100) / percFreecores);
 
-            vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
-            if (!selection.empty()) {
-                double percFreecores = (int) (cores / it->freeCores) * 100;
-                int alpha = (((bandwidth / it->totalBandwidth) * 100
-                        + (capacity / it->totalCapacity) * 100) / percFreecores);
+            rackFitness element = {alpha, it->inUse(),
+                                   selection, &(*it)
+            };
 
-                rackFitness element = {alpha, it->inUse(),
-                                       selection, &(*it)
-                };
-
-                insertRackSorted(fittingRacks, element);
-            }
-        } else {
-            vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
-            if (!selection.empty()) {
-                double percFreecores = (int) (cores / it->freeCores) * 100;
-                int alpha = (((bandwidth / it->totalBandwidth) * 100
-                              + (capacity / it->totalCapacity) * 100) / percFreecores);
-
-                rackFitness element = {alpha, it->inUse(),
-                                       selection, &(*it)
-                };
-//            rackFitness element = {((int) selection.size()), it->inUse(),
-//                                   selection, &(*it)
-//            };
-                insertRackSorted(fittingRacks, element);
-            }
+            insertRackSorted(fittingRacks, element);
         }
     }
 
