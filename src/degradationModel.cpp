@@ -8,7 +8,8 @@ using namespace std;
 
 DegradationModel::DegradationModel() {
 //    this->distortion = distortionValues({1706.29,1.08423,0.858092});
-    this->distortion = distortionValues({-0.021875,97.9734,1276.36});
+//    this->distortion = distortionValues({-0.021875,97.9734,1276.36}); SKX mix numbers
+    this->distortion = distortionValues({-0.113236,123.627,1719.01});
 }
 
 int DegradationModel::timeDistortion(raid& composition, workload& wload) {

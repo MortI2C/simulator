@@ -149,7 +149,6 @@ vector<int> PlacementPolicy::MinFragHeuristic(vector<NvmeResource>& resources, v
         return vector<int>();
     }
 
-
     int bBw = 0;
     int bCap = 0;
     vector<int> candidatesBw;

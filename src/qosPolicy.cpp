@@ -129,12 +129,17 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                 //Assuming all NVMe equal
                 int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
                 bool found = false;
+                int previousTime = -1;
                 for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
                     int modelTime = this->model.smufinModel(i, 1) + step;
-                    if (modelTime <= deadline) {
-                        found = true;
+                    if (previousTime == -1 && modelTime <= deadline) {
                         bandwidth = i;
-                    }
+                        previousTime = modelTime;
+                    } else if(previousTime > modelTime && modelTime <= deadline) {
+                        bandwidth = i;
+                        previousTime = modelTime;
+                    } else
+                        found = true;
                 }
             }
         } else {
