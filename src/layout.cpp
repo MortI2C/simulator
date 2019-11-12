@@ -194,7 +194,7 @@ double Layout::averageCompositionSize() {
             }
         }
     }
-    return (totalCompositions == 0) ? 0 : compositionsSize/totalCompositions;
+    return (totalCompositions == 0) ? 1 : compositionsSize/totalCompositions;
 }
 
 double Layout::averageWorkloadsSharing() {

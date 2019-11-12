@@ -71,8 +71,9 @@ bool EarliestDeadlineBackfillingSetsScheduler::scheduleWorkloads(vector<workload
         (orderedSmufinWLs.size()>0 && step >= (workloads[*orderedSmufinWLs.begin()].deadline - workloads[*orderedSmufinWLs.begin()].executionTime))) {
         placeEDFSetStarvWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
     }
-    
-    placeEDFSetStarvWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
+
+    if(orderedWorkloads.size() > 0)
+        placeEDFSetStarvWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
 
     //Remove placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {

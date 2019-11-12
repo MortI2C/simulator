@@ -124,8 +124,8 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
         ++it) {
 
         if(wload->wlName == "smufin") {
-            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
-                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
+//            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
+//                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
                 //Assuming all NVMe equal
                 int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
                 bool found = false;
@@ -135,7 +135,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                     if(freeResources == -1 || freeResources < it->numFreeResources)
                         freeResources = it->numFreeResources;
                 }
-                if(freeResources > 2) freeResources--;
+//                if(freeResources > 2) freeResources--;
 
                 for (int i = bwMultiple; !found && i > 0 && bwMultiple <= freeResources*bwMultiple; i += bwMultiple) {
                     int modelTime = this->model.smufinModel(i, 1) + step;
@@ -148,7 +148,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                     } else
                         found = true;
                 }
-            }
+//            }
         } else {
             float bwExtra = (deadline == -1 || bandwidth == 0) ? 0 : (
                     (log((float) ((float) (deadline - step) /

@@ -64,8 +64,10 @@ bool EarliestDeadlineStarvationSetsScheduler::scheduleWorkloads(vector<workload>
     }
 
     vector<int> toFinish;
-    placeEDFSetStarvWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
-    placeEDFSetStarvWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
+    if(orderedSmufinWLs.size() > 0)
+        placeEDFSetStarvWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
+    if(orderedWorkloads.size() > 0)
+        placeEDFSetStarvWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
 
     //Remove placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {

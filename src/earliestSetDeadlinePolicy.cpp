@@ -52,10 +52,10 @@ void EarliestSetDeadlineScheduler::placeEDFSetWorkloads(vector<workload>& worklo
                             vector<int>& scheduled, vector<int>& runningWorkloads,
                             PlacementPolicy* placementPolicy, int step, Layout& layout) {
     bool placed = false;
-    int groupsSize = (pendingToSchedule.size() >= 5) ? 5 : pendingToSchedule.size();
-    for(int i = groupsSize; !placed && i<pendingToSchedule.size(); ++i) {
+    int groupsSize = (pendingToSchedule.size() > 5) ? 5 : pendingToSchedule.size();
+    for(int i = groupsSize; !placed && i<=pendingToSchedule.size(); ++i) {
         vector<int> wset(groupsSize);
-        std::copy(pendingToSchedule.begin()+(i-groupsSize), pendingToSchedule.begin() + i, wset.begin());
+        std::copy(pendingToSchedule.begin() + (i - groupsSize), pendingToSchedule.begin() + i, wset.begin());
 //        std::copy(orderedWorkloads.begin(), orderedWorkloads.begin() + i, wset.begin());
         if (placementPolicy->placeWorkloadsNewComposition(workloads, wset, layout, step)) {
             for (auto it = wset.begin(); it != wset.end(); ++it) {
@@ -90,8 +90,11 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
     }
 
     vector<int> toFinish;
-    placeEDFSetWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
-    placeEDFSetWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
+    if(orderedSmufinWLs.size()>0)
+        placeEDFSetWorkloads(workloads, orderedSmufinWLs, toFinish, runningWorkloads, placementPolicy, step, layout);
+    if(orderedWorkloads.size()>0)
+        placeEDFSetWorkloads(workloads, orderedWorkloads, toFinish, runningWorkloads, placementPolicy, step, layout);
+
     //Remove placed workloads
     for(auto it = toFinish.begin(); it!=toFinish.end(); ++it) {
         for(auto it2 = pendingToSchedule.begin(); it2!=pendingToSchedule.end(); ++it2) {
