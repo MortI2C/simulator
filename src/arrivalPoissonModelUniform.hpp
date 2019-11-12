@@ -9,7 +9,7 @@ class ArrivalPoissonModelUniform {
    public:
     ArrivalPoissonModelUniform() {
     }
-    void generate_arrivals(vector<workload>&, float, double);
+    void generate_arrivals(vector<workload>&, float, double, double);
 };
 
 #endif

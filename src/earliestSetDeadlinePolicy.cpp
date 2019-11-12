@@ -25,7 +25,7 @@ void EarliestSetDeadlineScheduler::insertOrderedByDeadline(vector<workload>& wor
 void EarliestSetDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity, int layoutFreeCores) {
     int completionTime = wload.deadline;
     bool inserted = false;
-    double percFreecores = (int)(wload.cores/layoutFreeCores)*100;
+    double percFreecores = (layoutFreeCores > 0) ? (int)(wload.cores/layoutFreeCores)*100 : 1;
     int alpha = (((wload.nvmeBandwidth/layoutTotalBw)*100+(wload.nvmeCapacity/layoutTotalCapacity)*100)/percFreecores)*wload.executionTime;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(!workloads[*it].highprio && wload.highprio) {

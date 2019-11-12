@@ -27,9 +27,9 @@
 #include "mmpp-2.hpp"
 #include "EDFStarv.hpp"
 #include "EDFSetStarv.hpp"
+#include "EDFBackFilling.hpp"
+#include "EDFSetBackfilling.hpp"
 using namespace std;
-
-const int BASE_TIME = 1587;
 
 double getAvgCompletionTime(int step, const vector<workload>& scheduledWorkloads) {
     double completionTime = 0;
@@ -88,7 +88,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     cerr << step << " " << workloadsInStationary << " " << waitingTime << " " << exeTime << " " << completionTime << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << endl;
 }
 
-void printStatistics(int step, const vector<workload>& scheduledWorkloads, int stationaryStep, double loadFactor, double resourcesUsed, double frag, int finalStep, double abstractLf, double lambdaCoefficient) {
+void printStatistics(int step, const vector<workload>& scheduledWorkloads, int stationaryStep, double loadFactor, double resourcesUsed, double frag, int finalStep, double abstractLf, double lambdaCoefficient, double highPrioCoefficient, double compositionSize) {
     int waitingTime = 0;
     int exeTime = 0;
     int completionTime = 0;
@@ -113,11 +113,11 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
         completionTime /= workloadsInStationary;
     }
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
-    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << endl;
+    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << endl;
 }
 
 
-void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient) {
+void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient, double highPrioCoefficient) {
     std::cout.unsetf(std::ios::floatfield);
     std::cout.precision(4);
     int step = 0;
@@ -128,6 +128,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double loadFactor = 0;
     double actualLoadFactor = 0;
     double normLoadFactor = 0;
+    double compositionSize = 0;
     int stationaryStep = -1;
     int finalStep = -1;
 
@@ -190,6 +191,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
             loadFactor += currLoadFactor;
             actualLoadFactor += currActLoadFactor;
             normLoadFactor += abstractLoadFactor;
+            compositionSize += layout.averageCompositionSize();
         } else if(stationaryStep>=0 && finalStep==-1)
             finalStep = step;
 
@@ -209,7 +211,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << scheduler->logger.dump() << endl;
     step--; //correction
 //    printStatistics(step, workloads, stationaryStep);
-    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient);
+    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient, highPrioCoefficient, compositionSize);
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
 
@@ -224,6 +226,7 @@ int main(int argc, char* argv[]) {
     double lambdaCoefficient=1;
     double prio_threshold = 0.2;
     int starvCoefficient = 0.5;
+    double highPrioCoefficient = 1.25;
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
 
@@ -238,7 +241,7 @@ int main(int argc, char* argv[]) {
         prio_threshold = atof(argv[4]);
 
     if(argc>5)
-        starvCoefficient = atoi(argv[5]);
+        highPrioCoefficient = atof(argv[5]);
 
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
 //    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
@@ -329,7 +332,7 @@ int main(int argc, char* argv[]) {
     //cluster experiments
 //    arrival->generate_arrivals(workloads, 86400/patients, prio_threshold);
 //    arrival->generate_arrivals(workloads, 3600/patients, prio_threshold);
-    arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold);
+    arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient);
 //    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
 //    arrival->generate_arrivals(workloads, ((patients/40)*1500.37) / lambdaCoefficient, prio_threshold);
@@ -345,6 +348,8 @@ int main(int argc, char* argv[]) {
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
     EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
+    EarliestDeadlineBackfillingScheduler* edfBfilling = new EarliestDeadlineBackfillingScheduler();
+    EarliestDeadlineBackfillingSetsScheduler* edfSetBfilling = new EarliestDeadlineBackfillingSetsScheduler();
     EarliestDeadlineStarvationSetsScheduler* setStarved = new EarliestDeadlineStarvationSetsScheduler(starvCoefficient);
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
     EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
@@ -356,35 +361,39 @@ int main(int argc, char* argv[]) {
 //    simulator(scheduler, randomFit, workloads, patients, layout);
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
-    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient);
+    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient);
+    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient);
+    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSetSched, firstFit, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSetSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSetSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSetSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSetSched, minFrag, copyWL, patients, layout, lambdaCoefficient);
+    simulator(earliestSetSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(starvedf, firstFit, copyWL, patients, layout, lambdaCoefficient);
+    simulator(starvedf, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(starvedf, qosPolicy, copyWL, patients, layout, lambdaCoefficient);
+    simulator(starvedf, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(starvedf, minFrag, copyWL, patients, layout, lambdaCoefficient);
+    simulator(starvedf, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(setStarved, firstFit, copyWL, patients, layout, lambdaCoefficient);
+    simulator(setStarved, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(setStarved, qosPolicy, copyWL, patients, layout, lambdaCoefficient);
+    simulator(setStarved, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(setStarved, minFrag, copyWL, patients, layout, lambdaCoefficient);
+    simulator(setStarved, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    copyWL = workloads;
+//    simulator(edfBfilling, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    copyWL = workloads;
+//    simulator(edfSetBfilling, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 
     delete generator;
     delete arrival;

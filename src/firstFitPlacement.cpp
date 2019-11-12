@@ -162,7 +162,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
     }
 
     bool found = false;
-    for(auto it = layout.racks.begin(); !found && it->freeCores >= cores && it!=layout.racks.end(); ++it) {
+    for(auto it = layout.racks.begin(); !found && it!=layout.racks.end() && it->freeCores >= cores; ++it) {
         vector<NvmeResource> res = it->resources;
         vector<int> sortBw;
         for(int i = 0; i<it->freeResources.size(); ++i) {

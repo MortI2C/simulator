@@ -130,7 +130,14 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                 int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
                 bool found = false;
                 int previousTime = -1;
-                for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+                int freeResources = -1;
+                for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+                    if(freeResources == -1 || freeResources < it->numFreeResources)
+                        freeResources = it->numFreeResources;
+                }
+                if(freeResources > 2) freeResources--;
+
+                for (int i = bwMultiple; !found && i > 0 && bwMultiple <= freeResources*bwMultiple; i += bwMultiple) {
                     int modelTime = this->model.smufinModel(i, 1) + step;
                     if (previousTime == -1 && modelTime <= deadline) {
                         bandwidth = i;
@@ -258,14 +265,33 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
         } else {
             //Assuming all NVMe equal
             int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
-            bool found = false;
-            for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
-                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
-                if (modelTime <= shortestDeadline) {
-                    found = true;
-                    bandwidth = i;
-                }
+            int freeResources = -1;
+            for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+                if(freeResources == -1 || freeResources < it->numFreeResources)
+                    freeResources = it->numFreeResources;
             }
+            if(freeResources > 2) freeResources--;
+
+            bool found = false;
+            int previousTime = -1;
+            for (int i = bwMultiple; !found && i > 0 && bwMultiple <= freeResources*bwMultiple; i += bwMultiple) {
+                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
+                if (previousTime == -1 && modelTime <= deadline) {
+                    bandwidth = i;
+                    previousTime = modelTime;
+                } else if(previousTime > modelTime && modelTime <= deadline) {
+                    bandwidth = i;
+                    previousTime = modelTime;
+                } else
+                    found = true;
+            }
+//            for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+//                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
+//                if (modelTime <= shortestDeadline) {
+//                    found = true;
+//                    bandwidth = i;
+//                }
+//            }
         }
     }
 

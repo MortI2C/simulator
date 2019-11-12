@@ -13,9 +13,9 @@ void EarliestDeadlineStarvationSetsScheduler::insertOrderedByDeadline(vector<wor
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        int maxDelay = wload.deadline - wload.executionTime;
-//        int maxDelay = wload.deadline * (1 - this->starvCoefficient);
-//        if (wload.highprio) maxDelay = wload.deadline;
+//        int maxDelay = wload.deadline - wload.executionTime;
+        int maxDelay = wload.deadline * (1 - this->starvCoefficient);
+        if (wload.highprio) maxDelay = wload.deadline;
         if(maxDelay < (workloads[*it].deadline - workloads[*it].executionTime)) {
             inserted = true;
             vect.insert(it,i);
