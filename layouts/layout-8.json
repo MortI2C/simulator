@@ -1,45 +1,55 @@
 {
 	"rack0": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack1": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack2": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack3": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack4": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack5": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack6": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack7": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack8": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
 	"rack9": {
-		"nvmes": [{}],
+		"nvmes": [{"bandwidth": 1,
+			"capacity": 1}],
 		"cores": 25
 	},
-	"rack10": {
+	"disagg": {
 		"nvmes": [{
 				"bandwidth": 2000,
 				"capacity": 1600

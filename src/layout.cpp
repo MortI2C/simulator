@@ -42,9 +42,9 @@ void Layout::generateLayout(string filePath) {
 
 double Layout::calculateFragmentation() {
     double racksFragAccumulated = 0;
-    int totalBwRack = this->racks.begin()->resources.begin()->getTotalBandwidth()*this->racks.begin()->resources.size();
-    int totalCapRack = this->racks.begin()->resources.begin()->getTotalCapacity()*this->racks.begin()->resources.size();
-    int totalCoresRack = this->racks.begin()->cores*this->racks.size();
+    int totalBwRack = 0;
+    int totalCapRack = 0;
+    int totalCoresRack =  0;
     int totalBwUsed = 0;
     int totalCapUsed = 0;
     int totalCoresUsed = 0;
@@ -53,6 +53,10 @@ double Layout::calculateFragmentation() {
     for(vector<Rack>::iterator it = this->racks.begin(); it!=this->racks.end(); ++it) {
         int rackBw = it->getTotalBandwidthUsed();
         int rackCap = it->getTotalCapacityUsed();
+        totalBwRack += rackBw;
+        totalCapRack += rackCap;
+        totalCoresRack = it->cores;
+
         if(rackBw > 0 || rackCap > 0 || it->freeCores < it->cores)
             ++totalRacksUsed;
 
@@ -148,9 +152,9 @@ void Layout::printRaidsInfo() {
 int Layout::getTotalBandwidth() {
     int bw = 0;
     for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
-        for(auto it2 = this->racks.begin()->resources.begin();
-            it2!=this->racks.begin()->resources.end(); ++it2) {
-            bw+=it2->getTotalBandwidth();
+        for(auto it2 = it->resources.begin();
+            it2!=it->resources.end(); ++it2) {
+            bw = (it2->getTotalBandwidth() > 1 ) ? bw + it2->getTotalBandwidth() : bw;
         }
     }
     return bw;
@@ -159,9 +163,9 @@ int Layout::getTotalBandwidth() {
 int Layout::getTotalCapacity() {
     int cap = 0;
     for(auto it = this->racks.begin(); it!=this->racks.end(); ++it) {
-        for(auto it2 = this->racks.begin()->resources.begin();
-            it2!=this->racks.begin()->resources.end(); ++it2) {
-            cap+=it2->getTotalCapacity();
+        for(auto it2 = it->resources.begin();
+            it2!=it->resources.end(); ++it2) {
+            cap = (it2->getTotalCapacity() > 1 ) ? cap + it2->getTotalCapacity() : cap;
         }
     }
     return cap;

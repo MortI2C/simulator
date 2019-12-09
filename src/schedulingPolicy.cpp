@@ -29,7 +29,10 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
 //        this->logger[workloadId]["volumes"].push_back(newVolume);
     this->logger[workloadId]["step"] = step;
     this->logger[workloadId]["jobid"].push_back(workloadId);
-    this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.allocatedRack->rackId);
+    if(workloads[workloadId].wlName != "execOnly")
+        this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.allocatedRack->rackId);
+    else
+        this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.coresAllocatedRack->rackId);
     if(layout.loadFactor(workloads, pendingToSchedule,runningWorkloads) > this->logger[workloadId]["loadFactor"])
         this->logger[workloadId]["loadFactor"] = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
     this->logger[workloadId]["avgCompositionSize"] = layout.averageCompositionSize();

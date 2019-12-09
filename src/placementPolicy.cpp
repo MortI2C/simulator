@@ -54,7 +54,8 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
                                           wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
         }
     }
-    wload->allocation.allocatedRack->freeCores += wload->cores;
+    wload->allocation.coresAllocatedRack->freeCores += wload->cores;
+//    wload->allocation.allocatedRack->freeCores += wload->cores;
     wload->allocation = allocatedResources();
 }
 

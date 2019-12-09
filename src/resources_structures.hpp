@@ -37,6 +37,7 @@ struct allocatedResources {
     allocatedResources() : composition(-1) {}
     int composition;
     Rack* allocatedRack;
+    Rack* coresAllocatedRack;
 };
 
 struct workload {
