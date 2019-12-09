@@ -1,5 +1,45 @@
 {
 	"rack0": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack1": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack2": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack3": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack4": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack5": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack6": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack7": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack8": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack9": {
+		"nvmes": [{}],
+		"cores": 25
+	},
+	"rack10": {
 		"nvmes": [{
 				"bandwidth": 2000,
 				"capacity": 1600
@@ -41,6 +81,6 @@
 				"capacity": 1600
 			}
 		],
-		"cores": 250
+		"cores": 0
 	}
 }
