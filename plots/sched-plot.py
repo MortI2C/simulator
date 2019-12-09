@@ -68,6 +68,7 @@ jobs = 0
 jobsPlot = []
 labelsArrivals = []
 abstractLoadFactor = []
+labelsLf = []
 for i in schedule:
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
@@ -164,6 +165,7 @@ for i in range(0, lastTime+1):
         missedDeadlines.extend([deadlines])
         jobsPlot.extend([jobs])
         if lf != -1:
+            labelsLf.extend([i])
             loadFactor.append(round(lf,1))
             abstractLoadFactor.append(round(abstractLf,1))
 
@@ -199,16 +201,17 @@ plt.xticks(np.arange(0, max(loadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/loadFactor-over-time.pdf', bbox_inches='tight')
 
 plt.clf()
-pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75)#,  histtype='step')
-plt.ylabel('# Events')
-plt.xlabel('Abstract Load factor')
+plt.plot(labelsLf,loadFactor)
+#pl = plt.hist(loadFactor, 100, density=True, facecolor='g', alpha=0.75, cumulative=1)#,  histtype='step')
+#plt.ylabel('Likelihood')
+#plt.xlabel('Abstract Load factor')
 #plt.ylim(0,1)
-plt.xticks(np.arange(0, max(abstractLoadFactor)+1, 0.5), rotation='vertical')
+#plt.xticks(np.arange(0, max(abstractLoadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/abstractloadFactor-over-time.pdf', bbox_inches='tight')
 
-# plt.clf()
-# pl = plt.plot(labels, missedDeadlines)
-# plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
+plt.clf()
+pl = plt.plot(labels, missedDeadlines)
+plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
 
 plt.clf()
 pl = plt.plot(labels, arrivalAccPlot)

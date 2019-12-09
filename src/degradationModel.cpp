@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <assert.h>
 #include "degradationModel.hpp"
 #include "resources_structures.hpp"
 using namespace std;
@@ -29,6 +30,13 @@ int DegradationModel::timeDistortion(raid& composition, workload& wload) {
 }
 
 int DegradationModel::smufinModel(int totalBandwidth, int totalRuns) {
-    return ceil(this->distortion.a*totalBandwidth+this->distortion.b*totalRuns+this->distortion.c);
+    int bwModel = ceil(totalBandwidth/2000);
+    if(bwModel > 3) bwModel = 3;
+    if(totalRuns<=6 && bwModel>0 && totalRuns>0) {
+        return this->values[bwModel - 1][totalRuns - 1];
+    } else {
+        return ceil(this->distortion.a * totalBandwidth + this->distortion.b * totalRuns + this->distortion.c);
+    }
+//    return ceil(-0.116413*totalBandwidth+1.73256*exp(totalRuns)+1988.05);
 }
 

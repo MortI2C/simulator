@@ -85,7 +85,8 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                         it->compositions[i],*wload) + step;
 
                 if ((deadline == -1 || deadline >= estimateTTL) &&
-                        (wload->wlName == "smufin" || (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                        ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing<7) ||
+                        (wload->wlName != "smufin" && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
                     nvmeFitness element = {
@@ -136,7 +137,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                         freeResources = it->numFreeResources;
                 }
 //                if(freeResources > 2) freeResources--;
-                for (int i = bwMultiple; !found && i > 0 && i <= freeResources*bwMultiple && i<wload->limitPeakBandwidth; i += bwMultiple) {
+                for (int i = bwMultiple; !found && i > 0 && i <= freeResources*bwMultiple && i<=wload->limitPeakBandwidth; i += bwMultiple) {
                     int modelTime = this->model.smufinModel(i, 1) + step;
                     if (previousTime == -1 && modelTime <= deadline) {
                         bandwidth = i;
@@ -274,7 +275,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
 
             bool found = false;
             int previousTime = -1;
-            for (int i = bwMultiple; !found && i > 0 && i <= freeResources*bwMultiple && i < peakBw; i += bwMultiple) {
+            for (int i = bwMultiple; !found && i > 0 && i <= freeResources*bwMultiple && i <= peakBw; i += bwMultiple) {
                 int modelTime = this->model.smufinModel(i, wloads.size()) + step;
                 if (previousTime == -1 && modelTime <= deadline) {
                     bandwidth = i;

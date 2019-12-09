@@ -95,7 +95,9 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
                 int estimateTTL = wlTTL + step;
 
-                if ((deadline==-1 || estimateTTL <= deadline) && (wload->wlName == "smufin" || (compositionAvailBw >= wload->nvmeBandwidth &&
+                if ((deadline==-1 || estimateTTL <= deadline) &&
+                    ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing<7) ||
+                     (wload->wlName != "smufin" && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                      it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
                     double percFreecores = (int)(wload->cores/it->freeCores)*100;
@@ -210,15 +212,25 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
         } else {
             //Assuming all NVMe equal
             int bwMultiple = layout.racks.begin()->resources.begin()->getTotalBandwidth();
-            bool found = false;
-            for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
-                int modelTime = this->model.smufinModel(i, wloads.size()) + step;
-                if (modelTime <= shortestDeadline) {
-                    found = true;
-                    bandwidth = i;
+            int maxBw = bwMultiple * layout.racks.begin()->resources.size();
+            if((this->model.smufinModel(maxBw, wloads.size())+step) > shortestDeadline ) {
+                //Will never be able to meet request!
+                bandwidth = maxBw;
+            } else {
+                bool found = false;
+                for (int i = bwMultiple; !found && i > 0; i += bwMultiple) {
+                    int modelTime = this->model.smufinModel(i, wloads.size()) + step;
+                    if (modelTime <= shortestDeadline) {
+                        found = true;
+                        bandwidth = i;
+                    }
                 }
             }
         }
+    } else {
+        int maxBw = layout.racks.begin()->resources.size()*layout.racks.begin()->resources.begin()->getTotalBandwidth();
+        if(bandwidth>0 && bandwidth>maxBw)
+            bandwidth=maxBw;
     }
 
     bool scheduled = false;

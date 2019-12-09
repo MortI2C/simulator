@@ -2,12 +2,12 @@
 #include <vector>
 #include "layout.hpp"
 #include "resources_structures.hpp"
-#include "earliestDeadlinePolicy.hpp"
+#include "minFragSchedPolicy.hpp"
 #include "placementPolicy.hpp"
 using namespace std;
 
 //Insert into vector ordered by deadline step, worst-case O(n)
-void EarliestDeadlineScheduler::insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
+void MinFragScheduler::insertOrderedByDeadline(vector<workload>& workloads, vector<int>& vect, int i, workload& wload) {
     int completionTime = wload.deadline;
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
@@ -20,7 +20,7 @@ void EarliestDeadlineScheduler::insertOrderedByDeadline(vector<workload>& worklo
         vect.push_back(i);
 }
 
-void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity, int layoutFreeCores) {
+void MinFragScheduler::insertOrderedByAlpha(vector<workload>& workloads, vector<int>& vect, int i, workload& wload, int layoutTotalBw, int layoutTotalCapacity, int layoutFreeCores) {
     int completionTime = wload.deadline;
     bool inserted = false;
     double percFreecores = (layoutFreeCores > 0 ) ? (int)(wload.cores/layoutFreeCores)*100 : 1;
@@ -46,7 +46,7 @@ void EarliestDeadlineScheduler::insertOrderedByAlpha(vector<workload>& workloads
         vect.push_back(i);
 }
 
-bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
+bool MinFragScheduler::scheduleWorkloads(vector<workload>& workloads,
                                      vector <int>& pendingToSchedule,
                                      vector <int>& runningWorkloads,
                                      PlacementPolicy* placementPolicy, int step, Layout& layout) {
@@ -57,8 +57,8 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
 
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-//        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
-        this->insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
+//        this->insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
     }
 
     vector<int> toFinish;

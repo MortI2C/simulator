@@ -64,8 +64,11 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                 int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                 int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
 
-                if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
+                if((wload->wlName == "smufin" && it->compositions[i].workloadsUsing<7) ||
+                 (wload->wlName != "smufin" && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                  it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)) {
+//                if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+//                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
                     nvmeFitness element = {
                             ((it->compositions[i].composedNvme.getAvailableBandwidth() - wload->nvmeBandwidth)

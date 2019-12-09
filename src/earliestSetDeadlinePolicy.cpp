@@ -83,10 +83,15 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
 //        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
-        if(wload.wlName != "smufin")
-            this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
-        else
-            this->insertOrderedByAlpha(workloads,orderedSmufinWLs,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
+        if (wload.wlName != "smufin") {
+            this->insertOrderedByDeadline(workloads, orderedWorkloads, *it, wload);
+//            this->insertOrderedByAlpha(workloads, orderedWorkloads, *it, wload, layoutTotalBw, layoutTotalCapacity,
+//                                       layoutFreeCores);
+        } else {
+            this->insertOrderedByDeadline(workloads, orderedSmufinWLs, *it, wload);
+//            this->insertOrderedByAlpha(workloads, orderedSmufinWLs, *it, wload, layoutTotalBw, layoutTotalCapacity,
+//                                       layoutFreeCores);
+        }
     }
 
     vector<int> toFinish;
@@ -109,8 +114,8 @@ bool EarliestSetDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads
     //Finally try to place sets of workloads in new compositions
     for(auto it = pendingToSchedule.begin(); it!=pendingToSchedule.end(); ++it) {
         workload wload = workloads[*it];
-//        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
-        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
+        insertOrderedByDeadline(workloads,orderedWorkloads,*it,wload);
+//        this->insertOrderedByAlpha(workloads,orderedWorkloads,*it,wload, layoutTotalBw, layoutTotalCapacity, layoutFreeCores );
     }
 
     //Second place workloads starved for too long
