@@ -15,9 +15,15 @@ void Rack::addNvmeResource(NvmeResource& nvme) {
 
 void Rack::addNvmeResourceVector(vector<NvmeResource> nvmes) {
     this->resources = nvmes;
-    this->freeResources = vector<int>(nvmes.size(),1);
-    this->compositions = vector<raid>(nvmes.size());
-    this->numFreeResources = nvmes.size();
+    if(nvmes.begin()->getTotalCapacity()>1) {
+        this->freeResources = vector<int>(nvmes.size(), 1);
+        this->compositions = vector<raid>(nvmes.size());
+        this->numFreeResources = nvmes.size();
+    } else {
+        this->freeResources = vector<int>(0,0);
+        this->compositions = vector<raid>(0);
+        this->numFreeResources = 0;
+    }
 }
 
 void Rack::deleteNvmeResource (NvmeResource* nvme) {

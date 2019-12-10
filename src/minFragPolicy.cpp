@@ -146,8 +146,8 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
             }
         }
     }
-    Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
 
+    Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
     if(!fittingCompositions.empty() && coresRack != nullptr) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition],
@@ -249,7 +249,12 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
             bandwidth = minBw;
         } else {
             //Assuming all NVMe equal
-            int bwMultiple = layout.racks.end()->resources.begin()->getTotalBandwidth();
+            int bwMultiple = -1;
+            for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
+                if(it->resources.begin()->getTotalBandwidth()>1 && bwMultiple == -1)
+                    bwMultiple = it->resources.begin()->getTotalBandwidth();
+            }
+
             int maxBw = bwMultiple * layout.racks.end()->resources.size();
             if((this->model.smufinModel(maxBw, wloads.size())+step) > shortestDeadline ) {
                 //Will never be able to meet request!

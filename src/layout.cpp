@@ -81,8 +81,10 @@ double Layout::resourcesUsed() {
     double resourcesUsed = 0;
     int totalResources = 0;
     for(auto i = this->racks.begin(); i!=this->racks.end(); ++i) {
-        resourcesUsed+=(i->resourcesUsed()*i->resources.size());
-        totalResources+=i->resources.size();
+        if(i->resources.begin()->getTotalCapacity()>1) {
+            resourcesUsed += (i->resourcesUsed() * i->resources.size());
+            totalResources += i->resources.size();
+        }
     }
     return resourcesUsed/totalResources;
 }

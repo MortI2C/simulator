@@ -17,6 +17,8 @@ class FirstFitPolicy : public PlacementPolicy {
     bool placeExecOnlyWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int);
+    Rack* allocateCoresOnly(vector<workload>&, int, Layout&);
+    Rack* allocateWorkloadsCoresOnly(vector<workload>&, vector<int>&, Layout&);
 };
 
 #endif

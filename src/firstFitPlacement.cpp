@@ -36,19 +36,50 @@ bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Lay
         return true;
 }
 
-bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+Rack* FirstFitPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
     workload* wload = &workloads[wloadIt];
     bool scheduled = false;
-    for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() && !scheduled; ++it) {
+    vector<rackFitness> fittingRacks;
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         if(it->freeCores >= wload->cores)
         {
-            it->freeCores -= wload->cores;
-            scheduled=true;
-            wload->timeLeft = wload->executionTime;
-            wload->allocation.allocatedRack = &(*it);
+           Rack* element = &(*it);
+           return element;
         }
     }
-    return scheduled;
+
+    return nullptr;
+}
+
+Rack* FirstFitPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vector<int>& wloads, Layout& layout) {
+    int cores = 0;
+    for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
+        cores+=workloads[*it].cores;
+    }
+
+    bool scheduled = false;
+    vector<rackFitness> fittingRacks;
+    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+        if(it->freeCores >= cores)
+        {
+            Rack* element = &(*it);
+            return element;
+        }
+    }
+
+    return nullptr;
+}
+
+bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    workload* wload = &workloads[wloadIt];
+    Rack* scheduledRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(scheduledRack != nullptr) {
+        scheduledRack->freeCores -= wload->cores;
+        wload->timeLeft = wload->executionTime;
+        wload->allocation.coresAllocatedRack = scheduledRack;
+        return true;
+    } else
+        return false;
 }
 
 bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
@@ -57,7 +88,7 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() && !scheduled; ++it) {
         int position = 0;
-        for(int i = 0; !scheduled && it->freeCores >= wload->cores && i<it->compositions.size(); ++i) {
+        for(int i = 0; !scheduled && i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1; ++i) {
             if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
@@ -75,12 +106,16 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                              + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
                             wlTTL - compositionTTL, i, &(*it)
                     };
-                    it->freeCores -= wload->cores;
-                    this->updateRackWorkloads(workloads,wloadIt,
-                            element.rack,
-                            element.rack->compositions[element.composition],
-                            element.composition);
-                    scheduled = true;
+                    Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+                    if(coresRack != nullptr) {
+                        coresRack->freeCores -= wload->cores;
+                        this->updateRackWorkloads(workloads, wloadIt,
+                                                  element.rack,
+                                                  element.rack->compositions[element.composition],
+                                                  element.composition);
+                        scheduled = true;
+                        wload->allocation.coresAllocatedRack = coresRack;
+                    }
                 }
             }
         }
@@ -98,21 +133,24 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin();  it!=layout.racks.end() &&
-      !scheduled && it->freeCores >= wload->cores && fittingRacks.empty(); ++it) {
-        vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity );
-        int selectionBw = 0;
-        for(auto it2 = selection.begin(); it2!=selection.end(); ++it2) {
-            selectionBw = it->resources[*it2].getTotalBandwidth();
-        }
-        if(!selection.empty()) {
-            rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
-                                   selection, &(*it)
-            };
-            fittingRacks.push_back(element);
+      !scheduled && fittingRacks.empty(); ++it) {
+        if(it->resources.begin()->getTotalCapacity() > 1) {
+            vector<int> selection = this->MinSetHeuristic(it->resources, it->freeResources, bandwidth, capacity);
+            int selectionBw = 0;
+            for (auto it2 = selection.begin(); it2 != selection.end(); ++it2) {
+                selectionBw = it->resources[*it2].getTotalBandwidth();
+            }
+            if (!selection.empty()) {
+                rackFitness element = {(it->numFreeResources - (int) selection.size()), it->inUse(),
+                                       selection, &(*it)
+                };
+                fittingRacks.push_back(element);
+            }
         }
     }
 
-    if(!fittingRacks.empty()) {
+    Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
         scheduled = true;
@@ -139,11 +177,12 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
-        scheduledRack->freeCores -= wload->cores;
+        coresRack->freeCores -= wload->cores;
         wload->timeLeft = this->model.timeDistortion(scheduledRack->compositions[freeComposition],
                 *wload);
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
+        wload->allocation.coresAllocatedRack = coresRack;
     }
 
     return scheduled;
@@ -165,33 +204,35 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
     }
 
     bool found = false;
-    for(auto it = layout.racks.begin(); !found && it!=layout.racks.end() && it->freeCores >= cores; ++it) {
-        vector<NvmeResource> res = it->resources;
-        vector<int> sortBw;
-        for(int i = 0; i<it->freeResources.size(); ++i) {
-            if(it->freeResources[i]) {
-                this->insertSortedBandwidth(it->resources, sortBw, i);
+    for(auto it = layout.racks.begin(); !found && it!=layout.racks.end(); ++it) {
+        if(it->resources.begin()->getTotalCapacity()>1) {
+            vector <NvmeResource> res = it->resources;
+            vector<int> sortBw;
+            for (int i = 0; i < it->freeResources.size(); ++i) {
+                if (it->freeResources[i]) {
+                    this->insertSortedBandwidth(it->resources, sortBw, i);
+                }
             }
-        }
-        int resBw = 0;
-        int resCap = 0;
-        vector<int> tempSelection;
-        for(auto it2 = sortBw.begin(); !found && it2!=sortBw.end(); ++it2) {
-            resBw+=it->resources[*it2].getTotalBandwidth();
-            resCap+=it->resources[*it2].getTotalCapacity();
-            tempSelection.push_back(*it2);
-            if(resBw >= bandwidth && resCap >= capacity) {
-                found = true;
-                rackFitness element = {(it->numFreeResources - (int) tempSelection.size()), it->inUse(),
-                                       tempSelection, &(*it)
-                };
-                insertRackSorted(fittingRacks, element);
+            int resBw = 0;
+            int resCap = 0;
+            vector<int> tempSelection;
+            for (auto it2 = sortBw.begin(); !found && it2 != sortBw.end(); ++it2) {
+                resBw += it->resources[*it2].getTotalBandwidth();
+                resCap += it->resources[*it2].getTotalCapacity();
+                tempSelection.push_back(*it2);
+                if (resBw >= bandwidth && resCap >= capacity) {
+                    found = true;
+                    rackFitness element = {(it->numFreeResources - (int) tempSelection.size()), it->inUse(),
+                                           tempSelection, &(*it)
+                    };
+                    insertRackSorted(fittingRacks, element);
+                }
             }
         }
     }
 
-
-    if(!fittingRacks.empty()) {
+    Rack* coresRack = this->allocateWorkloadsCoresOnly(workloads, wloads, layout);
+    if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
         scheduled = true;
@@ -216,7 +257,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = wloads.size();
-        scheduledRack->freeCores -= cores;
+        coresRack->freeCores -= cores;
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];
             scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(*it);
@@ -224,6 +265,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
             wload->timeLeft = wload->executionTime;
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
+            wload->allocation.coresAllocatedRack = coresRack;
         }
     }
 
