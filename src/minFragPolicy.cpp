@@ -56,9 +56,9 @@ Rack* MinFragPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt,
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         if(it->freeCores >= wload->cores)
         {
-            int percFreecores = (it->freeCores/it->cores)*100;
-            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
-                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+            int alpha = 100 - (it->freeCores/it->cores)*100;
+//            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+//                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
 
             rackFitness element = {alpha, true,
                                    vector<int>(), &(*it)
@@ -85,9 +85,9 @@ Rack* MinFragPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vec
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         if(it->freeCores >= cores)
         {
-            int percFreecores = (it->freeCores/it->cores)*100;
-            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
-                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+            int alpha = 100 - (it->freeCores/it->cores)*100;
+//            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+//                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
 
             rackFitness element = {alpha, true,
                                    vector<int>(), &(*it)
@@ -121,7 +121,7 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1; ++i) {
+        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores); ++i) {
             if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
@@ -150,6 +150,9 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
     if(!fittingCompositions.empty() && coresRack != nullptr) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
+        if(it->rack->cores>0)
+            coresRack = it->rack;
+
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition],
                                   it->composition);
         scheduled = true;
@@ -170,7 +173,7 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
-        if( it->resources.begin()->getTotalCapacity()>1) {
+        if( it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
             if (!selection.empty()) {
                 int alpha = (((wload->nvmeBandwidth / it->totalBandwidth) * 100
@@ -188,6 +191,9 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
+        if(scheduledRack->cores > 0) 
+            coresRack = scheduledRack;
+
         scheduled = true;
         int freeComposition = -1;
         for(int i = 0; freeComposition == -1 && i<scheduledRack->compositions.size(); ++i) {
@@ -280,7 +286,7 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
-        if(it->resources.begin()->getTotalCapacity()>1) {
+        if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= cores)) {
             vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
             if (!selection.empty()) {
                 int alpha = (((bandwidth / it->totalBandwidth) * 100
@@ -299,6 +305,9 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
+        if(scheduledRack->cores > 0)
+            coresRack = scheduledRack;
+
         scheduled = true;
         int freeComposition = -1;
         for(int i = 0; freeComposition == -1 && i<scheduledRack->compositions.size(); ++i) {

@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 0;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 0;
-            workloads[i].cores = 16;
+            workloads[i].cores = 8;
             workloads[i].wlName = "execOnly";
         }
         workloads[i].baseExecutionTime = workloads[i].executionTime;

@@ -103,7 +103,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1; ++i) {
+        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores); ++i) {
             if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                 int wlTTL = wload->executionTime + step;
                 int compositionTTL = it->compositionTTL(workloads, i, step);
@@ -122,7 +122,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                              + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
                             estimateTTL - compositionTTL, i, &(*it)
                     };
-//                    if(compositionTTL <= estimateTTL)
+
                     this->insertSorted(fittingCompositions, element);
                 }
             }
@@ -132,6 +132,9 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
     if(!fittingCompositions.empty() && coresRack != nullptr) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
+        if(it->rack->cores>0)
+            coresRack = it->rack;
+
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition], it->composition);
 //        cout << it->rack->compositions[it->composition].assignedWorkloads.size() << endl;
         scheduled = true;
@@ -153,7 +156,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     for(vector<Rack>::iterator it = layout.racks.begin();
         it!=layout.racks.end() && !scheduled;
         ++it) {
-        if(it->resources.begin()->getTotalCapacity()>1) {
+        if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores>=wload->cores)) {
             if (wload->wlName == "smufin") {
 //            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
 //                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
@@ -180,7 +183,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                         found = true;
                 }
 //            }
-            } else {
+            } else  {
                 float bwExtra = (deadline == -1 || bandwidth == 0) ? 0 : (
                         (log((float) (
                                 (float) (deadline - step) /
@@ -238,6 +241,9 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
+        if(scheduledRack->cores>0)
+            coresRack=scheduledRack;
+
         scheduled = true;
         int freeComposition = -1;
         for(int i = 0; freeComposition == -1 && i<scheduledRack->compositions.size(); ++i) {
@@ -337,7 +343,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
     }
 
     for(auto it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
-        if(it->resources.begin()->getTotalCapacity() > 1) {
+        if(it->resources.begin()->getTotalCapacity() > 1 && (it->cores==0 || it->freeCores >= cores)) {
 //            vector <NvmeResource> res = it->resources;
 //            vector<int> sortBw;
 //            for (int i = 0; i < it->freeResources.size(); ++i) {
@@ -370,6 +376,9 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
+        if(scheduledRack->cores > 0)
+            coresRack = scheduledRack;
+
         scheduled = true;
         int freeComposition = -1;
         for(int i = 0; freeComposition == -1 && i<scheduledRack->compositions.size(); ++i) {
