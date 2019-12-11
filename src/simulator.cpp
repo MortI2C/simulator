@@ -266,7 +266,7 @@ int main(int argc, char* argv[]) {
         } else if (number < 0.3) { //0.3
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
-            workloads[i].nvmeCapacity = 341;
+            workloads[i].nvmeCapacity = 1000;
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 0;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 0;
-            workloads[i].cores = 8;
+            workloads[i].cores = 16;
             workloads[i].wlName = "execOnly";
         }
         workloads[i].baseExecutionTime = workloads[i].executionTime;
