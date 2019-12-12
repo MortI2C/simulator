@@ -149,6 +149,11 @@ double Rack::getAvailableBandwidth() {
         if(this->freeResources[i])
            availBandwidth += resources[i].getAvailableBandwidth();
     }
+    for(auto it = this->compositions.begin(); it!= this->compositions.end(); ++it)
+    {
+        if(it->used)
+            availBandwidth += it->composedNvme.getAvailableBandwidth();
+    }
 
     return availBandwidth;
 }
@@ -158,6 +163,11 @@ double Rack::getAvailableCapacity() {
     for(int i = 0; i<this->freeResources.size(); ++i) {
         if(this->freeResources[i])
             availCapacity += resources[i].getAvailableCapacity();
+    }
+    for(auto it = this->compositions.begin(); it!= this->compositions.end(); ++it)
+    {
+        if(it->used)
+            availCapacity += it->composedNvme.getAvailableCapacity();
     }
 
     return availCapacity;

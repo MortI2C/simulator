@@ -95,6 +95,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     int missedDeadlines = 0;
     int workloadsInStationary = 0;
     int highprioMisses = 0;
+    int failedToAllocatfailToAllocateDueCores= 0;
     for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
         if(stationaryStep <= it->arrival ) {
             waitingTime += (it->scheduled - it->arrival);
@@ -104,18 +105,19 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
                 ++missedDeadlines;
                 if(it->highprio) ++highprioMisses;
             }
+            failedToAllocatfailToAllocateDueCores +=  it->failToAllocateDueCores;
             workloadsInStationary++;
         }
     }
+
     if(workloadsInStationary > 0) {
         waitingTime /= workloadsInStationary;
         exeTime /= workloadsInStationary;
         completionTime /= workloadsInStationary;
     }
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
-    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << endl;
+    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << endl;
 }
-
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient, double highPrioCoefficient) {
     std::cout.unsetf(std::ios::floatfield);
@@ -254,7 +256,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.2) { //0.2
+        if(number < 0.1) { //0.2
             workloads[i].executionTime = 1500;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
@@ -263,14 +265,14 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
-        } else if (number < 0.3) { //0.3
+        } else if (number < 0.8) { //0.3
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
-            workloads[i].nvmeCapacity = 1000;
+            workloads[i].nvmeCapacity = 341;
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //4
+            workloads[i].cores = 10; //4
             workloads[i].wlName = "tpcxiot";
         } else {
             workloads[i].executionTime = 500;
@@ -279,7 +281,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 0;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 0;
-            workloads[i].cores = 8;
+            workloads[i].cores = 15;
             workloads[i].wlName = "execOnly";
         }
         workloads[i].baseExecutionTime = workloads[i].executionTime;

@@ -59,6 +59,8 @@ struct workload {
     int limitPeakBandwidth;
     int cores;
     string wlName;
+    int allocationAttempts = 0;
+    int failToAllocateDueCores = 0;
 };
 
 #endif

@@ -47,10 +47,14 @@ bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& 
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }
 
-    if( !this->placeWorkloadInComposition(workloads,wloadIt,layout,step,deadline) ) {
+    workloads[wloadIt].allocationAttempts++;
+    bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
+    if(!scheduled) {
+        workloads[wloadIt].allocationAttempts++;
         return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
-    } else
-        return true;
+    }
+
+    return scheduled;
 }
 
 Rack* QoSPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
@@ -103,33 +107,43 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores); ++i) {
-            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
-                int wlTTL = wload->executionTime + step;
-                int compositionTTL = it->compositionTTL(workloads, i, step);
-                int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
-                int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
-                int estimateTTL = (wload->nvmeBandwidth == 0) ? wload->executionTime+step : this->model.timeDistortion(
-                        it->compositions[i],*wload) + step;
+        if(it->cores>0 && it->resources.begin()->getTotalCapacity()>1 && it->freeCores < wload->cores) {
+            if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
+                wload->failToAllocateDueCores++;
+        } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
+            for (int i = 0; i < it->compositions.size(); ++i) {
+                if (it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                    int wlTTL = wload->executionTime + step;
+                    int compositionTTL = it->compositionTTL(workloads, i, step);
+                    int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
+                    int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
+                    int estimateTTL = (wload->nvmeBandwidth == 0) ? wload->executionTime + step :
+                                      this->model.timeDistortion(
+                                              it->compositions[i], *wload) + step;
 
-                if ((deadline == -1 || deadline >= estimateTTL) &&
-                        ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing<7) ||
-                        (wload->wlName != "smufin" && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
+                    if ((deadline == -1 || deadline >= estimateTTL) &&
+                        ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing < 7) ||
+                         (wload->wlName != "smufin" &&
+                          it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                          it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
-                    nvmeFitness element = {
-                            ((it->compositions[i].composedNvme.getAvailableBandwidth() - wload->nvmeBandwidth)
-                             + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
-                            estimateTTL - compositionTTL, i, &(*it)
-                    };
+                        nvmeFitness element = {
+                                ((it->compositions[i].composedNvme.getAvailableBandwidth() - wload->nvmeBandwidth)
+                                 + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
+                                estimateTTL - compositionTTL, i, &(*it)
+                        };
 
-                    this->insertSorted(fittingCompositions, element);
+                        this->insertSorted(fittingCompositions, element);
+                    }
                 }
             }
         }
     }
 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!fittingCompositions.empty() && coresRack == nullptr)
+        wload->failToAllocateDueCores++;
+
     if(!fittingCompositions.empty() && coresRack != nullptr) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
         if(it->rack->cores>0)
@@ -156,7 +170,10 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     for(vector<Rack>::iterator it = layout.racks.begin();
         it!=layout.racks.end() && !scheduled;
         ++it) {
-        if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores>=wload->cores)) {
+        if(it->cores>0 && it->resources.begin()->getTotalCapacity()>1 && it->freeCores < wload->cores) {
+            if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
+                wload->failToAllocateDueCores++;
+        } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             if (wload->wlName == "smufin") {
 //            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
 //                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
@@ -238,6 +255,9 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     }
 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!fittingRacks.empty() && coresRack == nullptr)
+        wload->failToAllocateDueCores++;
+    
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;

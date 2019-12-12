@@ -42,9 +42,12 @@ bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layo
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }
 
+    workloads[wloadIt].allocationAttempts++;
     bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
-    if(!scheduled)
+    if(!scheduled) {
+        workloads[wloadIt].allocationAttempts++;
         return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
+    }
 
     return scheduled;
 }
@@ -121,33 +124,43 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        for(int i = 0; i<it->compositions.size() && it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores); ++i) {
-            if(it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
-                int wlTTL = wload->executionTime;
-                int compositionTTL = it->compositionTTL(workloads, i, step);
-                int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
-                int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
-                int estimateTTL = wlTTL + step;
+        if(it->cores>0 && it->resources.begin()->getTotalCapacity()>1 && it->freeCores < wload->cores) {
+            if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
+                wload->failToAllocateDueCores++;
+        } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
+            for (int i = 0; i < it->compositions.size(); ++i) {
+                if (it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                    int wlTTL = wload->executionTime;
+                    int compositionTTL = it->compositionTTL(workloads, i, step);
+                    int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
+                    int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
+                    int estimateTTL = wlTTL + step;
 
-                if ((deadline==-1 || estimateTTL <= deadline) &&
-                    ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing<7) ||
-                     (wload->wlName != "smufin" && it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                     it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
+                    if ((deadline == -1 || estimateTTL <= deadline) &&
+                        ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing < 7) ||
+                         (wload->wlName != "smufin" &&
+                          it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                          it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
-                    int alpha = (((wload->nvmeBandwidth/compositionTotalBw)*100
-                            +(wload->nvmeCapacity/it->compositions[i].composedNvme.getTotalCapacity())*100));
+                        int alpha = (((wload->nvmeBandwidth / compositionTotalBw) * 100
+                                      + (wload->nvmeCapacity / it->compositions[i].composedNvme.getTotalCapacity()) *
+                                        100));
 
-                    nvmeFitness element = {
-                            alpha,
-                            estimateTTL - compositionTTL, i, &(*it)
-                    };
-                    this->insertSorted(fittingCompositions, element);
+                        nvmeFitness element = {
+                                alpha,
+                                estimateTTL - compositionTTL, i, &(*it)
+                        };
+                        this->insertSorted(fittingCompositions, element);
+                    }
                 }
             }
         }
     }
 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!fittingCompositions.empty() && coresRack == nullptr)
+        wload->failToAllocateDueCores++;
+
     if(!fittingCompositions.empty() && coresRack != nullptr) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
         if(it->rack->cores>0)
@@ -173,7 +186,11 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
     Rack* scheduledRack = nullptr;
     vector<rackFitness> fittingRacks;
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
-        if( it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
+        if(it->cores>0 && it->resources.begin()->getTotalCapacity()>1 && it->freeCores < wload->cores) {
+            if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
+                wload->failToAllocateDueCores++;
+        }
+        else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
             if (!selection.empty()) {
                 int alpha = (((wload->nvmeBandwidth / it->totalBandwidth) * 100
@@ -188,6 +205,9 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
     }
 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!fittingRacks.empty() && coresRack == nullptr)
+        wload->failToAllocateDueCores++;
+
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
         scheduledRack = element.rack;
