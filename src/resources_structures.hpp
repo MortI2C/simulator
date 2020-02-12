@@ -17,6 +17,7 @@ struct raid {
     bool used = false;
     int workloadsUsing;
     vector<int> assignedWorkloads;
+    Rack* coresRack;
 };
 
 struct rackFitness {

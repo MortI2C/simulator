@@ -18,6 +18,7 @@ void Layout::generateLayout(string filePath) {
     int rackId = 0;
     this->racks = vector<Rack>(j.size());
     for(json::iterator it = j.begin(); it!=j.end(); ++it) {
+        if(it.key()=="disagg") this->disaggregated = true;
         int totalBandwith = 0;
         int totalCapacity = 0;
         Rack newRack = Rack();

@@ -97,7 +97,8 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                 wload->failToAllocateDueCores++;
         } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             for (int i = 0; !scheduled && i < it->compositions.size(); ++i) {
-                if (it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores &&
+                    it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                     int wlTTL = wload->executionTime + step;
                     int compositionTTL = it->compositionTTL(workloads, i, step);
                     int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
@@ -115,29 +116,28 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                                  + (it->compositions[i].composedNvme.getAvailableCapacity() - wload->nvmeCapacity)),
                                 wlTTL - compositionTTL, i, &(*it)
                         };
+                        fittingCompositions.push_back(element);
 
                         //CHECK IF DISAGG SCENARIO OR NOT
-                        Rack *coresRack = nullptr;
-                        if (it->freeCores >= wload->cores)
-                            coresRack = &(*it);
-                        else if (it->cores == 0)
-                            coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+                        Rack *coresRack = it->compositions[i].coresRack;
 
-                        if (coresRack != nullptr) {
-                            coresRack->freeCores -= wload->cores;
-                            this->updateRackWorkloads(workloads, wloadIt,
-                                                      element.rack,
-                                                      element.rack->compositions[element.composition],
-                                                      element.composition);
-                            scheduled = true;
-                            wload->allocation.coresAllocatedRack = coresRack;
-                        } else
-                            wload->failToAllocateDueCores++;
+                        coresRack->freeCores -= wload->cores;
+                        this->updateRackWorkloads(workloads, wloadIt,
+                                element.rack,
+                                element.rack->compositions[element.composition],
+                                element.composition);
+                        scheduled = true;
+                        wload->allocation.coresAllocatedRack = coresRack;
                     }
                 }
             }
         }
     }
+
+    Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
+    if(!scheduled && !fittingCompositions.empty() && coresRack == nullptr)
+        wload->failToAllocateDueCores++;
+
 
     return scheduled;
 }
@@ -206,6 +206,7 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        scheduledRack->compositions[freeComposition].coresRack = coresRack;
         coresRack->freeCores -= wload->cores;
         wload->timeLeft = this->model.timeDistortion(scheduledRack->compositions[freeComposition],
                 *wload);
@@ -291,6 +292,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
         scheduledRack->compositions[freeComposition].composedNvme.setAvailableCapacity(composedCapacity-capacity);
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = wloads.size();
+        scheduledRack->compositions[freeComposition].coresRack = coresRack;
         coresRack->freeCores -= cores;
         for(auto it = wloads.begin(); it!=wloads.end(); ++it) {
             workload* wload = &workloads[*it];

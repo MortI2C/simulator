@@ -112,7 +112,8 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
                 wload->failToAllocateDueCores++;
         } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             for (int i = 0; i < it->compositions.size(); ++i) {
-                if (it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores &&
+                    it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                     int wlTTL = wload->executionTime + step;
                     int compositionTTL = it->compositionTTL(workloads, i, step);
                     int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
@@ -144,10 +145,9 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     if(!fittingCompositions.empty() && coresRack == nullptr)
         wload->failToAllocateDueCores++;
 
-    if(!fittingCompositions.empty() && coresRack != nullptr) {
+    if(!fittingCompositions.empty()) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
-        if(it->rack->cores>0)
-            coresRack = it->rack;
+        coresRack = it->rack->compositions[it->composition].coresRack;
 
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition], it->composition);
 //        cout << it->rack->compositions[it->composition].assignedWorkloads.size() << endl;
@@ -288,6 +288,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        scheduledRack->compositions[freeComposition].coresRack = coresRack;
         coresRack->freeCores -= wload->cores;
         wload->executionTime = this->model.timeDistortion(scheduledRack->compositions[freeComposition],*wload);
         wload->timeLeft = wload->executionTime;

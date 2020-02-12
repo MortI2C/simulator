@@ -10,8 +10,9 @@ using namespace std;
 class Layout {
    public:
     vector<Rack> racks;
+    bool disaggregated;
     Layout() {
-
+        this->disaggregated = false;
     }
 
     void generateLayout(string filePath);

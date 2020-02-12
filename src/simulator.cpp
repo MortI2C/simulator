@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
         } else if (number < 0.8) { //0.3
             workloads[i].executionTime = 320;
             workloads[i].nvmeBandwidth = 160;
-            workloads[i].nvmeCapacity = 341;
+            workloads[i].nvmeCapacity = 900;
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;

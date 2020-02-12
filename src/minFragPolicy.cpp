@@ -129,7 +129,8 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                 wload->failToAllocateDueCores++;
         } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             for (int i = 0; i < it->compositions.size(); ++i) {
-                if (it->compositions[i].used && it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores &&
+                    it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
                     int wlTTL = wload->executionTime;
                     int compositionTTL = it->compositionTTL(workloads, i, step);
                     int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
@@ -142,9 +143,9 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                           it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                           it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
-                        int alpha = (((wload->nvmeBandwidth / compositionTotalBw) * 100
-                                      + (wload->nvmeCapacity / it->compositions[i].composedNvme.getTotalCapacity()) *
-                                        100));
+                        int alpha = (100-100*((wload->nvmeBandwidth / compositionTotalBw)
+                                      + (wload->nvmeCapacity / it->compositions[i].composedNvme.getTotalCapacity()))
+                                              /(100*wload->cores/it->compositions[i].coresRack->freeCores));
 
                         nvmeFitness element = {
                                 alpha,
@@ -161,10 +162,9 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
     if(!fittingCompositions.empty() && coresRack == nullptr)
         wload->failToAllocateDueCores++;
 
-    if(!fittingCompositions.empty() && coresRack != nullptr) {
+    if(!fittingCompositions.empty()) {
         vector<nvmeFitness>::iterator it = fittingCompositions.begin();
-        if(it->rack->cores>0)
-            coresRack = it->rack;
+        coresRack = it->rack->compositions[it->composition].coresRack;
 
         this->updateRackWorkloads(workloads, wloadIt, it->rack, it->rack->compositions[it->composition],
                                   it->composition);
@@ -242,6 +242,7 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
         scheduledRack->compositions[freeComposition].volumes = element.selection;
         scheduledRack->compositions[freeComposition].workloadsUsing = 1;
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
+        scheduledRack->compositions[freeComposition].coresRack = coresRack;
         coresRack->freeCores -= wload->cores;
         wload->executionTime = this->model.timeDistortion(scheduledRack->compositions[freeComposition],*wload);
         wload->timeLeft = wload->executionTime;
