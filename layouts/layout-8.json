@@ -53,36 +53,7 @@
 		"nvmes": [{
 				"bandwidth": 2000,
 				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 1600
-			},
-			{
+			},{
 				"bandwidth": 2000,
 				"capacity": 1600
 			},

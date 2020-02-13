@@ -65,6 +65,7 @@ void Rack::freeComposition(Rack* rack, int composition) {
        );
        rack->compositions[composition].volumes = vector<int>(0);
        rack->compositions[composition].composedNvme = NvmeResource(0,0);
+       rack->compositions[composition].coresRack = nullptr;
 }
 
 double Rack::calculateFragmentation() {

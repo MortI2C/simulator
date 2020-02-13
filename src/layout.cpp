@@ -23,16 +23,20 @@ void Layout::generateLayout(string filePath) {
         int totalCapacity = 0;
         Rack newRack = Rack();
         json newArray = it.value();
-        vector<NvmeResource> nvmes;
+        vector<NvmeResource> nvmes = vector<NvmeResource>(0);
         for(json::iterator it2 = newArray["nvmes"].begin(); it2!=newArray["nvmes"].end(); ++it2) {
-            NvmeResource newNvme(it2.value()["bandwidth"],it2.value()["capacity"]);
-            nvmes.push_back(newNvme);
-            totalBandwith += (int)it2.value()["bandwidth"];
-            totalCapacity += (int)it2.value()["capacity"];
+            if(!it2->empty()) {
+                NvmeResource newNvme(it2.value()["bandwidth"], it2.value()["capacity"]);
+                nvmes.push_back(newNvme);
+                totalBandwith += (int) it2.value()["bandwidth"];
+                totalCapacity += (int) it2.value()["capacity"];
+            }
         }
         newRack.setTotalCores((int)newArray["cores"]);
         newRack.setFreeCores((int)newArray["cores"]);
-        newRack.addNvmeResourceVector(nvmes);
+        if(nvmes.size()>0)
+            newRack.addNvmeResourceVector(nvmes);
+
         newRack.setTotalBandwidth(totalBandwith);
         newRack.setTotalCapacity(totalCapacity);
         newRack.rackId = rackId;

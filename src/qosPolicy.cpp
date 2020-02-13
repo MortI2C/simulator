@@ -107,10 +107,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
     bool scheduled = false;
     for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         int position = 0;
-        if(it->cores>0 && it->resources.begin()->getTotalCapacity()>1 && it->freeCores < wload->cores) {
-            if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
-                wload->failToAllocateDueCores++;
-        } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
+        if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             for (int i = 0; i < it->compositions.size(); ++i) {
                 if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores &&
                     it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
@@ -136,6 +133,13 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
 
                         this->insertSorted(fittingCompositions, element);
                     }
+                } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores &&
+                           it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                    if ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing < 7) ||
+                        (wload->wlName != "smufin" &&
+                         it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                         it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))
+                        wload->failToAllocateDueCores++;
                 }
             }
         }
