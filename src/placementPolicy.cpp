@@ -17,6 +17,7 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
     workload* wload = &workloads[wloadIt];
 
     assert(wload->allocation.composition != -1 || (wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0));
+    wload->allocation.coresAllocatedRack->freeCores += wload->cores;
     if(wload->allocation.composition != -1) {
         wload->allocation.allocatedRack->compositions
         [wload->allocation.composition].composedNvme
@@ -54,7 +55,7 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
                                           wload->allocation.allocatedRack->compositions[wload->allocation.composition]);
         }
     }
-    wload->allocation.coresAllocatedRack->freeCores += wload->cores;
+
 //    wload->allocation.allocatedRack->freeCores += wload->cores;
     wload->allocation = allocatedResources();
 }

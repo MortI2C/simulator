@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include "assert.h"
 #include "Rack.hpp"
 #include "nvmeResource.hpp"
 using namespace std;
@@ -72,19 +73,37 @@ double Rack::calculateFragmentation() {
     int numResources = this->resources.size();
     int totalBwUsed = 0;
     int totalCapacityUsed = 0;
-    int totalBw = (this->resources.begin()->getTotalBandwidth());
-    int totalCapacity = (this->resources.begin()->getTotalCapacity());
+    int totalBw = (this->resources.begin()->getTotalBandwidth()*this->resources.size());
+    int totalCapacity = (this->resources.begin()->getTotalCapacity()*this->resources.size());
+    int totalCores = 0;
+    int coresUsed = 0;
     int resourcesUsed = 0;
+    vector<Rack*> racks;
     for(int i = 0; i<this->compositions.size(); ++i) {
         if(this->compositions[i].used) {
             totalCapacityUsed+=this->compositions[i].composedNvme.getTotalCapacity()-this->compositions[i].composedNvme.getAvailableCapacity();
             totalBwUsed+=this->compositions[i].composedNvme.getTotalBandwidth()-this->compositions[i].composedNvme.getAvailableBandwidth();
             resourcesUsed+=this->compositions[i].volumes.size();
+            Rack* compRack = this->compositions[i].coresRack;
+            assert(compRack != nullptr);
+            if(std::find(racks.begin(),racks.end(),compRack)==racks.end())
+                racks.push_back(compRack);
         }
     }
+    for(auto it = racks.begin(); it!=racks.end(); ++it) {
+        Rack* rel = *it;
+        totalCores+=rel->cores;
+        coresUsed+=(rel->cores-rel->freeCores);
+    }
 
-    int minResources = max(ceil((double)totalBwUsed/totalBw),ceil((double)totalCapacityUsed/totalCapacity));
-    return (double)(resourcesUsed-minResources)/numResources;
+    double minResources = max(ceil((double)totalBwUsed/totalBw),ceil((double)totalCapacityUsed/totalCapacity));
+    double minCores = (racks.size()>0) ? (double)coresUsed/totalCores : 0;
+    if(minCores==0)
+        return 0;
+    else {
+        double frag = (minResources<minCores) ? minResources / minCores : minCores  / minResources;
+        return frag;
+    }
 }
 
 double Rack::estimateFragmentation(int sumResources, int sumBw, int sumCap) {
@@ -213,7 +232,7 @@ int Rack::getTotalCores() {
 bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition, int step, DegradationModel& model) {
     workload* wload = &workloads[wloadId];
 
-    for(auto it2 = this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
+   for(auto it2 = this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
         if(workloads[*it2].wlName == "smufin" && wload->wlName != "smufin")
             return false;
         else if(wload->wlName != "smufin")
@@ -224,7 +243,7 @@ bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int comp
         int newTime = model.smufinModel(this->compositions[composition].composedNvme.getTotalBandwidth(),this->compositions[composition].workloadsUsing+1);
         workload* assigned = &workloads[*it2];
         int timeLeft = ((float) assigned->timeLeft / assigned->executionTime) * newTime;
-        if((step+timeLeft) >= assigned->deadline)
+        if((step+timeLeft) > assigned->deadline)
             return false;
     }
     return true;

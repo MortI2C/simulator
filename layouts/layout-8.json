@@ -49,17 +49,24 @@
 			"capacity": 1}],
 		"cores": 25
 	},
-	"disagg": {
+	"rackdisagg": {
 		"nvmes": [{
 				"bandwidth": 2000,
-				"capacity": 1600
+				"capacity": 8000
 			},{
 				"bandwidth": 2000,
-				"capacity": 1600
+				"capacity": 8000
 			},
 			{
 				"bandwidth": 2000,
-				"capacity": 1600
+				"capacity": 8000
+			},{
+				"bandwidth": 2000,
+				"capacity": 8000
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 8000
 			}
 		],
 		"cores": 0

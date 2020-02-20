@@ -12,6 +12,7 @@ class MinFragPolicy : public PlacementPolicy {
     MinFragPolicy(DegradationModel model) : PlacementPolicy(model) {}
     void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
+    void insertRackSorted2(vector<rackFitness>&, rackFitness&);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int);
     bool placeExecOnlyWorkload(vector<workload>&, int, Layout&, int, int);

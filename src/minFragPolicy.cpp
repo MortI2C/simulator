@@ -24,6 +24,22 @@ void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& ele
         vect.push_back(element);
 }
 
+void MinFragPolicy::insertRackSorted2(vector<rackFitness>& vect, rackFitness& element) {
+    bool inserted = false;
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+        if (it->inUse && !element.inUse) {
+            vect.insert(it, element);
+            inserted = true;
+        }
+        else if (it->fitness >= element.fitness) {
+            vect.insert(it, element);
+            inserted = true;
+        }
+    }
+    if(!inserted)
+        vect.push_back(element);
+}
+
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
@@ -67,7 +83,7 @@ Rack* MinFragPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt,
                                    vector<int>(), &(*it)
             };
 
-            this->insertRackSorted(fittingRacks, element);
+            this->insertRackSorted2(fittingRacks, element);
         }
     }
     if(!fittingRacks.empty()) {

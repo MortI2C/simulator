@@ -18,7 +18,9 @@ void Layout::generateLayout(string filePath) {
     int rackId = 0;
     this->racks = vector<Rack>(j.size());
     for(json::iterator it = j.begin(); it!=j.end(); ++it) {
-        if(it.key()=="disagg") this->disaggregated = true;
+        if(it.key()=="rackdisagg") {
+            this->disaggregated = true;
+        }
         int totalBandwith = 0;
         int totalCapacity = 0;
         Rack newRack = Rack();
@@ -54,6 +56,7 @@ double Layout::calculateFragmentation() {
     int totalCapUsed = 0;
     int totalCoresUsed = 0;
     int totalRacksUsed = 0;
+    int racksAvail = 0;
     double f_nvme = 0;
     for(vector<Rack>::iterator it = this->racks.begin(); it!=this->racks.end(); ++it) {
         int rackBw = it->getTotalBandwidthUsed();
@@ -69,17 +72,21 @@ double Layout::calculateFragmentation() {
         totalBwUsed += rackBw;
         totalCapUsed += rackCap;
 
-        f_nvme += it->calculateFragmentation();
+        if(it->resources.begin()->getTotalCapacity()>1) {
+            f_nvme += it->calculateFragmentation();
+            racksAvail++;
+        }
     }
-    f_nvme /= this->racks.size();
-
-    int minResources = max((double)totalCoresUsed/totalCoresRack,max(ceil((double)totalBwUsed/totalBwRack),ceil((double)totalCapUsed/totalCapRack)));
-    double f_rack = (double)(totalRacksUsed-minResources)/this->racks.size();
-
-    if(f_rack == 0 && (totalBwUsed > 0 || totalCapUsed > 0))
-        return f_nvme;
-    else
-        return f_rack;
+    f_nvme /= racksAvail;
+    return f_nvme;
+//
+//    int minResources = max((double)totalCoresUsed/totalCoresRack,max(ceil((double)totalBwUsed/totalBwRack),ceil((double)totalCapUsed/totalCapRack)));
+//    double f_rack = (double)(totalRacksUsed-minResources)/racksAvail;
+//
+//    if(f_rack == 0 && (totalBwUsed > 0 || totalCapUsed > 0))
+//        return f_nvme;
+//    else
+//        return f_rack;
 }
 
 double Layout::resourcesUsed() {

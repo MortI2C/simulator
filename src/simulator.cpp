@@ -185,7 +185,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         double currLoadFactor = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
         double currActLoadFactor = layout.actualLoadFactor(workloads,runningWorkloads);
         double abstractLoadFactor = layout.abstractLoadFactor(workloads, perfectSchedulerQueue);
-        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
+//        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
+        if(stationaryStep == -1 && (abstractLoadFactor>=0.7 || processedPatients>=0.1*patients))
             stationaryStep = step;
 
         if(stationaryStep>=0 && finalStep == -1 && (wlpointer!=workloads.end() || !perfectSchedulerQueue.empty())) {
@@ -256,7 +257,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.2) { //0.2
+        if(number < 0.7) { //0.2
             workloads[i].executionTime = 1500;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
@@ -265,10 +266,10 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
-        } else if (number < 0.3) { //0.3
-            workloads[i].executionTime = 320;
+        } else if (number < 0.8) { //0.3
+            workloads[i].executionTime = 340;
             workloads[i].nvmeBandwidth = 160;
-            workloads[i].nvmeCapacity = 900;
+            workloads[i].nvmeCapacity = 341;
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
