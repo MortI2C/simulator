@@ -193,7 +193,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         loadFactors abstractLfs = layout.calculateAbstractLoadFactors(workloads, perfectSchedulerQueue);
 
 //        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
-        if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7))
+        if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7 || abstractLfs.capacityLF >= 0.7 || abstractLfs.bandwidthLF >= 0.7))
             stationaryStep = step;
 
         if(stationaryStep>=0 && finalStep == -1 && (wlpointer!=workloads.end() || !perfectSchedulerQueue.empty())) {
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.1) { //0.2
+        if(number < 0.7) { //0.2
             workloads[i].executionTime = 1500;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
