@@ -21,9 +21,9 @@ struct raid {
 };
 
 struct loadFactors {
-    double cpuLF;
     double bandwidthLF;
     double capacityLF;
+    double cpuLF;
 };
 
 struct rackFitness {
