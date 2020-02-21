@@ -88,7 +88,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     cerr << step << " " << workloadsInStationary << " " << waitingTime << " " << exeTime << " " << completionTime << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << endl;
 }
 
-void printStatistics(int step, const vector<workload>& scheduledWorkloads, int stationaryStep, double loadFactor, double resourcesUsed, double frag, int finalStep, double abstractLf, double lambdaCoefficient, double highPrioCoefficient, double compositionSize, double avgWorkloadsSharing) {
+void printStatistics(int step, const vector<workload>& scheduledWorkloads, int stationaryStep, double loadFactor, double resourcesUsed, double frag, int finalStep, double abstractLf, double lambdaCoefficient, double highPrioCoefficient, double compositionSize, double avgWorkloadsSharing, loadFactors calcLfs, loadFactors absLfs) {
     int waitingTime = 0;
     int exeTime = 0;
     int completionTime = 0;
@@ -116,7 +116,9 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
         completionTime /= workloadsInStationary;
     }
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
-    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << endl;
+//    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF << " " << calcLfs.bandwidthLF << " " << calcLfs.capacityLF << " " << absLfs.cpuLF << " " << absLfs.bandwidthLF << " " << absLfs.capacityLF << endl;
+    cout << lambdaCoefficient << " " << calcLfs.cpuLF/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << endl;
+
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient, double highPrioCoefficient) {
@@ -132,6 +134,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double normLoadFactor = 0;
     double compositionSize = 0;
     double avgWorkloadsSharing = 0;
+    loadFactors calcLoadFactors = {0,0,0};
+    loadFactors absLoadFactors = {0,0,0};
     int stationaryStep = -1;
     int finalStep = -1;
 
@@ -185,8 +189,11 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         double currLoadFactor = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
         double currActLoadFactor = layout.actualLoadFactor(workloads,runningWorkloads);
         double abstractLoadFactor = layout.abstractLoadFactor(workloads, perfectSchedulerQueue);
+        loadFactors currLfs = layout.calculateLoadFactors(workloads, pendingToSchedule, runningWorkloads);
+        loadFactors abstractLfs = layout.calculateAbstractLoadFactors(workloads, perfectSchedulerQueue);
+
 //        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
-        if(stationaryStep == -1 && (abstractLoadFactor>=0.7 || processedPatients>=0.1*patients))
+        if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7))
             stationaryStep = step;
 
         if(stationaryStep>=0 && finalStep == -1 && (wlpointer!=workloads.end() || !perfectSchedulerQueue.empty())) {
@@ -197,6 +204,12 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
             normLoadFactor += abstractLoadFactor;
             compositionSize += layout.averageCompositionSize();
             avgWorkloadsSharing += layout.averageWorkloadsSharing();
+            calcLoadFactors.cpuLF += currLfs.cpuLF;
+            calcLoadFactors.bandwidthLF += currLfs.bandwidthLF;
+            calcLoadFactors.capacityLF += currLfs.capacityLF;
+            absLoadFactors.cpuLF += abstractLfs.cpuLF;
+            absLoadFactors.bandwidthLF += abstractLfs.bandwidthLF;
+            absLoadFactors.capacityLF += abstractLfs.capacityLF;
         } else if(stationaryStep>=0 && finalStep==-1)
             finalStep = step;
 
@@ -216,7 +229,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //    cout << scheduler->logger.dump() << endl;
     step--; //correction
 //    printStatistics(step, workloads, stationaryStep);
-    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient, highPrioCoefficient, compositionSize, avgWorkloadsSharing);
+    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient, highPrioCoefficient, compositionSize, avgWorkloadsSharing, calcLoadFactors, absLoadFactors);
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
 
@@ -257,7 +270,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.7) { //0.2
+        if(number < 0.1) { //0.2
             workloads[i].executionTime = 1500;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;

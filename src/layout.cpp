@@ -229,6 +229,29 @@ double Layout::averageWorkloadsSharing() {
     return (totalResources == 0)  ? 0 : workloadsComposition/totalResources;
 }
 
+loadFactors Layout::calculateLoadFactors(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
+    int availCores = this->getTotalCores();
+
+    int bwRequested = 0;
+    int capRequested = 0;
+    int coresRequested = 0;
+    for(auto it = queued.begin(); it!=queued.end(); ++it) {
+        bwRequested += workloads[*it].nvmeBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
+    }
+
+    for(auto it = running.begin(); it!=running.end(); ++it) {
+        bwRequested += workloads[*it].nvmeBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
+    }
+
+    return loadFactors{(double)bwRequested/availBw,(double)capRequested/availCap,(double)coresRequested/availCores};
+}
+
 double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vector<int>& running) {
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
@@ -285,6 +308,24 @@ double Layout::abstractLoadFactor(vector <workload> & workloads, vector<int> & q
     }
 
     return max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores);
+}
+
+
+loadFactors Layout::calculateAbstractLoadFactors(vector <workload> & workloads, vector<int> & queued){
+    int availBw = this->getTotalBandwidth();
+    int availCap = this->getTotalCapacity();
+    int availCores = this->getTotalCores();
+
+    int bwRequested = 0;
+    int capRequested = 0;
+    int coresRequested = 0;
+    for(auto it = queued.begin(); it!=queued.end(); ++it) {
+        bwRequested += workloads[*it].baseBandwidth;
+        capRequested += workloads[*it].nvmeCapacity;
+        coresRequested += workloads[*it].cores;
+    }
+
+    return loadFactors{(double)bwRequested/availBw,(double)capRequested/availCap,(double)coresRequested/availCores};
 }
 
 double Layout::calculateLoadFactor() {

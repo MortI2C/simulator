@@ -20,6 +20,12 @@ struct raid {
     Rack* coresRack;
 };
 
+struct loadFactors {
+    double cpuLF;
+    double bandwidthLF;
+    double capacityLF;
+};
+
 struct rackFitness {
     int fitness;
     bool inUse;

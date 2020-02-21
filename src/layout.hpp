@@ -33,6 +33,8 @@ class Layout {
     int getFreeCores();
     int calculateMaxBandwidth();
     double calculateLoadFactor();
+    loadFactors calculateAbstractLoadFactors(vector<workload>&, vector<int>&);
+    loadFactors calculateLoadFactors(vector<workload>&, vector<int>&, vector<int>&);
 };
 
 #endif
