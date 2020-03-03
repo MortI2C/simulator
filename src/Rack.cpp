@@ -243,8 +243,9 @@ bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int comp
         int newTime = model.smufinModel(this->compositions[composition].composedNvme.getTotalBandwidth(),this->compositions[composition].workloadsUsing+1);
         workload* assigned = &workloads[*it2];
         int timeLeft = ((float) assigned->timeLeft / assigned->executionTime) * newTime;
-        if((step+timeLeft) > assigned->deadline)
+        if((step+timeLeft) > assigned->deadline) {
             return false;
+        }
     }
     return true;
 }

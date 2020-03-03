@@ -14,8 +14,10 @@ DegradationModel::DegradationModel() {
 }
 
 int DegradationModel::timeDistortion(raid& composition, workload& wload) {
-    if(wload.wlName == "smufin")
-        return this->smufinModel(composition.composedNvme.getAvailableBandwidth(), composition.workloadsUsing);
+    if(wload.wlName == "smufin") {
+        assert(composition.composedNvme.getTotalBandwidth()>=2000);
+        return this->smufinModel(composition.composedNvme.getTotalBandwidth(), composition.workloadsUsing);
+    }
 
     if(wload.nvmeBandwidth == 0)
         return wload.executionTime;

@@ -241,9 +241,10 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
             if (!selection.empty()) {
                 int bwSel = 0;
                 for (auto it2 = selection.begin(); it2 != selection.end(); ++it2) {
-                    bwSel += it->resources[*it2].getAvailableBandwidth();
+                    bwSel += it->resources[*it2].getTotalBandwidth();
                 }
                 raid tempComposition;
+                tempComposition.composedNvme.setTotalBandwidth(bwSel);
                 tempComposition.composedNvme.setAvailableBandwidth(bwSel);
                 tempComposition.workloadsUsing = 1;
 

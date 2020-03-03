@@ -24,49 +24,46 @@
 			"capacity": 1}],
 		"cores": 25
 	},
-	"rack5": {
-		"nvmes": [{"bandwidth": 1,
-			"capacity": 1}],
-		"cores": 25
-	},
-	"rack6": {
-		"nvmes": [{"bandwidth": 1,
-			"capacity": 1}],
-		"cores": 25
-	},
-	"rack7": {
-		"nvmes": [{"bandwidth": 1,
-			"capacity": 1}],
-		"cores": 25
-	},
-	"rack8": {
-		"nvmes": [{"bandwidth": 1,
-			"capacity": 1}],
-		"cores": 25
-	},
-	"rack9": {
-		"nvmes": [{"bandwidth": 1,
-			"capacity": 1}],
-		"cores": 25
-	},
 	"rackdisagg": {
 		"nvmes": [{
 				"bandwidth": 2000,
-				"capacity": 8000
-			},{
-				"bandwidth": 2000,
-				"capacity": 8000
+				"capacity": 682
 			},
 			{
 				"bandwidth": 2000,
-				"capacity": 8000
-			},{
-				"bandwidth": 2000,
-				"capacity": 8000
+				"capacity": 682
 			},
 			{
 				"bandwidth": 2000,
-				"capacity": 8000
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 682
 			}
 		],
 		"cores": 0

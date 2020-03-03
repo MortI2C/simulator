@@ -64,12 +64,59 @@ deadlines = 0
 interArrivalTimes = 0
 previousTime = -1
 arrivalsJson = {}
+bwJson = {}
+capJson = {}
+cpuJson = {}
 jobs = 0
 jobsPlot = []
 labelsArrivals = []
+wlsPercentagesBW = []
+wlsPercentagesCap = []
+wlsPercentagesCPU = []
+wlsPercentagesLabels = []
 abstractLoadFactor = []
+absLfCPU = []
+absLfBW = []
+absLfCap = []
 labelsLf = []
+
+def add_wload(wlName, timeStamp):
+    if wlName == "tpcxiot":
+        if timeStamp not in capJson:
+            capJson[timeStamp] = 1
+        else:
+            capJson[timeStamp] += 1
+    elif wlName == "smufin":
+        if timeStamp not in bwJson:
+            bwJson[timeStamp] = 1
+        else:
+            bwJson[timeStamp] += 1
+    else:
+        if timeStamp not in cpuJson:
+            cpuJson[timeStamp] = 1
+        else:
+            cpuJson[timeStamp] += 1
+
+def delete_wload(wlName, timeStamp):
+    if wlName == "tpcxiot":
+        if timeStamp not in capJson:
+            capJson[timeStamp] = -1
+        else:
+            capJson[timeStamp] -= 1
+    elif wlName == "smufin":
+        if timeStamp not in bwJson:
+            bwJson[timeStamp] = -1
+        else:
+            bwJson[timeStamp] -= 1
+    else:
+        if timeStamp not in cpuJson:
+            cpuJson[timeStamp] = -1
+        else:
+            cpuJson[timeStamp] -= 1
+
 for i in schedule:
+        add_wload(i["wlName"][0],i["arrival"][0])
+        delete_wload(i["wlName"][0],i["completion"])
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
             parsedSched[i["scheduled"][0]].append(i)
@@ -98,9 +145,15 @@ for i in schedule:
 #        else:
 #            arrivalJson[i["completion"]] = -1
 
+wlBw = 0
+wlCap = 0
+wlCpu = 0
 for i in range(0, lastTime+1):
         lf = -1
         abstractLf = -1
+        lfCPU = -1
+        lfBW = -1
+        lfCap = -1
         if i in completions:
             for p in completions[i]:
                 jobs -= 1
@@ -132,6 +185,9 @@ for i in range(0, lastTime+1):
 
                 lf = job["loadFactor"]
                 abstractLf = job["abstractLoadFactorCompletion"]
+                lfBW = job["idealLFBW"]
+                lfCap = job["idealLFCap"]
+                lfCPU = job["idealLFCPU"]
 		for volume in job["volumes"]:
 		    if job["rackid"][0] not in racks:
 		        racks[job["rackid"][0]] = {}
@@ -142,6 +198,25 @@ for i in range(0, lastTime+1):
 		    else:
 		        racks[job["rackid"][0]][volume]+=1
 
+        if i in bwJson:
+            wlBw += bwJson[i]
+        if i in capJson:
+            wlCap += capJson[i]
+        if i in cpuJson:
+            wlCpu += cpuJson[i]
+
+        totalWl = wlBw+wlCap+wlCpu
+        wlsPercentagesLabels.extend([i])
+        if totalWl > 0:
+            wlsPercentagesBW.extend([100*float(wlBw) / float(totalWl)])
+            wlsPercentagesCap.extend([100*float(wlCap) / float(totalWl)])
+            wlsPercentagesCPU.extend([100*float(wlCpu) / float(totalWl)])
+        else:
+            wlsPercentagesBW.extend([0])
+            wlsPercentagesCap.extend([0])
+            wlsPercentagesCPU.extend([0])
+
+        # print("{} {} {}".format(wlsPercentagesBW[i],wlsPercentagesCap[i],wlsPercentagesCPU[i]))
         if i in arrivalJson:
         #    arrivals+=arrivalJson[i]
             arrivalsPlot.extend([arrivalJson[i]])
@@ -168,6 +243,9 @@ for i in range(0, lastTime+1):
             labelsLf.extend([i])
             loadFactor.append(round(lf,1))
             abstractLoadFactor.append(round(abstractLf,1))
+            absLfCPU.append(round(lfCPU,1))
+            absLfBW.append(round(lfBW,1))
+            absLfCap.append(round(lfCap,1))
 
 print(missedDeadlines[-1])
 #print(interArrivalTimes/len(schedule))
@@ -208,6 +286,22 @@ plt.plot(labelsLf,loadFactor)
 #plt.ylim(0,1)
 #plt.xticks(np.arange(0, max(abstractLoadFactor)+1, 0.5), rotation='vertical')
 plt.savefig('plots/abstractloadFactor-over-time.pdf', bbox_inches='tight')
+plt.clf()
+plt.xlabel("Simulation time(s)")
+plt.ylabel("Load factor")
+plt.plot(labelsLf,absLfCap,label='Capacity load factor')
+plt.plot(labelsLf,absLfBW,label='Bandwidth load factor')
+plt.plot(labelsLf,absLfCPU,label='CPU load factor')
+plt.legend()
+plt.savefig('plots/abslfs-over-time.pdf', bbox_inches='tight')
+plt.clf()
+plt.plot(wlsPercentagesLabels,wlsPercentagesBW,label='Bandwidth-intensive')
+plt.plot(wlsPercentagesLabels,wlsPercentagesCap,label='Capacity-intensive')
+plt.plot(wlsPercentagesLabels,wlsPercentagesCPU,label='CPU-intensive')
+plt.legend()
+plt.xlabel("Simulation time(s)")
+plt.ylabel("Percentage of workloads kind")
+plt.savefig('plots/percentages-over-time.pdf',bbox_inches='tight')
 
 plt.clf()
 pl = plt.plot(labels, missedDeadlines)

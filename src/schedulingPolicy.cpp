@@ -29,6 +29,7 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
 //        this->logger[workloadId]["volumes"].push_back(newVolume);
     this->logger[workloadId]["step"] = step;
     this->logger[workloadId]["jobid"].push_back(workloadId);
+    this->logger[workloadId]["wlName"].push_back(workloads[workloadId].wlName);
     if(workloads[workloadId].wlName != "execOnly")
         this->logger[workloadId]["rackid"].push_back(workloads[workloadId].allocation.allocatedRack->rackId);
     else
