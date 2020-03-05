@@ -230,10 +230,10 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
 //        cout << step << " " << layout.calculateFragmentation() << endl;
         ++step;
     }
-    cout << scheduler->logger.dump() << endl;
+//    cout << scheduler->logger.dump() << endl;
     step--; //correction
 //    printStatistics(step, workloads, stationaryStep);
-//    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient, highPrioCoefficient, compositionSize, avgWorkloadsSharing, calcLoadFactors, absLoadFactors);
+    printStatistics(step, workloads, stationaryStep, loadFactor, resourcesUsed, frag, finalStep, normLoadFactor, lambdaCoefficient, highPrioCoefficient, compositionSize, avgWorkloadsSharing, calcLoadFactors, absLoadFactors);
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << patients << " " << step << " " << loadFactor/step << " " << actualLoadFactor/step << " " << resourcesUsed/step << " " << getAvgExeTime(step, workloads) << " " << getAvgWaitingTime(step, workloads) << " " << frag/step << endl;
 
@@ -276,8 +276,8 @@ int main(int argc, char* argv[]) {
         double number = distribution(generate);
         if(number < 0.1) { //0.2
             workloads[i].executionTime = 1600;
-            workloads[i].nvmeBandwidth = 400;
-            workloads[i].baseBandwidth = 400;
+            workloads[i].nvmeBandwidth = 1800;
+            workloads[i].baseBandwidth = 1800;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
@@ -389,10 +389,10 @@ int main(int argc, char* argv[]) {
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-//    copyWL = workloads;
-//    simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-//    copyWL = workloads;
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
