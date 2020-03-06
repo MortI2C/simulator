@@ -229,7 +229,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7 || abstractLfs.capacityLF >= 0.7 || abstractLfs.bandwidthLF >= 0.7))
             stationaryStep = step;
 
-        if(stationaryStep>=0 && finalStep == -1 && (wlpointer!=workloads.end() || !perfectSchedulerQueue.empty())) {
+        if(stationaryStep>=0 && finalStep == -1 && wlpointer!=workloads.end() && !perfectSchedulerQueue.empty()) {
             frag += currFrag;
             resourcesUsed += currResourcesUsed;
             loadFactor += currLoadFactor;
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.7) { //0.2
+        if(number < 0.2) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 400;
             workloads[i].baseBandwidth = 400;
@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
-        } else if (number < 0.8) { //0.3
+        } else if (number < 0.3) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600;
