@@ -325,7 +325,11 @@ loadFactors Layout::calculateAbstractLoadFactors(vector <workload> & workloads, 
         coresRequested += workloads[*it].cores;
     }
 
-    return loadFactors{(double)bwRequested/availBw,(double)capRequested/availCap,(double)coresRequested/availCores};
+    double bwLf = (double)bwRequested/availBw;
+    double capLf = (double)capRequested/availCap;
+    double cpuLf = (double)coresRequested/availCores;
+
+    return loadFactors{bwLf, capLf, cpuLf};
 }
 
 double Layout::calculateLoadFactor() {

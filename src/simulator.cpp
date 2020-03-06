@@ -142,6 +142,10 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     vector<int> runningWorkloads;
     vector<int> pendingToSchedule;
     vector<int> perfectSchedulerQueue;
+    vector<int> waitingPerfectSchedulerQueue;
+    int perfBw = layout.getTotalBandwidth();
+    int perfCap = layout.getTotalCapacity();
+    int perfCores = layout.getTotalCores();
 //    vector<workload> scheduledWorkloads(patients);
     vector<workload>::iterator wlpointer = workloads.begin();
     while(processedPatients < patients || !runningWorkloads.empty()) {
@@ -149,6 +153,9 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         vector<int> toFinish;
         for(auto it = perfectSchedulerQueue.begin(); it!=perfectSchedulerQueue.end();) {
             if((workloads[*it].arrival + workloads[*it].baseExecutionTime) <= step) {
+                perfBw += workloads[*it].nvmeBandwidth;
+                perfCap += workloads[*it].nvmeCapacity;
+                perfCores += workloads[*it].cores;
                 perfectSchedulerQueue.erase(it);
             } else
                 ++it;
@@ -176,7 +183,14 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
             pendingToSchedule.push_back(wlpointer->wlId);
-            perfectSchedulerQueue.push_back(wlpointer->wlId);
+            if(perfBw >= wlpointer->nvmeBandwidth && perfCap >= wlpointer->nvmeCapacity &&
+                perfCores >= wlpointer->cores) {
+                perfBw -= wlpointer->nvmeBandwidth;
+                perfCap -= wlpointer->nvmeCapacity;
+                perfCores -= wlpointer->cores;
+                perfectSchedulerQueue.push_back(wlpointer->wlId);
+            } else
+                waitingPerfectSchedulerQueue.push_back(wlpointer->wlId);
             ++wlpointer;
         }
 
@@ -186,6 +200,20 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         if(priorScheduler>0)
             scheduler->scheduleWorkloads(workloads, pendingToSchedule, runningWorkloads, placementPolicy, step, layout);
 
+        //Process pending perfect
+        for(auto it = waitingPerfectSchedulerQueue.begin(); it!=waitingPerfectSchedulerQueue.end();) {
+            workload* wload = &workloads[*it];
+            if(perfBw >= wload->nvmeBandwidth && perfCap >= wload->nvmeCapacity &&
+               perfCores >= wload->cores) {
+                perfBw -= wload->nvmeBandwidth;
+                perfCap -= wload->nvmeCapacity;
+                perfCores -= wload->cores;
+                perfectSchedulerQueue.push_back(wload->wlId);
+                waitingPerfectSchedulerQueue.erase(it);
+            } else
+                ++it;
+        }
+
         processedPatients += (priorScheduler - pendingToSchedule.size());
 
         double currResourcesUsed = layout.resourcesUsed();
@@ -193,7 +221,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         double currLoadFactor = layout.loadFactor(workloads, pendingToSchedule,runningWorkloads);
         double currActLoadFactor = layout.actualLoadFactor(workloads,runningWorkloads);
         double abstractLoadFactor = layout.abstractLoadFactor(workloads, perfectSchedulerQueue);
-        loadFactors currLfs = layout.calculateLoadFactors(workloads, pendingToSchedule, runningWorkloads);
+//        loadFactors currLfs = layout.calculateLoadFactors(workloads, pendingToSchedule, runningWorkloads);
+        loadFactors currLfs = layout.calculateAbstractLoadFactors(workloads, runningWorkloads);
         loadFactors abstractLfs = layout.calculateAbstractLoadFactors(workloads, perfectSchedulerQueue);
 
 //        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
@@ -274,10 +303,10 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.1) { //0.2
+        if(number < 0.7) { //0.2
             workloads[i].executionTime = 1600;
-            workloads[i].nvmeBandwidth = 1800;
-            workloads[i].baseBandwidth = 1800;
+            workloads[i].nvmeBandwidth = 400;
+            workloads[i].baseBandwidth = 400;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
@@ -290,7 +319,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //4
+            workloads[i].cores = 10; //4
             workloads[i].wlName = "tpcxiot";
         } else {
             workloads[i].executionTime = 900;

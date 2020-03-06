@@ -26,43 +26,43 @@
 	},
 	"rackdisagg": {
 		"nvmes": [{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			},
 			{
-				"bandwidth": 2000,
+				"bandwidth": 2500,
 				"capacity": 682
 			}
 		],
