@@ -278,10 +278,11 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 
         int composedBandwidth = 0;
         int composedCapacity = 0;
-        for(int i = 0; i<element.selection.size(); ++i) {
-            scheduledRack->freeResources[element.selection[i]] = 0;
-            composedBandwidth += scheduledRack->resources[element.selection[i]].getTotalBandwidth();
-            composedCapacity += scheduledRack->resources[element.selection[i]].getTotalCapacity();
+        for(auto it = element.selection.begin(); it!=element.selection.end(); ++it) {
+//        for(int i = 0; i<element.selection.size(); ++i) {
+            scheduledRack->freeResources[*it] = 0;
+            composedBandwidth += scheduledRack->resources[*it].getTotalBandwidth();
+            composedCapacity += scheduledRack->resources[*it].getTotalCapacity();
         }
 
         scheduledRack->numFreeResources-=element.selection.size();

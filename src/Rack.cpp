@@ -56,6 +56,11 @@ void Rack::freeComposition(Rack* rack, int composition) {
 
        rack->compositions[composition].used = false;
        rack->numFreeResources+=rack->compositions[composition].volumes.size();
+       for(auto it = rack->compositions[composition].volumes.begin();
+        it!=rack->compositions[composition].volumes.end(); ++it) {
+           rack->freeResources[*it] = 1;
+       }
+
        rack->compositions[composition].volumes.erase(
                rack->compositions[composition].volumes.begin(),
                rack->compositions[composition].volumes.end()
@@ -232,20 +237,28 @@ int Rack::getTotalCores() {
 bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition, int step, DegradationModel& model) {
     workload* wload = &workloads[wloadId];
 
+    bool smufin = false;
    for(auto it2 = this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
-        if(workloads[*it2].wlName == "smufin" && wload->wlName != "smufin")
-            return false;
-        else if(wload->wlName != "smufin")
-            return true;
+        if(workloads[*it2].wlName == "smufin")
+            smufin = true;
     }
-    //ALL of them are smufin
-    for(auto it2=this->compositions[composition].assignedWorkloads.begin(); it2!=this->compositions[composition].assignedWorkloads.end(); ++it2) {
-        int newTime = model.smufinModel(this->compositions[composition].composedNvme.getTotalBandwidth(),this->compositions[composition].workloadsUsing+1);
-        workload* assigned = &workloads[*it2];
-        int timeLeft = ((float) assigned->timeLeft / assigned->executionTime) * newTime;
-        if((step+timeLeft) > assigned->deadline) {
-            return false;
+    if(smufin && wload->wlName != "smufin")
+        return false;
+    else if(!smufin && wload->wlName != "smufin")
+        return true;
+    else if(smufin && wload->wlName == "smufin") {
+        //ALL of them are smufin
+        for (auto it2 = this->compositions[composition].assignedWorkloads.begin();
+             it2 != this->compositions[composition].assignedWorkloads.end(); ++it2) {
+            int newTime = model.smufinModel(this->compositions[composition].composedNvme.getTotalBandwidth(),
+                                            this->compositions[composition].workloadsUsing + 1);
+            workload *assigned = &workloads[*it2];
+            int timeLeft = ((float) assigned->timeLeft / assigned->executionTime) * newTime;
+            if ((step + timeLeft) > assigned->deadline) {
+                return false;
+            }
         }
-    }
-    return true;
+        return true;
+    } else
+        return false;
 }

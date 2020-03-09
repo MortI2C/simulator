@@ -97,7 +97,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     int highprioMisses = 0;
     int failedToAllocatfailToAllocateDueCores= 0;
     for(auto it = scheduledWorkloads.begin(); it != scheduledWorkloads.end(); ++it) {
-        if(stationaryStep <= it->arrival ) {
+        if(stationaryStep!= -1 && stationaryStep <= it->arrival ) {
             waitingTime += (it->scheduled - it->arrival);
             exeTime += (it->stepFinished - it->scheduled);
             completionTime += (it->stepFinished - it->arrival);
@@ -117,7 +117,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     }
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF << " " << calcLfs.bandwidthLF << " " << calcLfs.capacityLF << " " << absLfs.cpuLF << " " << absLfs.bandwidthLF << " " << absLfs.capacityLF << endl;
-    cout << lambdaCoefficient << " " << calcLfs.cpuLF/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << endl;
+    cout << lambdaCoefficient << " " << workloadsInStationary << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << endl;
 
 }
 
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.2) { //0.2
+        if(number < 0.1) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 400;
             workloads[i].baseBandwidth = 400;
@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
-        } else if (number < 0.3) { //0.3
+        } else if (number < 0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600;
