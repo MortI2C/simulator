@@ -156,10 +156,14 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                           it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                           it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
-                        int alpha = (100-100*((wload->nvmeBandwidth / compositionTotalBw)
-                                      + (wload->nvmeCapacity / it->compositions[i].composedNvme.getTotalCapacity()))
-                                              /(100*wload->cores/it->compositions[i].coresRack->freeCores));
+                        int alpha = 0;
+                        if(wload->cores < it->compositions[i].coresRack->freeCores) {
+                            alpha = (100 - 100 * ((wload->nvmeBandwidth / compositionTotalBw)
+                                                      + (wload->nvmeCapacity /
+                                                         it->compositions[i].composedNvme.getTotalCapacity()))
+                                               / (100 * wload->cores / it->compositions[i].coresRack->freeCores));
 
+                        }
                         nvmeFitness element = {
                                 alpha,
                                 estimateTTL - compositionTTL, i, &(*it)

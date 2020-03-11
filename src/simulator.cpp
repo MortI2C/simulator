@@ -118,7 +118,6 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF << " " << calcLfs.bandwidthLF << " " << calcLfs.capacityLF << " " << absLfs.cpuLF << " " << absLfs.bandwidthLF << " " << absLfs.capacityLF << endl;
     cout << lambdaCoefficient << " " << workloadsInStationary << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << endl;
-
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient, double highPrioCoefficient) {
