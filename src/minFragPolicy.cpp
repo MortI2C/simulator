@@ -43,7 +43,7 @@ void MinFragPolicy::insertRackSorted2(vector<rackFitness>& vect, rackFitness& el
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->fitness < element.fitness) {
+        if(it->fitness > element.fitness) {
             vect.insert(it,element);
             inserted = true;
         }

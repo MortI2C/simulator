@@ -261,13 +261,13 @@ double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vect
     int capRequested = 0;
     int coresRequested = 0;
     for(auto it = queued.begin(); it!=queued.end(); ++it) {
-        bwRequested += workloads[*it].nvmeBandwidth;
+        bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
     }
 
     for(auto it = running.begin(); it!=running.end(); ++it) {
-        bwRequested += workloads[*it].nvmeBandwidth;
+        bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
     }
@@ -284,7 +284,7 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
     int capRequested = 0;
     int coresRequested = 0;
     for(auto it = running.begin(); it!=running.end(); ++it) {
-        bwRequested += workloads[*it].nvmeBandwidth;
+        bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
     }

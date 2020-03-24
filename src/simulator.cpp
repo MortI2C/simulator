@@ -152,7 +152,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         vector<int> toFinish;
         for(auto it = perfectSchedulerQueue.begin(); it!=perfectSchedulerQueue.end();) {
             if((workloads[*it].arrival + workloads[*it].baseExecutionTime) <= step) {
-                perfBw += workloads[*it].nvmeBandwidth;
+                perfBw += workloads[*it].baseBandwidth;
                 perfCap += workloads[*it].nvmeCapacity;
                 perfCores += workloads[*it].cores;
                 perfectSchedulerQueue.erase(it);
@@ -182,9 +182,9 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         //2nd add arriving workloads to pending to schedule
         while(wlpointer != workloads.end() && wlpointer->arrival <= step) {
             pendingToSchedule.push_back(wlpointer->wlId);
-            if(perfBw >= wlpointer->nvmeBandwidth && perfCap >= wlpointer->nvmeCapacity &&
+            if(perfBw >= wlpointer->baseBandwidth && perfCap >= wlpointer->nvmeCapacity &&
                 perfCores >= wlpointer->cores) {
-                perfBw -= wlpointer->nvmeBandwidth;
+                perfBw -= wlpointer->baseBandwidth;
                 perfCap -= wlpointer->nvmeCapacity;
                 perfCores -= wlpointer->cores;
                 perfectSchedulerQueue.push_back(wlpointer->wlId);
@@ -202,9 +202,9 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         //Process pending perfect
         for(auto it = waitingPerfectSchedulerQueue.begin(); it!=waitingPerfectSchedulerQueue.end();) {
             workload* wload = &workloads[*it];
-            if(perfBw >= wload->nvmeBandwidth && perfCap >= wload->nvmeCapacity &&
+            if(perfBw >= wload->baseBandwidth && perfCap >= wload->nvmeCapacity &&
                perfCores >= wload->cores) {
-                perfBw -= wload->nvmeBandwidth;
+                perfBw -= wload->baseBandwidth;
                 perfCap -= wload->nvmeCapacity;
                 perfCores -= wload->cores;
                 perfectSchedulerQueue.push_back(wload->wlId);
@@ -302,16 +302,16 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.1) { //0.2
+        if(number < 0.7) { //0.2
             workloads[i].executionTime = 1600;
-            workloads[i].nvmeBandwidth = 400;
-            workloads[i].baseBandwidth = 400;
+            workloads[i].nvmeBandwidth = 1800;
+            workloads[i].baseBandwidth = 1800;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 2; //1
+            workloads[i].cores = 6; //1
             workloads[i].wlName = "smufin";
-        } else if (number < 0.8) { //0.3
+        } else if (number <  0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600;
