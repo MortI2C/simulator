@@ -15,7 +15,7 @@ void MinFragPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& ele
         if(!it->inUse && element.inUse) {
             vect.insert(it,element);
             inserted = true;
-        } else if (it->fitness >= element.fitness) {
+        } else if (it->fitness < element.fitness) {
             vect.insert(it, element);
             inserted = true;
         }
@@ -31,7 +31,7 @@ void MinFragPolicy::insertRackSorted2(vector<rackFitness>& vect, rackFitness& el
             vect.insert(it, element);
             inserted = true;
         }
-        else if (it->fitness >= element.fitness) {
+        else if (it->fitness < element.fitness) {
             vect.insert(it, element);
             inserted = true;
         }
@@ -75,9 +75,10 @@ Rack* MinFragPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt,
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         if(it->freeCores >= wload->cores)
         {
-            int alpha = 100 - (it->freeCores/it->cores)*100;
-//            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
-//                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+//            int alpha = 100 - (it->freeCores/it->cores)*100;
+            int percFreecores = (it->freeCores/it->cores)*100;
+            int alpha = (percFreecores == 0) ? 0 : (100-max((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+                                                     ,(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
 
             rackFitness element = {alpha, true,
                                    vector<int>(), &(*it)
@@ -104,9 +105,10 @@ Rack* MinFragPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vec
     for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
         if(it->freeCores >= cores)
         {
-            int alpha = 100 - (it->freeCores/it->cores)*100;
-//            int alpha = (percFreecores == 0) ? 0 : (((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
-//                                                     +(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+//            int alpha = 100 - (it->freeCores/it->cores)*100;
+            int percFreecores = (it->freeCores/it->cores)*100;
+            int alpha = (percFreecores == 0) ? 0 : (100-max((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+                                                     ,(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
 
             rackFitness element = {alpha, true,
                                    vector<int>(), &(*it)

@@ -20,15 +20,11 @@
 #include "arrivalRegularModel.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
-#include "earliestSetDeadlinePolicy.hpp"
+#include "flexibleEDF.hpp"
 #include "degradationModel.hpp"
 #include "firstFitPlacement.hpp"
 #include "layout.hpp"
 #include "mmpp-2.hpp"
-#include "EDFStarv.hpp"
-#include "EDFSetStarv.hpp"
-#include "EDFBackFilling.hpp"
-#include "EDFSetBackfilling.hpp"
 using namespace std;
 
 double getAvgCompletionTime(int step, const vector<workload>& scheduledWorkloads) {
@@ -160,6 +156,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 ++it;
         }
 
+        int cpuWlsRunning = 0;
         //1st Check Workloads running finishing in this step
         for(auto it = runningWorkloads.begin(); it!=runningWorkloads.end();) {
             workload* run = &workloads[*it];
@@ -224,7 +221,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         loadFactors currLfs = layout.calculateAbstractLoadFactors(workloads, runningWorkloads);
         loadFactors abstractLfs = layout.calculateAbstractLoadFactors(workloads, perfectSchedulerQueue);
 
-//        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
+        //        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
         if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7 || abstractLfs.capacityLF >= 0.7 || abstractLfs.bandwidthLF >= 0.7))
             stationaryStep = step;
 
@@ -304,12 +301,12 @@ int main(int argc, char* argv[]) {
         double number = distribution(generate);
         if(number < 0.7) { //0.2
             workloads[i].executionTime = 1600;
-            workloads[i].nvmeBandwidth = 1800;
-            workloads[i].baseBandwidth = 1800;
+            workloads[i].nvmeBandwidth = 400;
+            workloads[i].baseBandwidth = 400;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 6; //1
+            workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
         } else if (number <  0.8) { //0.3
             workloads[i].executionTime = 800;
@@ -318,7 +315,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 10; //4
+            workloads[i].cores = 6; //4
             workloads[i].wlName = "tpcxiot";
         } else {
             workloads[i].executionTime = 900;
@@ -397,12 +394,13 @@ int main(int argc, char* argv[]) {
     FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
-    EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
+//    EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
 //    EarliestDeadlineBackfillingScheduler* edfBfilling = new EarliestDeadlineBackfillingScheduler();
 //    EarliestDeadlineBackfillingSetsScheduler* edfSetBfilling = new EarliestDeadlineBackfillingSetsScheduler();
-    EarliestDeadlineStarvationSetsScheduler* setStarved = new EarliestDeadlineStarvationSetsScheduler(starvCoefficient);
+//    EarliestDeadlineStarvationSetsScheduler* setStarved = new EarliestDeadlineStarvationSetsScheduler(starvCoefficient);
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
+    FlexibleEarliestDeadlineScheduler* flexibleEarliestSched = new FlexibleEarliestDeadlineScheduler(0.7);
+//    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    MinFragScheduler* minFragSched = new MinFragScheduler();
 //    cout << "bestfit: ";
 //    simulator(scheduler, bestFit, workloads, patients, layout);
@@ -418,11 +416,11 @@ int main(int argc, char* argv[]) {
 //    copyWL = workloads;
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
-    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    copyWL = workloads;
+//    simulator(flexibleEarliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSetSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
@@ -459,10 +457,11 @@ int main(int argc, char* argv[]) {
     delete minFrag;
     delete qosPolicy;
     delete firstFit;
-    delete starvedf;
-    delete setStarved;
+//    delete starvedf;
+//    delete setStarved;
     delete earliestSched;
-    delete earliestSetSched;
+    delete flexibleEarliestSched;
+//    delete earliestSetSched;
 
     return 0;
 }

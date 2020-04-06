@@ -260,8 +260,9 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
     }
 
     Rack* coresRack = this->allocateCoresOnly(workloads, wloadIt, layout);
-    if(!fittingRacks.empty() && coresRack == nullptr)
+    if(!fittingRacks.empty() && coresRack == nullptr) {
         wload->failToAllocateDueCores++;
+    }
     
     if(!fittingRacks.empty() && coresRack != nullptr) {
         rackFitness element = *fittingRacks.begin();
