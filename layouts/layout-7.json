@@ -2,42 +2,33 @@
 	"rack0": {
 		"nvmes": [{
 			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}, {
 			"bandwidth": 2000,
-			"capacity": 682
-		}, {
-			"bandwidth": 2000,
-			"capacity": 682
-		}, {
-			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}],
 		"cores": 25
 	},
 	"rack1": {
 		"nvmes": [{
 			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}, {
 			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}],
 		"cores": 25
 	},
 	"rack2": {
 		"nvmes": [{
 			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}, {
 			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}, {
 			"bandwidth": 2000,
-			"capacity": 682
-		}, {
-			"bandwidth": 2000,
-			"capacity": 682
+			"capacity": 600
 		}],
 		"cores": 25
 	},
