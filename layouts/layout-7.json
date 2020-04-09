@@ -11,11 +11,8 @@
 	},
 	"rack1": {
 		"nvmes": [{
-			"bandwidth": 2000,
-			"capacity": 600
-		}, {
-			"bandwidth": 2000,
-			"capacity": 600
+			"bandwidth": 1,
+			"capacity": 1
 		}],
 		"cores": 25
 	},
@@ -24,6 +21,12 @@
 			"bandwidth": 2000,
 			"capacity": 600
 		}, {
+			"bandwidth": 2000,
+			"capacity": 600
+		}, {
+			"bandwidth": 2000,
+			"capacity": 600
+		},{
 			"bandwidth": 2000,
 			"capacity": 600
 		}, {
