@@ -299,14 +299,14 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.1) { //0.2
+        if(number < 0.2) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 400;
             workloads[i].baseBandwidth = 400;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 2; //1
+            workloads[i].cores = 6; //1
             workloads[i].wlName = "smufin";
         } else if (number <  0.3) { //0.3
             workloads[i].executionTime = 800;
