@@ -306,7 +306,7 @@ int main(int argc, char* argv[]) {
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 6; //1
+            workloads[i].cores = 2; //1
             workloads[i].wlName = "smufin";
         } else if (number <  0.3) { //0.3
             workloads[i].executionTime = 800;
