@@ -24,14 +24,21 @@ import matplotlib.pyplot as plt
 logging.basicConfig(format="%(message)s", level=logging.ERROR)
 
 ap = argparse.ArgumentParser()
-#ap.add_argument("-l", "--layout", dest="l", required=True,
-#                help="Layout ile (json format)")
+ap.add_argument("-l", "--layout", dest="l", required=True,
+               help="Layout file (json format)")
 ap.add_argument("-s", "--schedule", dest="s", required=True,
 				help="JSON schedule file")
 args = ap.parse_args()
 
 with open(args.s) as s:
 	schedule = json.load(s)
+
+with open(args.l) as l:
+    layout = json.load(l)
+
+totalCores = 0
+for rack in layout:
+    totalCores += layout[rack]["cores"]
 
 lastTime = sorted(schedule, key=lambda k: k['completion'])[-1]["completion"]
 schedule = sorted(schedule, key=lambda k: k['step'], reverse=False)
@@ -74,6 +81,9 @@ wlsPercentagesBW = []
 wlsPercentagesCap = []
 wlsPercentagesCPU = []
 wlsPercentagesLabels = []
+wlsCoresBW = []
+wlsCoresCap = []
+wlsCoresCPU = []
 abstractLoadFactor = []
 absLfCPU = []
 absLfBW = []
@@ -115,7 +125,7 @@ def delete_wload(wlName, timeStamp):
             cpuJson[timeStamp] -= 1
 
 for i in schedule:
-        add_wload(i["wlName"][0],i["arrival"][0])
+        add_wload(i["wlName"][0],i["scheduled"][0])
         delete_wload(i["wlName"][0],i["completion"])
         arrivalsJson[i["arrival"][0]] = i
         if i["scheduled"][0] in parsedSched:
@@ -179,7 +189,7 @@ for i in range(0, lastTime+1):
                 avgCompSize = job["avgCompositionSize"]
                 avgWorkloadsSharing = job["avgWorkloadsSharing"] 
                 if job["completion"] in completions:
-		    completions[job["completion"]].append(job)
+		            completions[job["completion"]].append(job)
                 else:
                     completions[job["completion"]] = [job]
 
@@ -207,11 +217,20 @@ for i in range(0, lastTime+1):
 
         totalWl = wlBw+wlCap+wlCpu
         wlsPercentagesLabels.extend([i])
+        check = 2*wlBw + 10*wlCap + 15*wlCpu
+        # if check > totalCores:
+        #     print(str(wlBw)+" "+str(wlCap)+" "+str(wlCpu)+" "+str(check))
         if totalWl > 0:
+            wlsCoresBW.extend([100*(6*float(wlBw))/float(totalCores)])
+            wlsCoresCap.extend([100*(10*float(wlCap))/float(totalCores)])
+            wlsCoresCPU.extend([100*(15*float(wlCpu))/float(totalCores)])
             wlsPercentagesBW.extend([100*float(wlBw) / float(totalWl)])
             wlsPercentagesCap.extend([100*float(wlCap) / float(totalWl)])
             wlsPercentagesCPU.extend([100*float(wlCpu) / float(totalWl)])
         else:
+            wlsCoresBW.extend([0])
+            wlsCoresCap.extend([0])
+            wlsCoresCPU.extend([0])
             wlsPercentagesBW.extend([0])
             wlsPercentagesCap.extend([0])
             wlsPercentagesCPU.extend([0])
@@ -247,7 +266,7 @@ for i in range(0, lastTime+1):
             absLfBW.append(round(lfBW,1))
             absLfCap.append(round(lfCap,1))
 
-print(missedDeadlines[-1])
+# print(missedDeadlines[-1])
 #print(interArrivalTimes/len(schedule))
 plt.xlabel("Execution time (s)")
 # plt.title("NVMe used for job allocation over time")
@@ -304,6 +323,16 @@ plt.ylabel("Percentage of workloads kind")
 plt.savefig('plots/percentages-over-time.pdf',bbox_inches='tight')
 
 plt.clf()
+plt.plot(wlsPercentagesLabels,wlsCoresBW,label='Bandwidth-intensive')
+plt.plot(wlsPercentagesLabels,wlsCoresCap,label='Capacity-intensive')
+plt.plot(wlsPercentagesLabels,wlsCoresCPU,label='CPU-intensive')
+plt.legend()
+plt.xlabel("Simulation time(s)")
+plt.ylabel("Percentage of workloads kind")
+plt.savefig('plots/cores-perc-over-time.pdf',bbox_inches='tight')
+
+plt.clf()
+
 pl = plt.plot(labels, missedDeadlines)
 plt.savefig('plots/missedDeadlines-over-time.pdf', bbox_inches='tight')
 
