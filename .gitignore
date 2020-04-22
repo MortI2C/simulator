@@ -8,3 +8,5 @@ cmake-build-debug
 experiments.cc
 experiments
 simulator
+logs/*
+logs
