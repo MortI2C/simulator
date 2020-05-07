@@ -299,15 +299,15 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.7) { //0.2
+        if(number < 0.1) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 2; //1
-            workloads[i].wlName = "smufin";
+            workloads[i].cores = 6; //1
+            workloads[i].wlName = " smufin";
         } else if (number <  0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
@@ -368,24 +368,17 @@ int main(int argc, char* argv[]) {
 //    }
     //cout << workloadsDistribution.dump() << endl;
 
-//    ArrivalUniformModel* arrival = new ArrivalUniformModel();
-//    ArrivalPoissonModel* arrival = new ArrivalPoissonModel();
-    ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform();
+    ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform(); //POISSON
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(950,1200,0.1,0.9 );
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(325,455,0.2,0.6 );
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(200,350,0.1,0.8 );
 //    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(155.33,180,0.2,0.4 ); //PREFERRED
 //    ArrivalRegularModel* arrival = new ArrivalRegularModel();
     //cluster experiments
-//    arrival->generate_arrivals(workloads, 86400/patients, prio_threshold);
-//    arrival->generate_arrivals(workloads, 3600/patients, prio_threshold);
-    arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient);
-//    arrival->generate_arrivals(workloads, ((patients/40)*2194) / lambdaCoefficient, prio_threshold);
-//    arrival->generate_arrivals(workloads, ((patients/40)*1778.37) / lambdaCoefficient, prio_threshold);
-//    arrival->generate_arrivals(workloads, ((patients/40)*1500.37) / lambdaCoefficient, prio_threshold);
+    arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient); //POISSON
 //    arrival->generate_arrivals(workloads, 40, prio_threshold);
 //    arrival->generate_arrivals(workloads, 14, prio_threshold);
-    //    arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
+//        arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
     DegradationModel* model = new DegradationModel();
@@ -417,16 +410,16 @@ int main(int argc, char* argv[]) {
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSched , firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
-    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    copyWL = workloads;
+//    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(flexibleEarliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSetSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSetSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-//    copyWL = workloads;
-//    simulator(earliestSetSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(minFragSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;

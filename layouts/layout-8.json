@@ -52,6 +52,18 @@
 			{
 				"bandwidth": 2000,
 				"capacity": 600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 600
+			},
+			{
+				"bandwidth": 2000,
+				"capacity": 600
 			}
 		],
 		"cores": 0
