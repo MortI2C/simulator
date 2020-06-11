@@ -413,7 +413,7 @@ int main(int argc, char* argv[]) {
 //    copyWL = workloads;
 //    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(flexibleEarliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSetSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
