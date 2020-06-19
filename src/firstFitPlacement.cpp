@@ -82,6 +82,7 @@ bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloa
         scheduledRack->freeCores -= wload->cores;
         wload->timeLeft = wload->executionTime;
         wload->allocation.coresAllocatedRack = scheduledRack;
+        wload->placementPolicy = "minfrag";
         return true;
     } else
         return false;
@@ -126,6 +127,7 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                                 element.composition);
                         scheduled = true;
                         wload->allocation.coresAllocatedRack = coresRack;
+                        wload->placementPolicy = "minfrag";
                         assert(wload->allocation.coresAllocatedRack == it->compositions[i].coresRack);
                     }
                 } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores &&
@@ -214,6 +216,7 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
         wload->allocation.coresAllocatedRack = coresRack;
+        wload->placementPolicy = "minfrag";
     }
 
     return scheduled;
@@ -303,6 +306,7 @@ bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, v
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
             wload->allocation.coresAllocatedRack = coresRack;
+            wload->placementPolicy = "minfrag";
         }
     }
 

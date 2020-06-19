@@ -131,6 +131,7 @@ bool MinFragPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wload
         scheduledRack->freeCores -= wload->cores;
         wload->timeLeft = wload->executionTime;
         wload->allocation.coresAllocatedRack = scheduledRack;
+        wload->placementPolicy = "minfrag";
         return true;
     } else
         return false;
@@ -197,6 +198,7 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
         scheduled = true;
         coresRack->freeCores-=wload->cores;
         wload->allocation.coresAllocatedRack = coresRack;
+        wload->placementPolicy = "minfrag";
     }
 
     return scheduled;
@@ -275,6 +277,7 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
         wload->allocation.coresAllocatedRack = coresRack;
+        wload->placementPolicy = "minfrag";
     }
 
     return scheduled;
@@ -387,6 +390,7 @@ bool MinFragPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, ve
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
             wload->allocation.coresAllocatedRack = coresRack;
+            wload->placementPolicy = "minfrag";
         }
     }
 

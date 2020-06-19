@@ -42,6 +42,7 @@ void SchedulingPolicy::log(int workloadId, vector<workload>& workloads,
     this->logger[workloadId]["arrival"].push_back(workloads[workloadId].arrival);
     this->logger[workloadId]["scheduled"].push_back(workloads[workloadId].scheduled);
     this->logger[workloadId]["cores"].push_back(workloads[workloadId].cores);
+    this->logger[workloadId]["placementPolicy"] = workloads[workloadId].placementPolicy;
     if(workloads[workloadId].allocation.coresAllocatedRack!= nullptr &&
             workloads[workloadId].allocation.allocatedRack != nullptr &&
         workloads[workloadId].allocation.allocatedRack->rackId != workloads[workloadId].allocation.coresAllocatedRack->rackId)

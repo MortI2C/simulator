@@ -96,6 +96,7 @@ bool QoSPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, 
         scheduledRack->freeCores -= wload->cores;
         wload->timeLeft = wload->executionTime;
         wload->allocation.coresAllocatedRack = scheduledRack;
+        wload->placementPolicy = "qos";
         return true;
     } else
         return false;
@@ -158,6 +159,7 @@ bool QoSPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloa
         scheduled = true;
         coresRack->freeCores -= wload->cores;
         wload->allocation.coresAllocatedRack = coresRack;
+        wload->placementPolicy = "qos";
     }
 
     return scheduled;
@@ -302,6 +304,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
         wload->allocation.coresAllocatedRack = coresRack;
+        wload->placementPolicy = "qos";
     }
 
     return scheduled;
@@ -438,6 +441,7 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
             wload->allocation.composition = freeComposition;
             wload->allocation.allocatedRack = scheduledRack;
             wload->allocation.coresAllocatedRack = coresRack;
+            wload->placementPolicy = "qos";
         }
     }
 
