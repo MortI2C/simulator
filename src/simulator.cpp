@@ -23,6 +23,7 @@
 #include "flexibleEDF.hpp"
 #include "degradationModel.hpp"
 #include "firstFitPlacement.hpp"
+#include "firstFitModelAwarePlacement.hpp"
 #include "layout.hpp"
 #include "mmpp-2.hpp"
 using namespace std;
@@ -299,23 +300,23 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.7) { //0.2
+        if(number < 0.1) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
             workloads[i].nvmeCapacity = 43;
             workloads[i].performanceMultiplier = 0.98;
             workloads[i].limitPeakBandwidth = 6000;
-            workloads[i].cores = 6; //1
+            workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
         } else if (number <  0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
-            workloads[i].nvmeCapacity = 600;
+            workloads[i].nvmeCapacity = 600; //600
             workloads[i].baseBandwidth = 160;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //4
+            workloads[i].cores = 6; //6
             workloads[i].wlName = "tpcxiot";
         } else {
             workloads[i].executionTime = 900;
@@ -324,7 +325,7 @@ int main(int argc, char* argv[]) {
             workloads[i].baseBandwidth = 0;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 0;
-            workloads[i].cores = 15;
+            workloads[i].cores = 15; //15
             workloads[i].wlName = "execOnly";
         }
         workloads[i].baseExecutionTime = workloads[i].executionTime;
@@ -385,6 +386,7 @@ int main(int argc, char* argv[]) {
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
     FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
+    FirstFitModelAwarePolicy* firstFitAware = new FirstFitModelAwarePolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
 //    EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
@@ -392,7 +394,7 @@ int main(int argc, char* argv[]) {
 //    EarliestDeadlineBackfillingSetsScheduler* edfSetBfilling = new EarliestDeadlineBackfillingSetsScheduler();
 //    EarliestDeadlineStarvationSetsScheduler* setStarved = new EarliestDeadlineStarvationSetsScheduler(starvCoefficient);
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
-    FlexibleEarliestDeadlineScheduler* flexibleEarliestSched = new FlexibleEarliestDeadlineScheduler(0.5);
+    FlexibleEarliestDeadlineScheduler* flexibleEarliestSched = new FlexibleEarliestDeadlineScheduler(0.7);
 //    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    MinFragScheduler* minFragSched = new MinFragScheduler();
 //    cout << "bestfit: ";
@@ -404,7 +406,7 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
+//    copyWL = workloads;
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
