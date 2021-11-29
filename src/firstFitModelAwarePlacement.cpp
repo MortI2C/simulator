@@ -10,7 +10,7 @@
 using namespace std;
 
 
-void FirstFitPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
+void FirstFitModelAwarePolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
         if(!it->inUse && element.inUse) {
@@ -25,7 +25,7 @@ void FirstFitPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& el
         vect.push_back(element);
 }
 
-bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitModelAwarePolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
@@ -41,7 +41,7 @@ bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Lay
     return scheduled;
 }
 
-Rack* FirstFitPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
+Rack* FirstFitModelAwarePolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
     workload* wload = &workloads[wloadIt];
     bool scheduled = false;
     vector<rackFitness> fittingRacks;
@@ -56,7 +56,7 @@ Rack* FirstFitPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt
     return nullptr;
 }
 
-Rack* FirstFitPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vector<int>& wloads, Layout& layout) {
+Rack* FirstFitModelAwarePolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vector<int>& wloads, Layout& layout) {
     int cores = 0;
     for(auto it = wloads.begin(); it!= wloads.end(); ++it) {
         cores+=workloads[*it].cores;
@@ -75,7 +75,7 @@ Rack* FirstFitPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, ve
     return nullptr;
 }
 
-bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitModelAwarePolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     Rack* scheduledRack = this->allocateCoresOnly(workloads, wloadIt, layout);
     if(scheduledRack != nullptr) {
@@ -88,7 +88,7 @@ bool FirstFitPolicy::placeExecOnlyWorkload(vector<workload>& workloads, int wloa
         return false;
 }
 
-bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitModelAwarePolicy::placeWorkloadInComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     vector<nvmeFitness> fittingCompositions;
     bool scheduled = false;
@@ -145,7 +145,7 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
     return scheduled;
 }
 
-bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+bool FirstFitModelAwarePolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     bool scheduled = false;
     workload* wload = &workloads[wloadIt];
     int capacity = wload->nvmeCapacity;
@@ -222,7 +222,7 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
     return scheduled;
 }
 
-bool FirstFitPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
+bool FirstFitModelAwarePolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector<int>& wloads, Layout& layout, int step) {
     int deadline = workloads[*(wloads.begin())].deadline;
     int minBandwidth = -1;
     int capacity = 0;

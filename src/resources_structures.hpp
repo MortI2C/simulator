@@ -68,6 +68,7 @@ struct workload {
     string wlName;
     int allocationAttempts = 0;
     int failToAllocateDueCores = 0;
+    string placementPolicy;
 };
 
 #endif

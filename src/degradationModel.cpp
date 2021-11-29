@@ -42,3 +42,8 @@ int DegradationModel::smufinModel(int totalBandwidth, int totalRuns) {
 //    return ceil(-0.116413*totalBandwidth+1.73256*exp(totalRuns)+1988.05);
 }
 
+int DegradationModel::fioModel(int totalBandwidth, int totalRuns) {
+    int bwModel = ceil(totalBandwidth/2000);
+    return 900/pow(2,bwModel);
+}
+

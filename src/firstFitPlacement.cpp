@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "assert.h"
 #include "math.h"
-#include "firstFitModelAwarePlacement.hpp"
+#include "firstFitPlacement.hpp"
 #include "layout.hpp"
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
@@ -96,17 +96,14 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
         int position = 0;
         if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             for (int i = 0; !scheduled && i < it->compositions.size(); ++i) {
-                if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores &&
-                    it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
+                if (it->compositions[i].used && it->compositions[i].coresRack->freeCores>=wload->cores) {
                     int wlTTL = wload->executionTime + step;
                     int compositionTTL = it->compositionTTL(workloads, i, step);
                     int compositionTotalBw = it->compositions[i].composedNvme.getTotalBandwidth();
                     int compositionAvailBw = it->compositions[i].composedNvme.getAvailableBandwidth();
 
-                    if ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing < 7) ||
-                        (wload->wlName != "smufin" &&
-                         it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                         it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)) {
+                    if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                         it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 //                if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
 //                    it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity) {
 
@@ -121,7 +118,7 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                         Rack *coresRack = it->compositions[i].coresRack;
 
                         coresRack->freeCores -= wload->cores;
-                        this->updateRackWorkloads(workloads, wloadIt,
+                        this->updateRackWorkloadsUnaware(workloads, wloadIt,
                                 element.rack,
                                 element.rack->compositions[element.composition],
                                 element.composition);
@@ -130,12 +127,9 @@ bool FirstFitPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                         wload->placementPolicy = "minfrag";
                         assert(wload->allocation.coresAllocatedRack == it->compositions[i].coresRack);
                     }
-                } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores &&
-                           it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
-                    if ((wload->wlName == "smufin" && it->compositions[i].workloadsUsing < 7) ||
-                        (wload->wlName != "smufin" &&
-                         it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
-                         it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))
+                } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores) {
+                    if (it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
+                         it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity)
                         wload->failToAllocateDueCores++;
                 }
             }
@@ -211,8 +205,7 @@ bool FirstFitPolicy::placeWorkloadNewComposition(vector<workload>& workloads, in
         scheduledRack->compositions[freeComposition].assignedWorkloads.push_back(wloadIt);
         scheduledRack->compositions[freeComposition].coresRack = coresRack;
         coresRack->freeCores -= wload->cores;
-        wload->timeLeft = this->model.timeDistortion(scheduledRack->compositions[freeComposition],
-                *wload);
+        wload->timeLeft = wload->executionTime;
         wload->allocation.composition = freeComposition;
         wload->allocation.allocatedRack = scheduledRack;
         wload->allocation.coresAllocatedRack = coresRack;

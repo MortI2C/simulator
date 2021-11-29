@@ -180,7 +180,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
             if(it->getAvailableCapacity() >= wload->nvmeCapacity && it->getAvailableBandwidth() >= wload->nvmeBandwidth)
                 wload->failToAllocateDueCores++;
         } else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
-            if (wload->wlName == "smufin") {
+            if (wload->wlName == "smufin" || wload->wlName == "fio") {
 //            if((this->model.smufinModel(bandwidth,1)+step)>deadline && deadline!=-1
 //                && ((this->model.smufinModel(bandwidth,1)+step)*1.25<deadline)) {
                 //Assuming all NVMe equal
@@ -195,7 +195,10 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
 //                if(freeResources > 2) freeResources--;
                 for (int i = bwMultiple; !found && i > 0 && i <= freeResources * bwMultiple &&
                                          i <= wload->limitPeakBandwidth; i += bwMultiple) {
-                    int modelTime = this->model.smufinModel(i, 1) + step;
+                    int modelTime;
+                    if(wload->wlName == "smufin") modelTime = this->model.smufinModel(i, 1) + step;
+                    else modelTime = this->model.fioModel(i,1);
+
                     if (previousTime == -1 && modelTime <= deadline) {
                         bandwidth = i;
                         previousTime = modelTime;
@@ -214,6 +217,7 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                                 log((float) wload->performanceMultiplier)) +
                                 1
                                 ) * wload->baseBandwidth;
+                if(bwExtra<0) bwExtra*=-1;
                 if (deadline != -1 && bwExtra >= 1 && bwExtra >= wload->nvmeBandwidth) {
                     if (bwExtra > wload->limitPeakBandwidth) {
                         int newTime =

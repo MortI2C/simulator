@@ -26,6 +26,7 @@ class PlacementPolicy {
     void insertSortedBandwidth(vector<NvmeResource>&, vector<int>&, int);
     void insertSortedCapacity(vector<NvmeResource>&, vector<int>&, int);
     void updateRackWorkloads(vector <workload>&, int, Rack*, raid&, int);
+    void updateRackWorkloadsUnaware(vector <workload>&, int, Rack*, raid&, int);
     void updateRackWorkloadsTime(vector<workload>&, raid&);
 };
 

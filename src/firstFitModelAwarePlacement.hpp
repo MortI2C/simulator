@@ -1,5 +1,5 @@
-#ifndef FIRST_FIT_H
-#define FIRST_FIT_H
+#ifndef FIRST_FIT_AWARE_H
+#define FIRST_FIT_AWARE_H
 #include <iostream>
 #include <vector>
 #include "placementPolicy.hpp"
@@ -7,9 +7,9 @@
 #include "resources_structures.hpp"
 using namespace std;
 
-class FirstFitPolicy : public PlacementPolicy {
+class FirstFitModelAwarePolicy : public PlacementPolicy {
    public:
-    FirstFitPolicy(DegradationModel model) : PlacementPolicy(model) { }
+    FirstFitModelAwarePolicy(DegradationModel model) : PlacementPolicy(model) { }
 //    void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);

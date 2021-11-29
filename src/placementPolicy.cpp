@@ -230,6 +230,25 @@ void PlacementPolicy::insertSortedCapacity(vector<NvmeResource>& resources, vect
         vect.push_back(element);
 }
 
+void PlacementPolicy::updateRackWorkloadsUnaware(vector <workload>& workloads, int wloadIt, Rack* rack, raid& composition, int compositionId) {
+    workload* wload = &workloads[wloadIt];
+    composition.composedNvme.setAvailableCapacity(
+            (composition.composedNvme.getAvailableCapacity() - wload->nvmeCapacity));
+    composition.composedNvme.setAvailableBandwidth(
+            (composition.composedNvme.getAvailableBandwidth()-wload->nvmeBandwidth)
+            );
+
+    wload->allocation.composition = compositionId;
+    wload->allocation.allocatedRack = rack;
+    composition.workloadsUsing++;
+    wload->timeLeft = wload->executionTime;
+
+//    wload->nvmeBandwidth = (composition.composedNvme.getAvailableBandwidth() > wload->limitPeakBandwidth) ? wload->limitPeakBandwidth : composition.composedNvme.getAvailableBandwidth();
+    wload->executionTime = wload->timeLeft;
+//    this->updateRackWorkloadsTime(workloads, composition);
+    composition.assignedWorkloads.push_back(wloadIt);
+}
+
 void PlacementPolicy::updateRackWorkloads(vector <workload>& workloads, int wloadIt, Rack* rack, raid& composition, int compositionId) {
     workload* wload = &workloads[wloadIt];
     composition.composedNvme.setAvailableCapacity(
