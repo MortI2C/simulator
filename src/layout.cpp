@@ -34,6 +34,20 @@ void Layout::generateLayout(string filePath) {
                 totalCapacity += (int) it2.value()["capacity"];
             }
         }
+
+        int totalGpuBandwith = 0;
+        int totalGpuMemory = 0;
+        json gpuArray = it.value();
+        vector<GpuResource> gpus = vector<GpuResource>(0);
+        for(json::iterator it2 = gpuArray["gpus"].begin(); it2!=gpuArray["gpus"].end(); ++it2) {
+            if(!it2->empty()) {
+                GpuResource newGpu(it2.value()["bandwidth"], it2.value()["memory"]);
+                gpus.push_back(newGpu);
+                totalGpuBandwith += (int) it2.value()["bandwidth"];
+                totalGpuMemory += (int) it2.value()["memory"];
+            }
+        }
+
         newRack.setTotalCores((int)newArray["cores"]);
         newRack.setFreeCores((int)newArray["cores"]);
         if(nvmes.size()>0)
@@ -41,6 +55,9 @@ void Layout::generateLayout(string filePath) {
 
         newRack.setTotalBandwidth(totalBandwith);
         newRack.setTotalCapacity(totalCapacity);
+        newRack.setTotalGpuBandwidth(totalGpuBandwith);
+        newRack.setTotalGpuMemory(totalGpuMemory);
+
         newRack.rackId = rackId;
 //      newRack.stabilizeContainers();
         this->racks[rackId++] = newRack;

@@ -5,6 +5,7 @@
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 #include "degradationModel.hpp"
+#include "gpuResource.hpp"
 using namespace std;
 
 //class NvmeResource;
@@ -15,6 +16,8 @@ class Rack {
     int numFreeResources;
     int totalBandwidth;
     int totalCapacity;
+    int totalGpuBandwidth;
+    int totalGpuMemory;
     vector<NvmeResource> resources;
     vector<int> freeResources;
     vector<raid> compositions;
@@ -43,6 +46,8 @@ class Rack {
     void setTotalCapacity(int);
     void setFreeCores(int);
     void setTotalCores(int);
+    void setTotalGpuBandwidth(int);
+    void setTotalGpuMemory(int);
     int getTotalCores();
     bool possibleToColocate(vector<workload>&, int, int, int, DegradationModel&);
 };

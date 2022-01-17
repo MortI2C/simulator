@@ -20,7 +20,7 @@ struct raid {
     Rack* coresRack;
 };
 
-struct loadFactors {
+struct loadFactors {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
     double bandwidthLF;
     double capacityLF;
     double cpuLF;
@@ -52,8 +52,10 @@ struct workload {
     int executionTime;
     int baseExecutionTime;
     int timeLeft;
-    int nvmeBandwidth;
-    int nvmeCapacity;
+    int nvmeBandwidth = 0;
+    int nvmeCapacity = 0;
+    int gpuBandwidth = 0;
+    int gpuMemory = 0;
     bool highprio;
     int deadline;
     int arrival;
@@ -62,7 +64,7 @@ struct workload {
     int cyclesDelayed=0;
     int wlId;
     double performanceMultiplier;
-    int baseBandwidth;
+    int baseBandwidth = 0;
     int limitPeakBandwidth;
     int cores;
     string wlName;

@@ -66,6 +66,47 @@
 				"capacity": 600
 			}
 		],
+		"gpus": [{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			},
+			{
+				"bandwidth": 2000,
+				"memory": 600
+			}
+		],
 		"cores": 0
 	}
 }

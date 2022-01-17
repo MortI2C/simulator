@@ -327,6 +327,14 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 160;
             workloads[i].cores = 6; //6
             workloads[i].wlName = "tpcxiot";
+        } else if (number < 2 && number > 1) { //0.3
+            workloads[i].executionTime = 800;
+            workloads[i].gpuMemory = 2000;
+            workloads[i].gpuBandwidth = 1500;
+            workloads[i].performanceMultiplier = 1;
+            workloads[i].limitPeakBandwidth = 160;
+            workloads[i].cores = 6; //6
+            workloads[i].wlName = "yolo";
         } else {
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 0;

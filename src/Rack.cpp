@@ -234,6 +234,15 @@ int Rack::getTotalCores() {
     return this->cores;
 }
 
+void Rack::setTotalGpuBandwidth(int bandwidth) {
+    this->totalGpuBandwidth = bandwidth;
+}
+
+void Rack::setTotalGpuMemory(int memory) {
+    this->totalGpuMemory = memory;
+}
+
+
 bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int composition, int step, DegradationModel& model) {
     workload* wload = &workloads[wloadId];
 
