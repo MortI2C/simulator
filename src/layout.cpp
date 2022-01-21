@@ -18,9 +18,6 @@ void Layout::generateLayout(string filePath) {
     int rackId = 0;
     this->racks = vector<Rack>(j.size());
     for(json::iterator it = j.begin(); it!=j.end(); ++it) {
-        if(it.key()=="rackdisagg") {
-            this->disaggregated = true;
-        }
         int totalBandwith = 0;
         int totalCapacity = 0;
         Rack newRack = Rack();
@@ -43,6 +40,7 @@ void Layout::generateLayout(string filePath) {
             if(!it2->empty()) {
                 GpuResource newGpu(it2.value()["bandwidth"], it2.value()["memory"]);
                 gpus.push_back(newGpu);
+                this->gpus.push_back(newGpu);
                 totalGpuBandwith += (int) it2.value()["bandwidth"];
                 totalGpuMemory += (int) it2.value()["memory"];
             }
@@ -53,6 +51,9 @@ void Layout::generateLayout(string filePath) {
         if(nvmes.size()>0)
             newRack.addNvmeResourceVector(nvmes);
 
+        if(gpus.size()>0)
+            newRack.addGpuResourceVector(gpus);
+
         newRack.setTotalBandwidth(totalBandwith);
         newRack.setTotalCapacity(totalCapacity);
         newRack.setTotalGpuBandwidth(totalGpuBandwith);
@@ -61,6 +62,11 @@ void Layout::generateLayout(string filePath) {
         newRack.rackId = rackId;
 //      newRack.stabilizeContainers();
         this->racks[rackId++] = newRack;
+
+        if(it.key()=="rackdisagg") {
+            this->disaggregated = true;
+            this->rackPool = &(newRack);
+        }
     }
 }
 

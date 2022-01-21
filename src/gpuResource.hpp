@@ -3,17 +3,15 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include "resources_structures.hpp"
 
-struct Gpu {
+class GpuResource {
     int availableBandwidth;
     int availableMemory;
     int totalBandwidth;
     int totalMemory;
     bool used = false;
-};
-
-class GpuResource {
-    Gpu gpu;
+    vector<workload*> workloads;
 
     public:
         GpuResource() {
@@ -28,5 +26,8 @@ class GpuResource {
 		int getTotalMemory();
 		int getAvailableBandwidth();
 		int getAvailableMemory();
+		void setUsed(bool);
+		void assignWorkload(workload*);
+		bool isUsed();
 };
 #endif

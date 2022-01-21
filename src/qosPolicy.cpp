@@ -43,25 +43,28 @@ void QoSPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
 
 bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
-    if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
+    if(wload->wlType == "execOnly") {
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }
 
     workloads[wloadIt].allocationAttempts++;
-    bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
-    if(!scheduled) {
-        workloads[wloadIt].allocationAttempts++;
-        return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
-    }
+    if(wload->wlType == "gpuOnly") {
+        return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    } else {
+        bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
+        if (!scheduled) {
+            workloads[wloadIt].allocationAttempts++;
+            return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
+        }
 
-    return scheduled;
+        return scheduled;
+    }
 }
 
 Rack* QoSPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
     workload* wload = &workloads[wloadIt];
-    bool scheduled = false;
     vector<rackFitness> fittingRacks;
-    for(vector<Rack>::iterator it = layout.racks.begin(); !scheduled && it!=layout.racks.end(); ++it) {
+    for(vector<Rack>::iterator it = layout.racks.begin(); it!=layout.racks.end(); ++it) {
         if(it->freeCores >= wload->cores)
         {
            return &(*it);

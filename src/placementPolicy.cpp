@@ -7,6 +7,7 @@
 #include "nvmeResource.hpp"
 #include "placementPolicy.hpp"
 #include "degradationModel.hpp"
+#include <cmath>
 using namespace std;
 
 PlacementPolicy::PlacementPolicy(DegradationModel degradationModel) {
@@ -283,4 +284,88 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
             it2.executionTime = newTime;
         }
     }
+}
+
+bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    workload* wload = &workloads[wloadIt];
+    Rack* fittingRack = nullptr;
+    //1st: look for vgpu avail on list
+    for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
+        if(layout.disaggregated) {
+            if (!it->vgpus.empty() && it->possiblevGPUAllocation(wload->gpuMemory, wload->gpuBandwidth)
+                && it->freeCores >= wload->cores) {
+                fittingRack = &(*it);
+                it->assignWorkloadTovGPU(wload);
+            }
+        } else {
+            if(!it->gpus.empty() &&
+                wload->gpuMemory <= it->possiblePhysGPUAllocation(wload->gpuMemory,wload->gpuBandwidth)
+               && it->freeCores >= wload->cores ) {
+                GpuResource* gpu;
+                for(auto it2 = it->gpus.begin(); gpu!=nullptr && it2!=it->gpus.end(); ++it2) {
+                    if(gpu->getAvailableMemory()>=wload->gpuMemory &&
+                        gpu->getAvailableBandwidth()>=wload->gpuBandwidth)
+                        gpu = &(*it2);
+                }
+
+                fittingRack = &(*it);
+                gpu->setUsed(true);
+                gpu->assignWorkload(wload);
+            }
+        }
+    }
+
+    if(fittingRack == nullptr && layout.disaggregated) {
+        //Find if phys gpu free
+        for(auto it = layout.racks.begin(); fittingRack== nullptr && it!=layout.racks.end(); ++it) {
+            if(it->freeCores <= wload->cores)
+                fittingRack = &(*it);
+        }
+
+        for(auto it = layout.rackPool->gpus.begin(); fittingRack!=nullptr && it!=layout.rackPool->gpus.end(); ++it) {
+            if(!it->isUsed()) {
+                int bwDivisions = floor(it->getTotalBandwidth()/wload->gpuBandwidth);
+                int memDivisions = floor(it->getTotalMemory()/wload->gpuMemory);
+                assert(memDivisions >= 1 && bwDivisions >= 1);
+
+                bwDivisions = it->getTotalBandwidth()/bwDivisions;
+                memDivisions = it->getTotalMemory()/memDivisions;
+
+                int totalBw = it->getTotalBandwidth();
+                int totalMem = it->getTotalMemory();
+                vector<vGPUResource*> vgpus;
+                for(int j = 0; totalBw > 0; ++j) {
+                    int bwvGPU = (totalBw >= bwDivisions) ? bwDivisions  : totalBw;
+                    int memvGPU = (totalMem >= memDivisions) ? memDivisions : totalMem;
+
+                    totalBw -= bwDivisions;
+                    totalMem -= memDivisions;
+                    vGPUResource* vGPU = new vGPUResource(bwvGPU,memvGPU, &(*it));
+                    vgpus.push_back(vGPU);
+                }
+                assert(vgpus.size()<layout.racks.size());
+
+                //SIMPLE VGPU ASSIGNMENT: IN ORDER TO EACH RACK
+                fittingRack->addvGPU(*vgpus.begin());
+                int assignedvGPUS=1;
+                while(assignedvGPUS<vgpus.size()) {
+                    auto it = layout.racks.begin();
+                    if(&(*it) != layout.rackPool && &(*it) != fittingRack) {
+                        it->addvGPU(*(vgpus.begin() + assignedvGPUS));
+                        ++assignedvGPUS;
+                    }
+                    ++it;
+                }
+            }
+        }
+    }
+
+    if(fittingRack != nullptr) {
+        fittingRack->freeCores -= wload->cores;
+        wload->timeLeft = wload->executionTime;
+        wload->allocation.coresAllocatedRack = fittingRack;
+        wload->placementPolicy = "gpu";
+        return true;
+    } else
+        return false;
 }

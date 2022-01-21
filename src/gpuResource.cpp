@@ -5,40 +5,52 @@
 #include "resources_structures.hpp"
 
 GpuResource::GpuResource (int totalBandwidth, int totalMemory) {
-    this->gpu.totalBandwidth = totalBandwidth;
-    this->gpu.totalMemory = totalMemory;
-    this->gpu.availableBandwidth = totalBandwidth;
-    this->gpu.availableMemory = totalMemory;
+    this->totalBandwidth = totalBandwidth;
+    this->totalMemory = totalMemory;
+    this->availableBandwidth = totalBandwidth;
+    this->availableMemory = totalMemory;
 }
 
 int GpuResource::getTotalBandwidth() {
-    return this->gpu.totalBandwidth;
+    return this->totalBandwidth;
 }
 
 int GpuResource::getTotalMemory() {
-    return this->gpu.totalMemory;
+    return this->totalMemory;
 }
 
 int GpuResource::getAvailableBandwidth() {
-    return this->gpu.availableBandwidth;
+    return this->availableBandwidth;
 }
 
 int GpuResource::getAvailableMemory() {
-    return this->gpu.availableMemory;
+    return this->availableMemory;
 }
 
 void GpuResource::setTotalBandwidth(int bandwidth) {
-    this->gpu.totalBandwidth = bandwidth;
+    this->totalBandwidth = bandwidth;
 }
 
 void GpuResource::setTotalMemory(int memory) {
-    this->gpu.totalMemory = memory;
+    this->totalMemory = memory;
 }
 
 void GpuResource::setAvailableBandwidth(int bandwidth) {
-    this->gpu.availableBandwidth = bandwidth;
+    this->availableBandwidth = bandwidth;
 }
 
 void GpuResource::setAvailableMemory(int memory) {
-    this->gpu.availableMemory = memory;
+    this->availableMemory = memory;
+}
+
+void GpuResource::setUsed(bool used) {
+    this->used = used;
+}
+
+void GpuResource::assignWorkload(workload* wload) {
+    this->workloads.push_back(wload);
+}
+
+bool GpuResource::isUsed() {
+    return this->used;
 }

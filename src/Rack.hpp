@@ -5,6 +5,7 @@
 #include "resources_structures.hpp"
 #include "nvmeResource.hpp"
 #include "degradationModel.hpp"
+#include "vgpuResource.hpp"
 #include "gpuResource.hpp"
 using namespace std;
 
@@ -16,8 +17,10 @@ class Rack {
     int numFreeResources;
     int totalBandwidth;
     int totalCapacity;
-    int totalGpuBandwidth;
-    int totalGpuMemory;
+    int totalGpuBandwidth = 0;
+    int totalGpuMemory = 0;
+    vector<GpuResource> gpus;
+    vector<vGPUResource*> vgpus;
     vector<NvmeResource> resources;
     vector<int> freeResources;
     vector<raid> compositions;
@@ -27,6 +30,8 @@ class Rack {
 
     Rack() {
     }
+    void addvGPU(vGPUResource* vGPU);
+    void addGpuResourceVector(vector<GpuResource>);
     void addNvmeResource(NvmeResource&);
     void deleteNvmeResource (NvmeResource*);
     void freeComposition(Rack*, int);
@@ -50,6 +55,9 @@ class Rack {
     void setTotalGpuMemory(int);
     int getTotalCores();
     bool possibleToColocate(vector<workload>&, int, int, int, DegradationModel&);
+    bool possiblevGPUAllocation(int, int);
+    bool possiblePhysGPUAllocation(int, int);
+    bool assignWorkloadTovGPU(workload*);
 };
 
 #endif

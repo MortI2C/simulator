@@ -309,6 +309,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
+            workloads[i].wlType = "nvme";
         } else if (number <  0.7) { //0.3
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 2000;
@@ -318,6 +319,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 6000;
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
+            workloads[i].wlType = "nvme";
         } else if (number <  0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
@@ -327,6 +329,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 160;
             workloads[i].cores = 6; //6
             workloads[i].wlName = "tpcxiot";
+            workloads[i].wlType = "nvme";
         } else if (number < 2 && number > 1) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].gpuMemory = 2000;
@@ -335,6 +338,7 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 160;
             workloads[i].cores = 6; //6
             workloads[i].wlName = "yolo";
+            workloads[i].wlType = "gpuOnly";
         } else {
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 0;
@@ -344,10 +348,12 @@ int main(int argc, char* argv[]) {
             workloads[i].limitPeakBandwidth = 0;
             workloads[i].cores = 15; //15
             workloads[i].wlName = "execOnly";
+            workloads[i].wlType = "execOnly";
         }
         workloads[i].baseExecutionTime = workloads[i].executionTime;
         workloads[i].wlId = i;
     }
+
 //    uniform_int_distribution<int> executionTimes(100,1800);
 //    uniform_int_distribution<int> bandwidths(0,2000);
 //    uniform_int_distribution<int> capacity(0,1600);

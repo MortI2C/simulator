@@ -7,6 +7,7 @@
 #include "assert.h"
 #include "Rack.hpp"
 #include "nvmeResource.hpp"
+#include "vgpuResource.hpp"
 using namespace std;
 
 void Rack::addNvmeResource(NvmeResource& nvme) {
@@ -270,4 +271,45 @@ bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int comp
         return true;
     } else
         return false;
+}
+
+void Rack::addvGPU(vGPUResource* vGPU) {
+    this->vgpus.push_back(vGPU);
+    this->totalGpuBandwidth += vGPU->getTotalBandwidth();
+    this->totalGpuMemory += vGPU->getTotalMemory();
+}
+
+void Rack::addGpuResourceVector(vector<GpuResource> gpus) {
+    this->gpus = gpus;
+}
+
+bool Rack::possiblevGPUAllocation(int memory, int bandwidth) {
+    for(auto it = this->vgpus.begin(); it!=this->vgpus.end(); ++it) {
+        if((*it)->getAvailableMemory() >= memory && (*it)->getAvailableBandwidth() >= bandwidth)
+            return true;
+    }
+
+    return false;
+}
+
+bool Rack::possiblePhysGPUAllocation(int memory, int bandwidth) {
+    for(auto it = this->gpus.begin(); it!=this->gpus.end(); ++it) {
+        if(it->getAvailableMemory() >= memory && it->getAvailableBandwidth() >= bandwidth)
+            return true;
+    }
+
+    return false;
+}
+
+bool Rack::assignWorkloadTovGPU(workload* wload) {
+    int memory = wload->gpuMemory;
+    int bandwidth = wload->gpuBandwidth;
+    for(auto it = this->vgpus.begin(); it!=this->vgpus.end(); ++it) {
+        if((*it)->getAvailableMemory() >= memory && (*it)->getAvailableBandwidth() >= bandwidth) {
+            (*it)->assignWorkload(wload);
+            return true;
+        }
+    }
+
+    return false;
 }

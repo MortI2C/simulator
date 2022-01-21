@@ -6,26 +6,44 @@
 #include "gpuResource.hpp"
 #include "resources_structures.hpp"
 
-vGPUResource::vGPUResource (int memory, int bandwidth, GpuResource* physGpu) {
+vGPUResource::vGPUResource (int bandwidth, int memory, GpuResource* physGpu) {
     assert(memory <= physGpu->getTotalMemory() && bandwidth <= physGpu->getTotalBandwidth());
-    this->vGpu.physicalGpu = physGpu;
-    this->vGpu.totalBandwidth = bandwidth;
-    this->vGpu.totalMemory = memory;
+    this->physicalGpu = physGpu;
+    this->totalBandwidth = bandwidth;
+    this->totalMemory = memory;
 }
 
 int vGPUResource::getTotalMemory() {
-    return this->vGpu.totalMemory;
+    return this->totalMemory;
 }
 
 
 int vGPUResource::getTotalBandwidth() {
-    return this->vGpu.totalBandwidth;
+    return this->totalBandwidth;
 }
 
 void vGPUResource::setTotalBandwidth(int bandwidth) {
-    this->vGpu.totalBandwidth = bandwidth;
+    this->totalBandwidth = bandwidth;
 }
 
 void vGPUResource::setTotalMemory(int memory) {
-    this->vGpu.totalMemory = memory;
+    this->totalMemory = memory;
+}
+
+vector<workload*> vGPUResource::getWorkloads() {
+    return this->wloads;
+}
+
+int vGPUResource::getAvailableBandwidth() {
+    return this->availBandwidth;
+}
+
+int vGPUResource::getAvailableMemory() {
+    return this->availMemory;
+}
+
+void vGPUResource::assignWorkload(workload* wload) {
+    this->wloads.push_back(wload);
+    this->availMemory -= wload->gpuMemory;
+    this->availBandwidth -= wload->gpuBandwidth;
 }

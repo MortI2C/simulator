@@ -54,6 +54,10 @@ void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element
 
 bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
+    if(wload->wlType == "gpuOnly") {
+        return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    }
+
     if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }

@@ -4,16 +4,16 @@
 #include <vector>
 #include <queue>
 #include "gpuResource.hpp"
+#include "resources_structures.hpp"
 
-struct vGPU {
+class vGPUResource {
     GpuResource* physicalGpu;
     int totalMemory;
     int totalBandwidth;
+    int availMemory;
+    int availBandwidth;
     bool used = false;
-};
-
-class vGPUResource {
-    vGPU vGpu;
+    vector<workload*> wloads;
 
     public:
         vGPUResource() {
@@ -24,5 +24,9 @@ class vGPUResource {
 		void setTotalBandwidth(int);
 		int getTotalMemory();
 		int getTotalBandwidth();
+		vector<workload*> getWorkloads();
+		int getAvailableMemory();
+		int getAvailableBandwidth();
+		void assignWorkload(workload*);
 };
 #endif

@@ -31,14 +31,18 @@ bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Lay
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }
 
-    workloads[wloadIt].allocationAttempts++;
-    bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
-    if(!scheduled) {
+    if(wload->wlType == "gpuOnly") {
+        return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    } else {
         workloads[wloadIt].allocationAttempts++;
-        return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
-    }
+        bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
+        if (!scheduled) {
+            workloads[wloadIt].allocationAttempts++;
+            return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
+        }
 
-    return scheduled;
+        return scheduled;
+    }
 }
 
 Rack* FirstFitPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {
