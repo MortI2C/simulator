@@ -288,13 +288,13 @@ bool Rack::possiblevGPUAllocation(int memory, int bandwidth) {
    return this->vgpu->getAvailableMemory() >= memory && this->vgpu->getAvailableBandwidth() >= bandwidth;
 }
 
-bool Rack::possiblePhysGPUAllocation(int memory, int bandwidth) {
+vector<GpuResource>::iterator Rack::possiblePhysGPUAllocation(int bandwidth, int memory) {
     for(auto it = this->gpus.begin(); it!=this->gpus.end(); ++it) {
         if(it->getAvailableMemory() >= memory && it->getAvailableBandwidth() >= bandwidth)
-            return true;
+            return it;
     }
 
-    return false;
+    return this->gpus.end();
 }
 
 void Rack::assignWorkloadTovGPU(workload* wload) {

@@ -56,7 +56,7 @@ class Rack {
     bool possibleToColocate(vector<workload>&, int, int, int, DegradationModel&);
     void setvGPU(vGPUResource* vGPU);
     bool possiblevGPUAllocation(int, int);
-    bool possiblePhysGPUAllocation(int, int);
+    vector<GpuResource>::iterator possiblePhysGPUAllocation(int, int);
     void assignWorkloadTovGPU(workload*);
 };
 

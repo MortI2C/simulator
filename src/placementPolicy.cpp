@@ -319,19 +319,14 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 it->assignWorkloadTovGPU(wload);
             }
         } else {
-            if(!it->gpus.empty() &&
-                wload->gpuMemory <= it->possiblePhysGPUAllocation(wload->gpuMemory,wload->gpuBandwidth)
-               && it->freeCores >= wload->cores ) {
-                GpuResource* gpu;
-                for(auto it2 = it->gpus.begin(); gpu!=nullptr && it2!=it->gpus.end(); ++it2) {
-                    if(gpu->getAvailableMemory()>=wload->gpuMemory &&
-                        gpu->getAvailableBandwidth()>=wload->gpuBandwidth)
-                        gpu = &(*it2);
+            if(!it->gpus.empty() && it->freeCores >= wload->cores) {
+                vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
+                if(gpu!=it->gpus.end()) {
+                    assert(gpu != it->gpus.end());
+                    fittingRack = &(*it);
+                    gpu->setUsed(true);
+                    gpu->assignWorkload(wload);
                 }
-
-                fittingRack = &(*it);
-                gpu->setUsed(true);
-                gpu->assignWorkload(wload);
             }
         }
     }
