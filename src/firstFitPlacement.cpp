@@ -27,12 +27,11 @@ void FirstFitPolicy::insertRackSorted(vector<rackFitness>& vect, rackFitness& el
 
 bool FirstFitPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
-    if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
-        return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
-    }
 
     if(wload->wlType == "gpuOnly") {
         return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    } else if(wload->nvmeBandwidth == 0 && wload->nvmeCapacity == 0) {
+        return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     } else {
         workloads[wloadIt].allocationAttempts++;
         bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);

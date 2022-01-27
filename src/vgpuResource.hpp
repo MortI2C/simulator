@@ -28,5 +28,8 @@ class vGPUResource {
 		int getAvailableMemory();
 		int getAvailableBandwidth();
 		void assignWorkload(workload*);
+		bool removeWorkload(workload*);
+		bool isUsed();
+		GpuResource* getPhysicalGpu();
 };
 #endif

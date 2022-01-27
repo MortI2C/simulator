@@ -3,7 +3,10 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include "gpuResource.hpp"
 #include "resources_structures.hpp"
+
+class vGPUResource;
 
 class GpuResource {
     int availableBandwidth;
@@ -12,12 +15,16 @@ class GpuResource {
     int totalMemory;
     bool used = false;
     vector<workload*> workloads;
+    vector<vGPUResource*> vgpus;
+    vector<int> usedVgpus;
+    int vgpusUsed = 0;
 
     public:
         GpuResource() {
 
 		};
         GpuResource (int, int);
+        void addVgpusVector(vector<vGPUResource*>);
 		void setTotalBandwidth(int);
 		void setTotalMemory(int);
 		void setAvailableBandwidth(int);
@@ -29,5 +36,10 @@ class GpuResource {
 		void setUsed(bool);
 		void assignWorkload(workload*);
 		bool isUsed();
+        bool removeWorkload(workload*);
+        void setvGPUUsed(vGPUResource*);
+        void freevGPU(vGPUResource*);
+        vGPUResource* possibleAllocateWloadInvGPU(int, int);
+        void setvGPUAsUsed(vGPUResource*);
 };
 #endif

@@ -65,7 +65,7 @@ void Layout::generateLayout(string filePath) {
 
         if(it.key()=="rackdisagg") {
             this->disaggregated = true;
-            this->rackPool = &(newRack);
+            this->rackPool = newRack;
         }
     }
 }

@@ -43,22 +43,19 @@ void QoSPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
 
 bool QoSPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
-    if(wload->wlType == "execOnly") {
+    if(wload->wlType == "gpuOnly") {
+        return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
+    } else  if(wload->wlType == "execOnly") {
         return this->placeExecOnlyWorkload(workloads, wloadIt, layout, step, deadline);
     }
 
     workloads[wloadIt].allocationAttempts++;
-    if(wload->wlType == "gpuOnly") {
-        return this->placeGpuOnlyWorkload(workloads, wloadIt, layout, step, deadline);
-    } else {
-        bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
-        if (!scheduled) {
-            workloads[wloadIt].allocationAttempts++;
-            return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
-        }
-
-        return scheduled;
+    bool scheduled = this->placeWorkloadInComposition(workloads, wloadIt, layout, step, deadline);
+    if (!scheduled) {
+        workloads[wloadIt].allocationAttempts++;
+        return this->placeWorkloadNewComposition(workloads, wloadIt, layout, step, deadline);
     }
+    return scheduled;
 }
 
 Rack* QoSPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt, Layout& layout) {

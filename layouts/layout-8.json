@@ -67,44 +67,44 @@
 			}
 		],
 		"gpus": [{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			},
 			{
-				"bandwidth": 2000,
-				"memory": 600
+				"bandwidth": 20000,
+				"memory": 8000
 			}
 		],
 		"cores": 0

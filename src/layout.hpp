@@ -9,7 +9,7 @@ using namespace std;
 
 class Layout {
    public:
-    Rack* rackPool;
+    Rack rackPool;
     vector<Rack> racks;
     vector<GpuResource> gpus;
     bool disaggregated;
