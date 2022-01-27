@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.3) { //0.3
+        } else if (number <  0.1) { //0.3
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 2000;
             workloads[i].nvmeCapacity = 0; //600
@@ -333,7 +333,7 @@ int main(int argc, char* argv[]) {
         } else if (number < 0.8) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].gpuMemory = 2000;
-            workloads[i].gpuBandwidth = 1500;
+            workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
             workloads[i].cores = 6; //6

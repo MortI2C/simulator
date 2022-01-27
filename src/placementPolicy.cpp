@@ -335,7 +335,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
         //find if node is free to assign a new vgpu
         for(auto it = layout.racks.begin(); fittingRack== nullptr && it!=layout.racks.end(); ++it) {
             if(it->freeCores >= wload->cores
-                && it->freeCores == it->cores && it->vgpu == nullptr) //check unused + vgpu not assigned (error on freeing otherwise)
+                && it->vgpu == nullptr) //check vgpu not assigned
                 fittingRack = &(*it);
         }
 
