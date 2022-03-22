@@ -273,19 +273,14 @@ bool Rack::possibleToColocate(vector<workload>& workloads, int wloadId, int comp
         return false;
 }
 
-void Rack::setvGPU(vGPUResource* vGPU) {
-    assert(this->vgpu == nullptr);
-    this->vgpu = vGPU;
+void Rack::addvGPU(vGPUResource* vGPU) {
+    this->vgpus.push_back(vGPU);
     this->totalGpuBandwidth += vGPU->getTotalBandwidth();
     this->totalGpuMemory += vGPU->getTotalMemory();
 }
 
 void Rack::addGpuResourceVector(vector<GpuResource> gpus) {
     this->gpus = gpus;
-}
-
-bool Rack::possiblevGPUAllocation(int memory, int bandwidth) {
-   return this->vgpu->getAvailableMemory() >= memory && this->vgpu->getAvailableBandwidth() >= bandwidth;
 }
 
 vector<GpuResource>::iterator Rack::possiblePhysGPUAllocation(int bandwidth, int memory) {
@@ -296,9 +291,9 @@ vector<GpuResource>::iterator Rack::possiblePhysGPUAllocation(int bandwidth, int
 
     return this->gpus.end();
 }
-
-void Rack::assignWorkloadTovGPU(workload* wload) {
-    int memory = wload->gpuMemory;
-    int bandwidth = wload->gpuBandwidth;
-    this->vgpu->assignWorkload(wload);
-}
+//
+//void Rack::assignWorkloadTovGPU(workload* wload) {
+//    int memory = wload->gpuMemory;
+//    int bandwidth = wload->gpuBandwidth;
+//    this->vgpu->assignWorkload(wload);
+//}

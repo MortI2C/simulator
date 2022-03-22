@@ -11,6 +11,7 @@ using namespace std;
 
 class Rack;
 class GpuResource;
+class vGPUResource;
 
 struct raid {
     raid() : composedNvme(NvmeResource(0,0)), volumes(vector<int>(0)), used(false), workloadsUsing(0), assignedWorkloads(vector<int>(0)) {}
@@ -35,6 +36,7 @@ struct rackFitness {
     vector<int> selection;
     Rack* rack;
     GpuResource* gpu = nullptr;
+    vGPUResource* vgpu = nullptr;
     rackFitness(int f,bool i,vector<int> s,Rack* r) {
         this->fitness = f;
         this->inUse = i;
@@ -55,6 +57,7 @@ struct allocatedResources {
     int composition;
     Rack* allocatedRack;
     Rack* coresAllocatedRack;
+    vGPUResource* vgpu = nullptr;
 };
 
 struct workload {

@@ -72,11 +72,7 @@
 				},
 				{
 					"bandwidth": 6000,
-					"memory": 6000
-				},
-				{
-					"bandwidth": 6000,
-					"memory": 6000
+					"memory": 4000
 				},
 				{
 					"bandwidth": 6000,

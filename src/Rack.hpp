@@ -20,7 +20,8 @@ class Rack {
     int totalGpuBandwidth = 0;
     int totalGpuMemory = 0;
     vector<GpuResource> gpus;
-    vGPUResource* vgpu = nullptr;
+    vector<vGPUResource*> vgpus;
+//    vGPUResource* vgpu = nullptr;
     vector<NvmeResource> resources;
     vector<int> freeResources;
     vector<raid> compositions;
@@ -54,10 +55,9 @@ class Rack {
     void setTotalGpuMemory(int);
     int getTotalCores();
     bool possibleToColocate(vector<workload>&, int, int, int, DegradationModel&);
-    void setvGPU(vGPUResource* vGPU);
-    bool possiblevGPUAllocation(int, int);
+    void addvGPU(vGPUResource* vGPU);
     vector<GpuResource>::iterator possiblePhysGPUAllocation(int, int);
-    void assignWorkloadTovGPU(workload*);
+//    void assignWorkloadTovGPU(workload*);
 };
 
 #endif

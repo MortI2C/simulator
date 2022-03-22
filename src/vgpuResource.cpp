@@ -50,6 +50,7 @@ void vGPUResource::assignWorkload(workload* wload) {
     this->availBandwidth -= wload->gpuBandwidth;
     this->physicalGpu->setvGPUAsUsed(this);
     this->used = true;
+    wload->allocation.vgpu = this;
 }
 
 bool vGPUResource::removeWorkload(workload* wload) {
