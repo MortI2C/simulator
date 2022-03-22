@@ -257,9 +257,12 @@ bool QoSPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int wlo
                 int ttl = this->model.timeDistortion(tempComposition,
                                                      *wload);
 
-                rackFitness element = {ttl, it->inUse(),
-                                       selection, &(*it)
-                };
+                rackFitness element;
+                element.fitness = ttl;
+                element.inUse =it->inUse();
+                element.selection = selection;
+                element.rack = &(*it);
+//                rackFitness element = {ttl, it->inUse(), selection, &(*it), nullptr};
                 insertRackSorted(fittingRacks, element);
             }
         }
@@ -399,9 +402,15 @@ bool QoSPolicy::placeWorkloadsNewComposition(vector<workload>& workloads, vector
                         ttl = wload->executionTime;
                 }
 
-                rackFitness element = {ttl, it->inUse(),
-                                       selection, &(*it)
-                };
+                rackFitness element;
+                element.fitness = ttl;
+                element.inUse = it->inUse();
+                element.selection = selection;
+                element.rack = &(*it);
+
+//                rackFitness element = {ttl, it->inUse(),
+//                                       selection, &(*it)
+//                };
                 insertRackSorted(fittingRacks, element);
             }
         }

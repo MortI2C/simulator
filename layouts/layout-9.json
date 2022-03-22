@@ -51,13 +51,7 @@
 		}],
 		"gpus": [{
 			"bandwidth": 6000,
-			"memory": 2000
-		}, {
-			"bandwidth": 6000,
-			"memory": 2000
-		}, {
-			"bandwidth": 6000,
-			"memory": 2000
+			"memory": 8000
 		}],
 		"cores": 25
 	},
@@ -65,10 +59,6 @@
 		"nvmes": [{
 			"bandwidth": 1,
 			"capacity": 1
-		}],
-		"gpus": [{
-			"bandwidth": 6000,
-			"memory": 2000
 		}],
 		"cores": 25
 	}

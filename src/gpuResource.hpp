@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include "gpuResource.hpp"
 #include "resources_structures.hpp"
+#include "gpuResource.hpp"
 
 class vGPUResource;
 

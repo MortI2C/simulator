@@ -40,6 +40,18 @@ void MinFragPolicy::insertRackSorted2(vector<rackFitness>& vect, rackFitness& el
         vect.push_back(element);
 }
 
+void MinFragPolicy::insertRackSortedGpu(vector<rackFitness>& vect, rackFitness& element) {
+    bool inserted = false;
+    for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
+        if (it->fitness > element.fitness) {
+            vect.insert(it, element);
+            inserted = true;
+        }
+    }
+    if(!inserted)
+        vect.push_back(element);
+}
+
 void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
@@ -50,6 +62,128 @@ void MinFragPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element
     }
     if(!inserted)
         vect.push_back(element);
+}
+
+bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
+    workload* wload = &workloads[wloadIt];
+    Rack* fittingRack = nullptr;
+    vector<rackFitness> fittingRacks;
+    //1st: look for vgpu avail on list
+    for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
+        if(layout.disaggregated) {
+            if (it->vgpu!=nullptr && it->vgpu->getAvailableMemory() >= wload->gpuMemory
+                && it->vgpu->getAvailableBandwidth() >= wload->gpuBandwidth
+                && it->freeCores >= wload->cores) {
+                int remCores = it->freeCores - wload->cores;
+                rackFitness element{remCores / layout.minCoresWl, true,
+                                       vector<int>(), &(*it)
+                };
+
+                this->insertRackSortedGpu(fittingRacks, element);
+//                fittingRack = &(*it);
+//                it->assignWorkloadTovGPU(wload);
+            }
+        } else {
+            if(!it->gpus.empty() && it->freeCores >= wload->cores) {
+                vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
+                if(gpu!=it->gpus.end()) {
+                    assert(gpu != it->gpus.end());
+                    int remCores = it->freeCores - wload->cores;
+                    rackFitness element = {remCores / layout.minCoresWl, true,
+                                           vector<int>(), &(*it)
+                    };
+                    this->insertRackSortedGpu(fittingRacks, element);
+//                    fittingRack = &(*it);
+//                    gpu->setUsed(true);
+//                    gpu->assignWorkload(wload);
+                }
+            }
+        }
+    }
+
+    if(fittingRacks.size() == 0 && layout.disaggregated) {
+        //find if node is free to assign a new vgpu
+        for(auto it = layout.racks.begin(); fittingRack== nullptr && it!=layout.racks.end(); ++it) {
+            if(it->freeCores >= wload->cores
+               && it->vgpu == nullptr) {//check vgpu not assigned
+                int remCores = it->freeCores - wload->cores;
+                rackFitness element(remCores / layout.minCoresWl, true,
+                                       vector<int>(), &(*it));
+                this->insertRackSortedGpu(fittingRacks, element);
+//                fittingRack = &(*it);
+                fittingRack = fittingRacks.begin()->rack;
+            }
+        }
+
+        bool assigned = false;
+        //find gpu with avail vgpus
+        for(auto it = layout.rackPool.gpus.begin(); !assigned && fittingRack!=nullptr && it!=layout.rackPool.gpus.end(); ++it) {
+            vGPUResource* vgpu = it->possibleAllocateWloadInvGPU(wload->gpuBandwidth, wload->gpuMemory);
+            if(vgpu!= nullptr) {
+                fittingRack->setvGPU(vgpu);
+                vgpu->assignWorkload(wload);
+                assigned = true;
+            }
+        }
+
+        //Find if phys gpu free + partition into vgpus
+        for(auto it = layout.rackPool.gpus.begin(); !assigned && fittingRack!=nullptr && it!=layout.rackPool.gpus.end(); ++it) {
+            if(!it->isUsed()) {
+                assert(it->getTotalBandwidth()>=wload->gpuBandwidth &&
+                       it->getTotalMemory()>=wload->gpuMemory);
+
+                int bwDivisions = floor(it->getTotalBandwidth()/wload->gpuBandwidth);
+                int memDivisions = floor(it->getTotalMemory()/wload->gpuMemory);
+                assert(memDivisions >= 1 && bwDivisions >= 1);
+
+                bwDivisions = it->getTotalBandwidth()/bwDivisions;
+                memDivisions = it->getTotalMemory()/memDivisions;
+
+                int totalBw = it->getTotalBandwidth();
+                int totalMem = it->getTotalMemory();
+                vector<vGPUResource*> vgpus;
+                for(int j = 0; totalBw > 0 && totalMem > 0; ++j) {
+                    int bwvGPU = (totalBw >= bwDivisions) ? bwDivisions  : totalBw;
+                    int memvGPU = (totalMem >= memDivisions) ? memDivisions : totalMem;
+                    assert(bwvGPU > 0 && memvGPU > 0);
+
+                    totalBw -= bwDivisions;
+                    totalMem -= memDivisions;
+                    vGPUResource* vGPU = new vGPUResource(bwvGPU,memvGPU, &(*it));
+                    vgpus.push_back(vGPU);
+                }
+                it->addVgpusVector(vgpus);
+                it->setUsed(true);
+
+                fittingRack->setvGPU(*vgpus.begin());
+                fittingRack->vgpu->assignWorkload(wload);
+                assigned = true;
+            }
+        }
+        if(!assigned) fittingRack = nullptr;
+    }
+
+    if(fittingRacks.size()>0) {
+        fittingRack = fittingRacks.begin()->rack;
+        if(layout.disaggregated) {
+            assert(fittingRack->vgpu != nullptr);
+            fittingRack->assignWorkloadTovGPU(wload);
+        } else {
+            GpuResource* gpu = fittingRacks.begin()->gpu;
+            assert(gpu!=nullptr);
+            gpu->setUsed(true);
+            gpu->assignWorkload(wload);
+        }
+    }
+
+    if(fittingRack != nullptr) {
+        fittingRack->freeCores -= wload->cores;
+        wload->timeLeft = wload->executionTime;
+        wload->allocation.coresAllocatedRack = fittingRack;
+        wload->placementPolicy = "gpu";
+        return true;
+    } else
+        return false;
 }
 
 bool MinFragPolicy::placeWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {

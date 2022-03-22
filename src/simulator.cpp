@@ -13,7 +13,7 @@
 #include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
-#include "minFragSchedPolicy.hpp"
+//#include "minFragSchedPolicy.hpp"
 #include "arrivalUniformModel.hpp"
 #include "arrivalPoissonModel.hpp"
 #include "arrivalPoissonModelUniform.hpp"
@@ -114,7 +114,7 @@ void printStatistics(int step, const vector<workload>& scheduledWorkloads, int s
     }
     step = (finalStep == -1) ? step - stationaryStep : finalStep - stationaryStep;
 //    cout << lambdaCoefficient << " " << loadFactor/step << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << abstractLf/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF << " " << calcLfs.bandwidthLF << " " << calcLfs.capacityLF << " " << absLfs.cpuLF << " " << absLfs.bandwidthLF << " " << absLfs.capacityLF << endl;
-    cout << lambdaCoefficient << " " << workloadsInStationary << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << endl;
+    cout << lambdaCoefficient << " " << workloadsInStationary << " " << (double)missedDeadlines/workloadsInStationary << " " << (double)highprioMisses/workloadsInStationary << " " << resourcesUsed/step << " " << waitingTime << " " << frag/step << " " << absLfs.cpuLF/step << " " << compositionSize/step << " " << highPrioCoefficient << " " <<  avgWorkloadsSharing/step << " " << failedToAllocatfailToAllocateDueCores << " " << calcLfs.cpuLF/step << " " << calcLfs.bandwidthLF/step << " " << calcLfs.capacityLF/step << " " << calcLfs.gpuMemLF/step << " " << absLfs.cpuLF/step << " " << absLfs.bandwidthLF/step << " " << absLfs.capacityLF/step << " " << absLfs.gpuMemLF/step << endl;
 }
 
 void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, vector<workload>& workloads, int patients, Layout& layout, double lambdaCoefficient, double highPrioCoefficient) {
@@ -130,8 +130,8 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     double normLoadFactor = 0;
     double compositionSize = 0;
     double avgWorkloadsSharing = 0;
-    loadFactors calcLoadFactors = {0,0,0};
-    loadFactors absLoadFactors = {0,0,0};
+    loadFactors calcLoadFactors = {0,0,0,0};
+    loadFactors absLoadFactors = {0,0,0,0};
     int stationaryStep = -1;
     int finalStep = -1;
 
@@ -223,7 +223,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
         loadFactors abstractLfs = layout.calculateAbstractLoadFactors(workloads, perfectSchedulerQueue);
 
         //        if(stationaryStep == -1 && abstractLoadFactor >= 0.7 )
-        if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7 || abstractLfs.capacityLF >= 0.7 || abstractLfs.bandwidthLF >= 0.7))
+        if(stationaryStep == -1 && (abstractLfs.cpuLF >= 0.7 || abstractLfs.capacityLF >= 0.7 || abstractLfs.bandwidthLF >= 0.7 || abstractLfs.gpuMemLF >= 0.7))
             stationaryStep = step;
 
         if(stationaryStep>=0 && finalStep == -1 && wlpointer!=workloads.end() && !perfectSchedulerQueue.empty()) {
@@ -237,9 +237,11 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
             calcLoadFactors.cpuLF += currLfs.cpuLF;
             calcLoadFactors.bandwidthLF += currLfs.bandwidthLF;
             calcLoadFactors.capacityLF += currLfs.capacityLF;
+            calcLoadFactors.gpuMemLF += currLfs.gpuMemLF;
             absLoadFactors.cpuLF += abstractLfs.cpuLF;
             absLoadFactors.bandwidthLF += abstractLfs.bandwidthLF;
             absLoadFactors.capacityLF += abstractLfs.capacityLF;
+            absLoadFactors.gpuMemLF += abstractLfs.gpuMemLF;
         } else if(stationaryStep>=0 && finalStep==-1)
             finalStep = step;
 
@@ -300,7 +302,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.2) { //0.2
+        if(number < 0.0) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
@@ -310,7 +312,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.1) { //0.3
+        } else if (number <  0.0) { //0.3
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 2000;
             workloads[i].nvmeCapacity = 0; //600
@@ -320,7 +322,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.4) { //0.3
+        } else if (number <  0.2) { //0.3
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600; //600
@@ -330,13 +332,13 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "tpcxiot";
             workloads[i].wlType = "nvme";
-        } else if (number < 0.8) { //0.3
-            workloads[i].executionTime = 800;
+        } else if (number < 0.9) { //0.3
+            workloads[i].executionTime = 750;
             workloads[i].gpuMemory = 2000;
-            workloads[i].gpuBandwidth = 1;
+            workloads[i].gpuBandwidth = 2000;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //6
+            workloads[i].cores = 10; //6
             workloads[i].wlName = "yolo";
             workloads[i].wlType = "gpuOnly";
         } else {
@@ -353,6 +355,7 @@ int main(int argc, char* argv[]) {
         workloads[i].baseExecutionTime = workloads[i].executionTime;
         workloads[i].wlId = i;
     }
+
 
 //    uniform_int_distribution<int> executionTimes(100,1800);
 //    uniform_int_distribution<int> bandwidths(0,2000);
@@ -405,6 +408,7 @@ int main(int argc, char* argv[]) {
 //        arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
+    layout.minCoresWl = 6;
     DegradationModel* model = new DegradationModel();
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
@@ -429,10 +433,10 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-//    copyWL = workloads;
+    copyWL = workloads;
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
-    simulator(flexibleEarliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;

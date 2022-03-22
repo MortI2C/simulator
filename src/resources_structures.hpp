@@ -5,10 +5,12 @@
 #include <vector>
 #include "math.h"
 #include "nvmeResource.hpp"
+
 //#include "Rack.hpp"
 using namespace std;
 
 class Rack;
+class GpuResource;
 
 struct raid {
     raid() : composedNvme(NvmeResource(0,0)), volumes(vector<int>(0)), used(false), workloadsUsing(0), assignedWorkloads(vector<int>(0)) {}
@@ -24,6 +26,7 @@ struct loadFactors {
     double bandwidthLF;
     double capacityLF;
     double cpuLF;
+    double gpuMemLF;
 };
 
 struct rackFitness {
@@ -31,6 +34,13 @@ struct rackFitness {
     bool inUse;
     vector<int> selection;
     Rack* rack;
+    GpuResource* gpu = nullptr;
+    rackFitness(int f,bool i,vector<int> s,Rack* r) {
+        this->fitness = f;
+        this->inUse = i;
+        this->selection = s;
+        this->rack = r;
+    }
 };
 
 struct nvmeFitness {

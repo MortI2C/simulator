@@ -68,11 +68,19 @@
 		],
 		"gpus": [{
 					"bandwidth": 6000,
-					"memory": 8000
+					"memory": 2000
 				},
 				{
 					"bandwidth": 6000,
-					"memory": 8000
+					"memory": 6000
+				},
+				{
+					"bandwidth": 6000,
+					"memory": 6000
+				},
+				{
+					"bandwidth": 6000,
+					"memory": 6000
 				}
 		],
 		"cores": 0

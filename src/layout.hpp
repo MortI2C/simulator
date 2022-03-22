@@ -13,6 +13,7 @@ class Layout {
     vector<Rack> racks;
     vector<GpuResource> gpus;
     bool disaggregated;
+    int minCoresWl;
     Layout() {
         this->disaggregated = false;
     }
@@ -33,6 +34,7 @@ class Layout {
     int getTotalCapacity();
     int getTotalCores();
     int getFreeCores();
+    int getTotalGpuMemory();
     int calculateMaxBandwidth();
     double calculateLoadFactor();
     loadFactors calculateAbstractLoadFactors(vector<workload>&, vector<int>&);

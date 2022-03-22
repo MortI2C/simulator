@@ -66,8 +66,9 @@ bool FlexibleEarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& work
     MinFragPolicy* minFrag = new MinFragPolicy(placementPolicy->model);
     QoSPolicy* qosPolicy = new QoSPolicy(placementPolicy->model);
     loadFactors currLfs = layout.calculateAbstractLoadFactors(workloads, runningWorkloads);
-    if((currLfs.capacityLF<=0.5 && currLfs.bandwidthLF<=0.5) ||
-        currLfs.bandwidthLF>=this->placementPolicyThreshold && currLfs.capacityLF<this->placementPolicyThreshold) {
+    if(currLfs.gpuMemLF<=0.3 ||
+        (currLfs.capacityLF<=0.5 && currLfs.bandwidthLF<=0.5) ||
+        (currLfs.bandwidthLF>=this->placementPolicyThreshold && currLfs.capacityLF<this->placementPolicyThreshold)) {
         placementPolicy = qosPolicy;
     }
     else

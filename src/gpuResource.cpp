@@ -74,6 +74,7 @@ bool GpuResource::removeWorkload(workload* wload) {
             this->availableMemory += wload->gpuMemory;
         }
     }
+    if(this->workloads.size()==0) this->used = false;
     return found;
 }
 

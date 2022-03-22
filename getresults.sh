@@ -5,5 +5,5 @@
 #for p in 1.8 2.1 2.5 3 3.4 4; do #compute-intensive
 for p in 1.8; do
   lambda=$(echo $p | tr "," ".")
-  ./simulator 1500 "layouts/layout-8.json" $lambda 0.2 1.2
+  ./simulator 1500 "layouts/layout-7.json" $lambda 0.2 1.2
 done

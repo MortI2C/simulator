@@ -376,6 +376,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                     vGPUResource* vGPU = new vGPUResource(bwvGPU,memvGPU, &(*it));
                     vgpus.push_back(vGPU);
                 }
+                cerr << vgpus.size() << endl;
                 it->addVgpusVector(vgpus);
                 it->setUsed(true);
 

@@ -10,3 +10,7 @@ experiments
 simulator
 logs/*
 logs
+*.sh
+*.txt
+*.py
+*.ods
