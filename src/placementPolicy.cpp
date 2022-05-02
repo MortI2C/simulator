@@ -332,6 +332,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
                 if(gpu!=it->gpus.end()) {
                     assert(gpu != it->gpus.end());
+                    assert(!gpu->isUsed());
                     fittingRack = &(*it);
                     gpu->setUsed(true);
                     gpu->assignWorkload(wload);

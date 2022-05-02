@@ -15,7 +15,7 @@ class vGPUResource {
     bool used = false;
     vector<workload*> wloads;
 
-    public:
+public:
         vGPUResource() {
 
 		};
@@ -31,5 +31,8 @@ class vGPUResource {
 		bool removeWorkload(workload*);
 		bool isUsed();
 		GpuResource* getPhysicalGpu();
+		int getNumberWorkloads() {
+		    return this->wloads.size();
+		}
 };
 #endif

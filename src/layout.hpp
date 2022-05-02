@@ -14,6 +14,7 @@ class Layout {
     vector<GpuResource> gpus;
     bool disaggregated;
     int minCoresWl;
+    int numPhysGpu;
     Layout() {
         this->disaggregated = false;
     }

@@ -265,7 +265,7 @@ loadFactors Layout::calculateLoadFactors(vector<workload>& workloads, vector<int
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
     int availCores = this->getTotalCores();
-    int availGpuMemory = this->getTotalGpuMemory();
+    int availGpuMemory = this->gpus.size();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -275,14 +275,16 @@ loadFactors Layout::calculateLoadFactors(vector<workload>& workloads, vector<int
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     for(auto it = running.begin(); it!=running.end(); ++it) {
         bwRequested += workloads[*it].nvmeBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     return loadFactors{(double)bwRequested/availBw,(double)capRequested/availCap,(double)coresRequested/availCores, (double)gpuMemReq/availGpuMemory};
@@ -292,7 +294,7 @@ double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vect
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
     int availCores = this->getTotalCores();
-    int availGpuMemory = this->getTotalGpuMemory();
+    int availGpuMemory = this->gpus.size();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -302,14 +304,16 @@ double Layout::loadFactor(vector<workload>& workloads, vector<int>& queued, vect
         bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     for(auto it = running.begin(); it!=running.end(); ++it) {
         bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     return max(max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores), (double)gpuMemReq/availGpuMemory);
@@ -319,7 +323,7 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
     int coresCap = this->getTotalCores();
-    int availGpuMemory = this->getTotalGpuMemory();
+    int availGpuMemory = this->gpus.size();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -329,7 +333,8 @@ double Layout::actualLoadFactor(vector<workload>& workloads, vector<int>& runnin
         bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
     coresCap+=coresRequested;
 
@@ -340,7 +345,7 @@ double Layout::abstractLoadFactor(vector <workload> & workloads, vector<int> & q
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
     int availCores = this->getTotalCores();
-    int availGpuMemory = this->getTotalGpuMemory();
+    int availGpuMemory = this->gpus.size();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -350,7 +355,8 @@ double Layout::abstractLoadFactor(vector <workload> & workloads, vector<int> & q
         bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     return max(max(max((double)bwRequested/availBw,(double)capRequested/availCap),(double)coresRequested/availCores), (double)gpuMemReq/availGpuMemory);
@@ -361,7 +367,7 @@ loadFactors Layout::calculateAbstractLoadFactors(vector <workload> & workloads, 
     int availBw = this->getTotalBandwidth();
     int availCap = this->getTotalCapacity();
     int availCores = this->getTotalCores();
-    int availGpuMemory = this->getTotalGpuMemory();
+    int availGpuMemory = this->gpus.size();
 
     int bwRequested = 0;
     int capRequested = 0;
@@ -371,7 +377,8 @@ loadFactors Layout::calculateAbstractLoadFactors(vector <workload> & workloads, 
         bwRequested += workloads[*it].baseBandwidth;
         capRequested += workloads[*it].nvmeCapacity;
         coresRequested += workloads[*it].cores;
-        gpuMemReq += workloads[*it].gpuMemory;
+        if(workloads[*it].gpuMemory > 0)
+            gpuMemReq++;
     }
 
     double bwLf = (double)bwRequested/availBw;

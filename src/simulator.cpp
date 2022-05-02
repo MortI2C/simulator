@@ -333,12 +333,12 @@ int main(int argc, char* argv[]) {
             workloads[i].wlName = "tpcxiot";
             workloads[i].wlType = "nvme";
         } else if (number < 0.9) { //0.3
-            workloads[i].executionTime = 750;
-            workloads[i].gpuMemory = 2000;
-            workloads[i].gpuBandwidth = 2000;
+            workloads[i].executionTime = 200;
+            workloads[i].gpuMemory = 800;
+            workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 10; //6
+            workloads[i].cores = 6; //6
             workloads[i].wlName = "yolo";
             workloads[i].wlType = "gpuOnly";
         } else {

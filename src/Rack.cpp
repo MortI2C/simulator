@@ -285,7 +285,8 @@ void Rack::addGpuResourceVector(vector<GpuResource> gpus) {
 
 vector<GpuResource>::iterator Rack::possiblePhysGPUAllocation(int bandwidth, int memory) {
     for(auto it = this->gpus.begin(); it!=this->gpus.end(); ++it) {
-        if(it->getAvailableMemory() >= memory && it->getAvailableBandwidth() >= bandwidth)
+        if(!it->isUsed() &&
+            it->getAvailableMemory() >= memory && it->getAvailableBandwidth() >= bandwidth)
             return it;
     }
 
