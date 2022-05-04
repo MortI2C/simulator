@@ -47,3 +47,7 @@ int DegradationModel::fioModel(int totalBandwidth, int totalRuns) {
     return 900/pow(2,bwModel);
 }
 
+int DegradationModel::yoloModel(int totalRuns) {
+    return 300;
+}
+

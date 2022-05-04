@@ -51,10 +51,10 @@
 		}],
 		"gpus": [{
 			"bandwidth": 8000,
-			"memory": 8000
+			"memory": 3200
 		}, {
 			"bandwidth": 8000,
-			"memory": 8000
+			"memory": 3200
 		}],
 		"cores": 25
 	},
@@ -65,10 +65,10 @@
 		}],
 		"gpus": [{
 			"bandwidth": 8000,
-			"memory": 8000
+			"memory": 3200
 		}, {
 			"bandwidth": 8000,
-			"memory": 8000
+			"memory": 3200
 		}],
 		"cores": 25
 	}

@@ -24,6 +24,7 @@ class DegradationModel {
     int timeDistortion(raid&, workload&);
     int smufinModel(int, int);
     int fioModel(int,int);
+    int yoloModel(int);
 };
 
 #endif

@@ -142,6 +142,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
     int perfBw = layout.getTotalBandwidth();
     int perfCap = layout.getTotalCapacity();
     int perfCores = layout.getTotalCores();
+    int perfGpuMemory = layout.getTotalGpuMemory();
 //    vector<workload> scheduledWorkloads(patients);
     vector<workload>::iterator wlpointer = workloads.begin();
     while(processedPatients < patients || !runningWorkloads.empty()) {
@@ -152,6 +153,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 perfBw += workloads[*it].baseBandwidth;
                 perfCap += workloads[*it].nvmeCapacity;
                 perfCores += workloads[*it].cores;
+                perfGpuMemory += workloads[*it].gpuMemory;
                 perfectSchedulerQueue.erase(it);
             } else
                 ++it;
@@ -172,6 +174,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 scheduler->logger[*it]["idealLFCPU"] = abstractLfsStage.cpuLF;
                 scheduler->logger[*it]["idealLFBW"] = abstractLfsStage.bandwidthLF;
                 scheduler->logger[*it]["idealLFCap"] = abstractLfsStage.capacityLF;
+                scheduler->logger[*it]["idealLFGPU"] = abstractLfsStage.gpuMemLF;
                 runningWorkloads.erase(it);
             } else
                 ++it;
@@ -185,6 +188,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 perfBw -= wlpointer->baseBandwidth;
                 perfCap -= wlpointer->nvmeCapacity;
                 perfCores -= wlpointer->cores;
+                perfGpuMemory -= wlpointer->gpuMemory;
                 perfectSchedulerQueue.push_back(wlpointer->wlId);
             } else
                 waitingPerfectSchedulerQueue.push_back(wlpointer->wlId);
@@ -205,6 +209,7 @@ void simulator(SchedulingPolicy* scheduler, PlacementPolicy* placementPolicy, ve
                 perfBw -= wload->baseBandwidth;
                 perfCap -= wload->nvmeCapacity;
                 perfCores -= wload->cores;
+                perfGpuMemory -= wload->gpuMemory;
                 perfectSchedulerQueue.push_back(wload->wlId);
                 waitingPerfectSchedulerQueue.erase(it);
             } else
@@ -338,7 +343,7 @@ int main(int argc, char* argv[]) {
             workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //6
+            workloads[i].cores = 2; //6
             workloads[i].wlName = "yolo";
             workloads[i].wlType = "gpuOnly";
         } else {
