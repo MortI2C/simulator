@@ -14,16 +14,12 @@
 #include "qosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
 //#include "minFragSchedPolicy.hpp"
-#include "arrivalUniformModel.hpp"
-#include "arrivalPoissonModel.hpp"
 #include "arrivalPoissonModelUniform.hpp"
-#include "arrivalRegularModel.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
 #include "flexibleEDF.hpp"
 #include "degradationModel.hpp"
 #include "firstFitPlacement.hpp"
-#include "firstFitModelAwarePlacement.hpp"
 #include "layout.hpp"
 #include "mmpp-2.hpp"
 using namespace std;
@@ -401,16 +397,8 @@ int main(int argc, char* argv[]) {
     //cout << workloadsDistribution.dump() << endl;
 
     ArrivalPoissonModelUniform* arrival = new ArrivalPoissonModelUniform(); //POISSON
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(950,1200,0.1,0.9 );
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(325,455,0.2,0.6 );
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(200,350,0.1,0.8 );
-//    MarkovModulatedpoissonProcess2* arrival = new MarkovModulatedpoissonProcess2(155.33,180,0.2,0.4 ); //PREFERRED
-//    ArrivalRegularModel* arrival = new ArrivalRegularModel();
     //cluster experiments
     arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient); //POISSON
-//    arrival->generate_arrivals(workloads, 40, prio_threshold);
-//    arrival->generate_arrivals(workloads, 14, prio_threshold);
-//        arrival->generate_arrivals(workloads, ((patients/24)*1778.137) / lambdaCoefficient, prio_threshold);
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
     layout.minCoresWl = 6;
@@ -418,7 +406,6 @@ int main(int argc, char* argv[]) {
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
     FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
-    FirstFitModelAwarePolicy* firstFitAware = new FirstFitModelAwarePolicy(*model);
 //    MinFragScheduler* scheduler = new MinFragScheduler();
     FcfsScheduler* fcfsSched = new FcfsScheduler();
 //    EarliestDeadlineStarvationScheduler* starvedf = new EarliestDeadlineStarvationScheduler(starvCoefficient);
@@ -440,10 +427,10 @@ int main(int argc, char* argv[]) {
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
-    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
-//    simulator(fcfsSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
