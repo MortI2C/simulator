@@ -313,7 +313,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.0) { //0.3
+        } else if (number <  0.4) { //0.4 or 0.0 if not smufin
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 2000;
             workloads[i].nvmeCapacity = 0; //600
@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.2) { //0.3
+        } else if (number <  0.2) {
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600; //600
@@ -401,7 +401,7 @@ int main(int argc, char* argv[]) {
     arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient); //POISSON
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
-    layout.minCoresWl = 6;
+    layout.minCoresWl = 2; //6 works
     DegradationModel* model = new DegradationModel();
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
@@ -425,8 +425,9 @@ int main(int argc, char* argv[]) {
 //    cout << "minfrag: ";
     vector<workload> copyWL = workloads;
 //    simulator(fcfsSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(flexibleEarliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;

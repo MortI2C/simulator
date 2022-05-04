@@ -292,6 +292,17 @@ vector<GpuResource>::iterator Rack::possiblePhysGPUAllocation(int bandwidth, int
 
     return this->gpus.end();
 }
+
+bool Rack::assignWorkloadvGPU(workload *wload) {
+    for(auto it = this->vgpus.begin(); it!=this->vgpus.end(); ++it) {
+        if((*it)->getAvailableMemory()>=wload->gpuMemory && (*it)->getAvailableBandwidth()>=wload->gpuBandwidth) {
+            (*it)->assignWorkload(wload);
+            return true;
+        }
+    }
+    return false;
+}
+
 //
 //void Rack::assignWorkloadTovGPU(workload* wload) {
 //    int memory = wload->gpuMemory;
