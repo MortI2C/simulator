@@ -85,4 +85,6 @@ bool EarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& workloads,
             }
         }
     }
+
+    return true;
 }

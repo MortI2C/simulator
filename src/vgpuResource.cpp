@@ -56,8 +56,6 @@ void vGPUResource::assignWorkload(workload* wload) {
 
 bool vGPUResource::removeWorkload(workload* wload) {
     assert(this->physicalGpu->removeWorkload(wload));
-    this->used = false;
-
     return true;
 }
 
@@ -67,4 +65,8 @@ bool vGPUResource::isUsed() {
 
 GpuResource* vGPUResource::getPhysicalGpu() {
     return this->physicalGpu;
+}
+
+void vGPUResource::setUsed(bool used) {
+    this->used = used;
 }

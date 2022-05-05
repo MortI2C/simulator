@@ -47,4 +47,6 @@ bool FcfsScheduler::scheduleWorkloads(vector<workload>& workloads,
             }
         }
     }
+
+    return true;
 }

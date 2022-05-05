@@ -70,7 +70,11 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
                     wload->allocation.coresAllocatedRack->vgpus.erase(it);
                 }
             }
+            GpuResource* physGpu = wloadvGPU->getPhysicalGpu();
             wloadvGPU->removeWorkload(wload);
+            if(physGpu->getNumWorkloads()>0)
+                wloadvGPU->setUsed(false);
+
             wload->allocation.vgpu = nullptr;
         } else {
             assert(wload->allocation.coresAllocatedRack->gpus.size()>0);

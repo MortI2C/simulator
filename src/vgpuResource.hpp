@@ -30,6 +30,7 @@ public:
 		void assignWorkload(workload*);
 		bool removeWorkload(workload*);
 		bool isUsed();
+		void setUsed(bool);
 		GpuResource* getPhysicalGpu();
 		int getNumberWorkloads() {
 		    return this->wloads.size();

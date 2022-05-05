@@ -98,4 +98,6 @@ bool FlexibleEarliestDeadlineScheduler::scheduleWorkloads(vector<workload>& work
             }
         }
     }
+
+    return true;
 }
