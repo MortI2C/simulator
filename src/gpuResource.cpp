@@ -74,17 +74,20 @@ bool GpuResource::removeWorkload(workload* wload) {
             this->availableMemory += wload->gpuMemory;
         }
     }
-    if(this->workloads.size()==0) this->used = false;
+    if(this->workloads.size()==0) {
+        for(auto it : this->vgpus)
+            delete it;
+        this->vgpus.clear();
+        this->used = false;
+    }
     return found;
 }
 
 vGPUResource* GpuResource::possibleAllocateWloadInvGPU(int bandwidth, int memory) {
     int element = 0;
-    for(auto it = this->usedVgpus.begin(); it!=this->usedVgpus.end(); ++it, ++element) {
-        if(!*it) {
-            vGPUResource* vgpu = this->vgpus[element];
-            if(vgpu->getAvailableBandwidth() >= bandwidth && vgpu->getAvailableMemory() >= memory)
-                return vgpu;
+    for(auto it = this->vgpus.begin(); it!=this->vgpus.end(); ++it) {
+        if(!(*it)->isUsed()) {
+            return *it;
         }
     }
 
@@ -141,4 +144,12 @@ void GpuResource::setvGPUAsUsed(vGPUResource* vgpu) {
     }
 
     assert(found);
+}
+
+int GpuResource::getNumWorkloads() {
+    return this->workloads.size();
+}
+
+vector<workload*> GpuResource::getWorkloads() {
+    return this->workloads;
 }

@@ -29,6 +29,7 @@ class PlacementPolicy {
     void updateRackWorkloads(vector <workload>&, int, Rack*, raid&, int);
     void updateRackWorkloadsUnaware(vector <workload>&, int, Rack*, raid&, int);
     void updateRackWorkloadsTime(vector<workload>&, raid&);
+    void updateRackGpuWorkloads(vector<workload*>);
 };
 
 #endif

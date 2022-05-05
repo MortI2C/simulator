@@ -45,7 +45,8 @@ int vGPUResource::getAvailableMemory() {
 }
 
 void vGPUResource::assignWorkload(workload* wload) {
-    this->wloads.push_back(wload);
+    this->physicalGpu->assignWorkload(wload);
+//    this->wloads.push_back(wload);
     this->availMemory -= wload->gpuMemory;
     this->availBandwidth -= wload->gpuBandwidth;
     this->physicalGpu->setvGPUAsUsed(this);
@@ -54,26 +55,14 @@ void vGPUResource::assignWorkload(workload* wload) {
 }
 
 bool vGPUResource::removeWorkload(workload* wload) {
-    bool found = false;
-    for(auto it = this->wloads.begin(); !found && it!=this->wloads.end(); ++it) {
-        if(wload->wlId == (*it)->wlId) {
-            found = true;
-            this->wloads.erase(it);
-            this->availMemory += wload->gpuMemory;
-            this->availBandwidth += wload->gpuBandwidth;
-        }
-    }
-    assert(this->wloads.size()>=0);
-    if(this->wloads.size()==0) {
-        this->used = false;
-        this->physicalGpu->freevGPU(this);
-    }
+    assert(this->physicalGpu->removeWorkload(wload));
+    this->used = false;
 
-    return found;
+    return true;
 }
 
 bool vGPUResource::isUsed() {
-    return this->wloads.size()>0;
+    return this->used;
 }
 
 GpuResource* vGPUResource::getPhysicalGpu() {

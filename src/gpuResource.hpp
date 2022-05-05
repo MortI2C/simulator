@@ -15,12 +15,13 @@ class GpuResource {
     int totalMemory;
     bool used = false;
     vector<workload*> workloads;
-    vector<vGPUResource*> vgpus;
     vector<int> usedVgpus;
     int vgpusUsed = 0;
 
     public:
-        GpuResource() {
+    vector<vGPUResource*> vgpus;
+
+    GpuResource() {
 
 		};
         GpuResource (int, int);
@@ -41,5 +42,7 @@ class GpuResource {
         void freevGPU(vGPUResource*);
         vGPUResource* possibleAllocateWloadInvGPU(int, int);
         void setvGPUAsUsed(vGPUResource*);
+        int getNumWorkloads();
+        vector<workload*> getWorkloads();
 };
 #endif

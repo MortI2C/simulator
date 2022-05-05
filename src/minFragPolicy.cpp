@@ -74,8 +74,7 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
         if(layout.disaggregated) {
             if(it->freeCores >= wload->cores && it->vgpus.size()>0) {
                 for(auto it2 = it->vgpus.begin(); fittingRack==nullptr && it2!=it->vgpus.end(); ++it2) {
-                    if((*it2)->getAvailableMemory() >= wload->gpuMemory
-                       && (*it2)->getAvailableBandwidth() >= wload->gpuBandwidth) {
+                    if(!(*it2)->isUsed()) {
                         int remCores = it->freeCores - wload->cores;
                         rackFitness element(remCores / layout.minCoresWl, true,
                                             vector<int>(), &(*it));
@@ -120,6 +119,7 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
             if(vgpu!= nullptr) {
                 fittingRack->addvGPU(vgpu);
                 vgpu->assignWorkload(wload);
+                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads());
                 assigned = true;
             }
         }
@@ -155,6 +155,7 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
 
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
+//                wload->executionTime = this->model.yoloModel(it->getNumWorkloads());
                 assigned = true;
             }
         }
@@ -169,11 +170,13 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
         if(layout.disaggregated) {
             assert(fittingRacks.begin()->vgpu!= nullptr);
             fittingRacks.begin()->vgpu->assignWorkload(wload);
+            wload->executionTime = this->model.yoloModel(fittingRacks.begin()->vgpu->getPhysicalGpu()->getNumWorkloads());
         } else {
             GpuResource* gpu = fittingRacks.begin()->gpu;
             assert(gpu!=nullptr);
             gpu->setUsed(true);
             gpu->assignWorkload(wload);
+            wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
         }
     }
 
@@ -182,6 +185,7 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
         wload->timeLeft = wload->executionTime;
         wload->allocation.coresAllocatedRack = fittingRack;
         wload->placementPolicy = "gpu";
+
         return true;
     } else
         return false;

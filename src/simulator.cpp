@@ -334,7 +334,8 @@ int main(int argc, char* argv[]) {
             workloads[i].wlName = "tpcxiot";
             workloads[i].wlType = "nvme";
         } else if (number < 0.9) { //0.3
-            workloads[i].executionTime = 200;
+            workloads[i].executionTime = 152;
+            workloads[i].baseExecutionTime = 152;
             workloads[i].gpuMemory = 800;
             workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;

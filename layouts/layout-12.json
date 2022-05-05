@@ -67,20 +67,20 @@
 			}
 		],
 		"gpus": [{
-					"bandwidth": 4,
-					"memory": 3200
+					"bandwidth": 2,
+					"memory": 1600
 				},
 				{
-					"bandwidth": 4,
-					"memory": 3200
+					"bandwidth": 2,
+					"memory": 1600
 				},
 				{
-					"bandwidth": 4,
-					"memory": 3200
+					"bandwidth": 2,
+					"memory": 1600
 				},
 				{
-					"bandwidth": 4,
-					"memory": 3200
+					"bandwidth": 2,
+					"memory": 1600
 				}
 		],
 		"cores": 0

@@ -61,19 +61,17 @@ void PlacementPolicy::freeResources(vector<workload>& workloads, int wloadIt) {
         //check if vgpu or phys gpu
         //free resources, if vgpu check if last using (free vgpu).
         if(wload->allocation.coresAllocatedRack->vgpus.size() > 0) {
-            wload->allocation.vgpu->removeWorkload(wload);
             vGPUResource* wloadvGPU = wload->allocation.vgpu;
-            if(!wloadvGPU->isUsed()) {
-                bool found = false;
-                for(auto it = wload->allocation.coresAllocatedRack->vgpus.begin();
-                    !found && it!=wload->allocation.coresAllocatedRack->vgpus.end(); ++it) {
-                    if(wloadvGPU == (*it)) {
-                        found = true;
-                        wload->allocation.coresAllocatedRack->vgpus.erase(it);
-                    }
+            bool found = false;
+            for(auto it = wload->allocation.coresAllocatedRack->vgpus.begin();
+                !found && it!=wload->allocation.coresAllocatedRack->vgpus.end(); ++it) {
+                if(wloadvGPU == (*it)) {
+                    found = true;
+                    wload->allocation.coresAllocatedRack->vgpus.erase(it);
                 }
-                wload->allocation.vgpu = nullptr;
             }
+            wloadvGPU->removeWorkload(wload);
+            wload->allocation.vgpu = nullptr;
         } else {
             assert(wload->allocation.coresAllocatedRack->gpus.size()>0);
             bool found = false;
@@ -312,22 +310,26 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
     }
 }
 
+void PlacementPolicy::updateRackGpuWorkloads(vector<workload*> workloads) {
+    int numConcurrent = workloads.size();
+
+    for(auto it = workloads.begin(); it!=workloads.end(); ++it) {
+        if((*it)->timeLeft==(*it)->executionTime)
+            (*it)->executionTime = this->model.yoloModel(numConcurrent);
+        else {
+            int baseTime = this->model.yoloModel(numConcurrent);
+            double penalty = baseTime/(*it)->baseExecutionTime;
+            (*it)->timeLeft *= penalty;
+        }
+    }
+}
+
 bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, Layout& layout, int step, int deadline = -1) {
     workload* wload = &workloads[wloadIt];
     Rack* fittingRack = nullptr;
     //1st: look for vgpu avail on list
-    for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
-        if(layout.disaggregated) {
-            if(it->freeCores >= wload->cores && it->vgpus.size()>0) {
-                for(auto it2 = it->vgpus.begin(); fittingRack==nullptr && it2!=it->vgpus.end(); ++it2) {
-                    if((*it2)->getAvailableMemory() >= wload->gpuMemory
-                        && (*it2)->getAvailableBandwidth() >= wload->gpuBandwidth) {
-                        fittingRack = &(*it);
-                        (*it2)->assignWorkload(wload);
-                    }
-                }
-            }
-        } else {
+    if(!layout.disaggregated) {
+        for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
             if(!it->gpus.empty() && it->freeCores >= wload->cores) {
                 vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
                 if(gpu!=it->gpus.end()) {
@@ -336,6 +338,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                     fittingRack = &(*it);
                     gpu->setUsed(true);
                     gpu->assignWorkload(wload);
+                    wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
                 }
             }
         }
@@ -356,6 +359,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
             if(vgpu!=nullptr) {
                 fittingRack->addvGPU(vgpu);
                 vgpu->assignWorkload(wload);
+                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads());
                 assigned = true;
             }
         }
@@ -390,6 +394,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 it->setUsed(true);
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
+//                wload->executionTime = this->model.yoloModel(it->getNumWorkloads()); NO NEED, IT IS ALWAYS 1 CONC RUN HERE
                 assigned = true;
             }
         }
