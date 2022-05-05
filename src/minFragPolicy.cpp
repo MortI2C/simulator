@@ -70,20 +70,8 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
     vector<rackFitness> fittingRacks;
     bool assigned = false;
     //1st: look for vgpu avail on list
-    for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
-        if(layout.disaggregated) {
-            if(it->freeCores >= wload->cores && it->vgpus.size()>0) {
-                for(auto it2 = it->vgpus.begin(); fittingRack==nullptr && it2!=it->vgpus.end(); ++it2) {
-                    if(!(*it2)->isUsed()) {
-                        int remCores = it->freeCores - wload->cores;
-                        rackFitness element(remCores / layout.minCoresWl, true,
-                                            vector<int>(), &(*it));
-                        element.vgpu = *it2;
-                        this->insertRackSortedGpu(fittingRacks, element);
-                    }
-                }
-            }
-        } else {
+    if(!layout.disaggregated) {
+        for(vector<Rack>::iterator it = layout.racks.begin(); fittingRack==nullptr && it!=layout.racks.end(); ++it) {
             if(!it->gpus.empty() && it->freeCores >= wload->cores) {
                 vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
                 if(gpu!=it->gpus.end()) {

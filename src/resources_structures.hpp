@@ -52,6 +52,11 @@ struct nvmeFitness {
     Rack* rack;
 };
 
+struct gpuFitness {
+    int fitness;
+    vGPUResource* vgpu;
+};
+
 struct allocatedResources {
     allocatedResources() : composition(-1) {}
     int composition;

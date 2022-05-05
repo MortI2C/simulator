@@ -17,11 +17,11 @@ class GpuResource {
     vector<workload*> workloads;
     vector<int> usedVgpus;
     int vgpusUsed = 0;
-
-    public:
     vector<vGPUResource*> vgpus;
 
-    GpuResource() {
+    public:
+
+        GpuResource() {
 
 		};
         GpuResource (int, int);

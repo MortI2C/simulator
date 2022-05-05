@@ -12,9 +12,11 @@ class QoSPolicy : public PlacementPolicy {
     QoSPolicy(DegradationModel model) : PlacementPolicy(model) { }
     void insertSorted(vector<nvmeFitness>&, nvmeFitness&);
     void insertRackSorted(vector<rackFitness>&, rackFitness&);
+    void insertSortedGpu(vector<gpuFitness>& vect, gpuFitness element);
     bool placeWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadInComposition(vector<workload>&, int, Layout&, int, int);
     bool placeExecOnlyWorkload(vector<workload>&, int, Layout&, int, int);
+    bool placeGpuOnlyWorkload(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadNewComposition(vector<workload>&, int, Layout&, int, int);
     bool placeWorkloadsNewComposition(vector<workload>&, vector<int>&, Layout&, int);
     Rack* allocateCoresOnly(vector<workload>&, int, Layout&);
