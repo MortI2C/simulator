@@ -176,7 +176,8 @@ bool QoSPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, L
             vGPUResource* vgpu = (*fittingGpus.begin()).vgpu;
             fittingRack->addvGPU(vgpu);
             vgpu->assignWorkload(wload);
-            this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads());
+            wload->timeLeft = wload->executionTime;
+            this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads(),step);
             assigned = true;
         }
 
@@ -211,6 +212,7 @@ bool QoSPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, L
 
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
+                wload->timeLeft = wload->executionTime;
 //                wload->executionTime = this->model.yoloModel(it->getNumWorkloads());
                 assigned = true;
             }

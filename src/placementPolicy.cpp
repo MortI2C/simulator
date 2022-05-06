@@ -314,16 +314,22 @@ void PlacementPolicy::updateRackWorkloadsTime(vector<workload>& workloads, raid&
     }
 }
 
-void PlacementPolicy::updateRackGpuWorkloads(vector<workload*> workloads) {
+void PlacementPolicy::updateRackGpuWorkloads(vector<workload*> workloads, int step) {
     int numConcurrent = workloads.size();
 
     for(auto it = workloads.begin(); it!=workloads.end(); ++it) {
-        if((*it)->timeLeft==(*it)->executionTime)
-            (*it)->executionTime = this->model.yoloModel(numConcurrent);
+        workload* wload = (*it);
+        if(wload->timeLeft==wload->executionTime)
+            wload->executionTime = this->model.yoloModel(numConcurrent);
         else {
             int baseTime = this->model.yoloModel(numConcurrent);
-            double penalty = baseTime/(*it)->baseExecutionTime;
-            (*it)->timeLeft *= penalty;
+            double penalty = baseTime/wload->baseExecutionTime;
+            double percentage = 1-(wload->timeLeft/wload->executionTime);
+            penalty*=percentage;
+            int newTime = wload->timeLeft * (1+penalty);
+            if((newTime+step) <= ((wload->scheduled+baseTime)))
+                wload->timeLeft *= (1+penalty);
+//            cerr << wload->timeLeft << " " << penalty << " " << wload->timeLeft*penalty << endl;
         }
     }
 }
@@ -363,7 +369,8 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
             if(vgpu!=nullptr) {
                 fittingRack->addvGPU(vgpu);
                 vgpu->assignWorkload(wload);
-                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads());
+                wload->timeLeft = wload->executionTime;
+                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads(),step);
                 assigned = true;
             }
         }
@@ -398,6 +405,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 it->setUsed(true);
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
+                wload->timeLeft = wload->executionTime;
 //                wload->executionTime = this->model.yoloModel(it->getNumWorkloads()); NO NEED, IT IS ALWAYS 1 CONC RUN HERE
                 assigned = true;
             }

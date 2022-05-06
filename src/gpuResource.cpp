@@ -58,6 +58,7 @@ void GpuResource::assignWorkload(workload* wload) {
     this->workloads.push_back(wload);
     this->availableBandwidth -= wload->gpuBandwidth;
     this->availableMemory -= wload->gpuMemory;
+    wload->timeLeft = wload->executionTime;
 }
 
 bool GpuResource::isUsed() {

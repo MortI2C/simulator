@@ -107,7 +107,8 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
             if(vgpu!= nullptr) {
                 fittingRack->addvGPU(vgpu);
                 vgpu->assignWorkload(wload);
-                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads());
+                wload->timeLeft = wload->executionTime;
+                this->updateRackGpuWorkloads(vgpu->getPhysicalGpu()->getWorkloads(),step);
                 assigned = true;
             }
         }

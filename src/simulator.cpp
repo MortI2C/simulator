@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
     int patients=atoi(argv[1]);
     double lambdaCoefficient=1;
     double prio_threshold = 0.2;
-    int starvCoefficient = 0.5;
+    double starvCoefficient = 0.5;
     double highPrioCoefficient = 1.2;
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
@@ -336,6 +336,7 @@ int main(int argc, char* argv[]) {
         } else if (number < 0.9) { //0.3
             workloads[i].executionTime = 152;
             workloads[i].baseExecutionTime = 152;
+            workloads[i].timeLeft = 152;
             workloads[i].gpuMemory = 800;
             workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;

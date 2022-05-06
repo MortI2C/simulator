@@ -46,6 +46,7 @@ int vGPUResource::getAvailableMemory() {
 
 void vGPUResource::assignWorkload(workload* wload) {
     this->physicalGpu->assignWorkload(wload);
+    wload->timeLeft = wload->executionTime;
 //    this->wloads.push_back(wload);
     this->availMemory -= wload->gpuMemory;
     this->availBandwidth -= wload->gpuBandwidth;
