@@ -348,7 +348,8 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                     fittingRack = &(*it);
                     gpu->setUsed(true);
                     gpu->assignWorkload(wload);
-                    wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
+                    assert(gpu->getNumWorkloads()==1);
+//                    wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
                 }
             }
         }

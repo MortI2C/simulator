@@ -13,7 +13,7 @@
 #include "minFragPolicy.hpp"
 #include "qosPolicy.hpp"
 #include "fcfsSchedulePolicy.hpp"
-//#include "minFragSchedPolicy.hpp"
+#include "combinedPolicy.hpp"
 #include "arrivalPoissonModelUniform.hpp"
 #include "workloadPoissonGenerator.hpp"
 #include "earliestDeadlinePolicy.hpp"
@@ -313,7 +313,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "smufin";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.4) { //0.4 or 0.0 if not smufin
+        } else if (number <  0.0) { //0.4 or 0.0 if not smufin
             workloads[i].executionTime = 900;
             workloads[i].nvmeBandwidth = 2000;
             workloads[i].nvmeCapacity = 0; //600
@@ -416,6 +416,7 @@ int main(int argc, char* argv[]) {
 //    EarliestDeadlineStarvationSetsScheduler* setStarved = new EarliestDeadlineStarvationSetsScheduler(starvCoefficient);
     EarliestDeadlineScheduler* earliestSched = new EarliestDeadlineScheduler(starvCoefficient);
     FlexibleEarliestDeadlineScheduler* flexibleEarliestSched = new FlexibleEarliestDeadlineScheduler(0.7);
+    CombinedPolicy* combinedPolicy = new CombinedPolicy(*model);
 //    EarliestSetDeadlineScheduler* earliestSetSched = new EarliestSetDeadlineScheduler(starvCoefficient);
 //    MinFragScheduler* minFragSched = new MinFragScheduler();
 //    cout << "bestfit: ";
@@ -430,10 +431,12 @@ int main(int argc, char* argv[]) {
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(flexibleEarliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-//    copyWL = workloads;
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, combinedPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
