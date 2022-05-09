@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.2) {
+        } else if (number <  0.0) {
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600; //600
@@ -333,7 +333,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 6; //6
             workloads[i].wlName = "tpcxiot";
             workloads[i].wlType = "nvme";
-        } else if (number < 0.9) { //0.3
+        } else if (number < 0.7) { //0.3
             workloads[i].executionTime = 152;
             workloads[i].baseExecutionTime = 152;
             workloads[i].timeLeft = 152;
@@ -403,7 +403,7 @@ int main(int argc, char* argv[]) {
     arrival->generate_arrivals(workloads, lambdaCoefficient*72*60*60/patients, prio_threshold, highPrioCoefficient); //POISSON
     Layout layout = Layout();
     layout.generateLayout(layoutPath);
-    layout.minCoresWl = 2; //6 works
+    layout.minCoresWl = 6; //6 works
     DegradationModel* model = new DegradationModel();
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);

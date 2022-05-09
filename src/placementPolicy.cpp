@@ -323,13 +323,10 @@ void PlacementPolicy::updateRackGpuWorkloads(vector<workload*> workloads, int st
             wload->executionTime = this->model.yoloModel(numConcurrent);
         else {
             int baseTime = this->model.yoloModel(numConcurrent);
-            double penalty = baseTime/wload->baseExecutionTime;
-            double percentage = 1-(wload->timeLeft/wload->executionTime);
-            penalty*=percentage;
+            double penalty = 1-(baseTime/wload->baseExecutionTime);
             int newTime = wload->timeLeft * (1+penalty);
             if((newTime+step) <= ((wload->scheduled+baseTime)))
                 wload->timeLeft *= (1+penalty);
-//            cerr << wload->timeLeft << " " << penalty << " " << wload->timeLeft*penalty << endl;
         }
     }
 }

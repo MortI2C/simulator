@@ -48,7 +48,7 @@ int DegradationModel::fioModel(int totalBandwidth, int totalRuns) {
 }
 
 int DegradationModel::yoloModel(int totalRuns) {
-    int times[] = {151,175,282,950};
+    int times[] = {151,175,282,750};
     assert(totalRuns<=4);
     return times[totalRuns-1];
 }

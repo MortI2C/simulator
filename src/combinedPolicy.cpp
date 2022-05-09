@@ -43,7 +43,7 @@ void CombinedPolicy::insertRackSorted2(vector<rackFitness>& vect, rackFitness& e
 void CombinedPolicy::insertRackSortedGpu(vector<rackFitness>& vect, rackFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if (it->fitness > element.fitness) {
+        if (it->fitness < element.fitness) {
             vect.insert(it, element);
             inserted = true;
         }
@@ -55,7 +55,7 @@ void CombinedPolicy::insertRackSortedGpu(vector<rackFitness>& vect, rackFitness&
 void CombinedPolicy::insertSorted(vector<nvmeFitness>& vect, nvmeFitness& element) {
     bool inserted = false;
     for(auto it = vect.begin(); !inserted && it!=vect.end(); ++it) {
-        if(it->fitness > element.fitness) {
+        if(it->fitness < element.fitness) {
             vect.insert(it,element);
             inserted = true;
         }
@@ -292,9 +292,9 @@ bool CombinedPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
                           it->compositions[i].composedNvme.getAvailableBandwidth() >= wload->nvmeBandwidth &&
                           it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
-                        int alpha = 0;
+                        int remCores = 0;
                         if(wload->cores < it->compositions[i].coresRack->freeCores) {
-                            int alpha = it->freeCores - wload->cores;
+                            int remCores = it->freeCores - wload->cores;
 
 //                            alpha = (100 - 100 * ((wload->nvmeBandwidth / compositionTotalBw)
 //                                                      + (wload->nvmeCapacity /
@@ -303,7 +303,7 @@ bool CombinedPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
 
                         }
                         nvmeFitness element = {
-                                alpha,
+                                remCores / layout.minCoresWl,
                                 estimateTTL - compositionTTL, i, &(*it)
                         };
                         this->insertSorted(fittingCompositions, element);

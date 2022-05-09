@@ -73,14 +73,6 @@
 				{
 					"bandwidth": 4,
 					"memory": 3200
-				},
-				{
-					"bandwidth": 4,
-					"memory": 3200
-				},
-				{
-					"bandwidth": 4,
-					"memory": 3200
 				}
 		],
 		"cores": 0
