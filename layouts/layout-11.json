@@ -69,10 +69,6 @@
 		"gpus": [{
 					"bandwidth": 8000,
 					"memory": 800
-				},
-				{
-					"bandwidth": 8000,
-					"memory": 800
 				}
 		],
 		"cores": 0

@@ -124,7 +124,7 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
                 int bwDivisions = floor(it->getTotalBandwidth()/wload->gpuBandwidth);
                 int memDivisions = floor(it->getTotalMemory()/wload->gpuMemory);
                 assert(memDivisions >= 1 && bwDivisions >= 1);
-                if(bwDivisions > 3 || memDivisions > 3)
+                if(bwDivisions > 3 && memDivisions > 3)
                     memDivisions = 3;
 
                 bwDivisions = it->getTotalBandwidth()/bwDivisions;
