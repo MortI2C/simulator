@@ -122,8 +122,8 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
                 int bwDivisions = floor(it->getTotalBandwidth()/wload->gpuBandwidth);
                 int memDivisions = floor(it->getTotalMemory()/wload->gpuMemory);
                 assert(memDivisions >= 1 && bwDivisions >= 1);
-                if(bwDivisions > 2 || memDivisions > 2)
-                    memDivisions = 2;
+                if(bwDivisions > 3 || memDivisions > 3)
+                    memDivisions = 3;
 
                 bwDivisions = it->getTotalBandwidth()/bwDivisions;
                 memDivisions = it->getTotalMemory()/memDivisions;
@@ -209,7 +209,7 @@ Rack* CombinedPolicy::allocateCoresOnly(vector<workload>& workloads, int wloadIt
         if(it->freeCores >= wload->cores)
         {
             int remCores = it->freeCores - wload->cores;
-            rackFitness element = {remCores / layout.minCoresWl, true,
+            rackFitness element = {100-(remCores / layout.minCoresWl), true,
                                    vector<int>(), &(*it)
             };
 
@@ -243,7 +243,7 @@ Rack* CombinedPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, ve
 //                                   vector<int>(), &(*it)
 //            };
             int remCores = it->freeCores - cores;
-            rackFitness element = {remCores / layout.minCoresWl, true,
+            rackFitness element = {100-(remCores / layout.minCoresWl), true,
                                    vector<int>(), &(*it)
             };
 
@@ -300,13 +300,13 @@ bool CombinedPolicy::placeWorkloadInComposition(vector<workload>& workloads, int
 //                                                      + (wload->nvmeCapacity /
 //                                                         it->compositions[i].composedNvme.getTotalCapacity()))
 //                                               / (100 * wload->cores / it->compositions[i].coresRack->freeCores));
-
+                            nvmeFitness element = {
+                                    100-(remCores / layout.minCoresWl),
+                                    estimateTTL - compositionTTL, i, &(*it)
+                            };
+                            this->insertSorted(fittingCompositions, element);
                         }
-                        nvmeFitness element = {
-                                remCores / layout.minCoresWl,
-                                estimateTTL - compositionTTL, i, &(*it)
-                        };
-                        this->insertSorted(fittingCompositions, element);
+
                     }
                 } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores &&
                            it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {

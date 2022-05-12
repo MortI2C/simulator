@@ -76,8 +76,8 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
                 vector<GpuResource>::iterator gpu = it->possiblePhysGPUAllocation(wload->gpuBandwidth,wload->gpuMemory);
                 if(gpu!=it->gpus.end()) {
                     assert(gpu != it->gpus.end());
-                    int remCores = it->freeCores - wload->cores;
-                    rackFitness element = {remCores / layout.minCoresWl, true,
+//                    int remCores = it->freeCores - wload->cores;
+                    rackFitness element = {1, true,
                                            vector<int>(), &(*it)
                     };
                     element.gpu = &(*gpu);
@@ -91,8 +91,11 @@ bool MinFragPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadI
         //find if node is free to assign a new vgpu
         for(auto it = layout.racks.begin(); fittingRack== nullptr && it!=layout.racks.end(); ++it) {
             if(it->freeCores >= wload->cores) {
-                int remCores = it->freeCores - wload->cores;
-                rackFitness element(remCores / layout.minCoresWl, true,
+                int percFreecores = (it->freeCores/it->cores)*100;
+                int alpha = (percFreecores == 0) ? 0 : (100-max((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+                        ,(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+//                int remCores = it->freeCores - wload->cores;
+                rackFitness element(alpha, true,
                                        vector<int>(), &(*it));
                 this->insertRackSortedGpu(fittingRacks, element);
 //                fittingRack = &(*it);
@@ -237,14 +240,17 @@ Rack* MinFragPolicy::allocateWorkloadsCoresOnly(vector<workload>& workloads, vec
         if(it->freeCores >= cores)
         {
 //            int alpha = 100 - (it->freeCores/it->cores)*100;
-//            int percFreecores = (it->freeCores/it->cores)*100;
-//            int alpha = (percFreecores == 0) ? 0 : (100-max((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
-//                                                     ,(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
+            int percFreecores = (it->freeCores/it->cores)*100;
+            int alpha = (percFreecores == 0) ? 0 : (100-max((it->getTotalBandwidthUsed()/it->totalBandwidth)*100
+                                                     ,(it->getTotalCapacityUsed()/it->totalCapacity)*100)/percFreecores);
 
-            int remCores = it->freeCores - cores;
-            rackFitness element = {remCores / layout.minCoresWl, true,
+            rackFitness element = {alpha, true,
                                    vector<int>(), &(*it)
             };
+//            int remCores = it->freeCores - cores;
+//            rackFitness element = {remCores / layout.minCoresWl, true,
+//                                   vector<int>(), &(*it)
+//            };
 
             this->insertRackSorted(fittingRacks, element);
         }
@@ -292,18 +298,18 @@ bool MinFragPolicy::placeWorkloadInComposition(vector<workload>& workloads, int 
                           it->compositions[i].composedNvme.getAvailableCapacity() >= wload->nvmeCapacity))) {
 
                         int remCores = it->freeCores - wload->cores;
-//                        if(wload->cores < it->compositions[i].coresRack->freeCores) {
-//                            alpha = (100 - 100 * ((wload->nvmeBandwidth / compositionTotalBw)
-//                                                      + (wload->nvmeCapacity /
-//                                                         it->compositions[i].composedNvme.getTotalCapacity()))
-//                                               / (100 * wload->cores / it->compositions[i].coresRack->freeCores));
-//
-//                        }
-                        nvmeFitness element = {
-                                remCores / layout.minCoresWl,
-                                estimateTTL - compositionTTL, i, &(*it)
-                        };
-                        this->insertSorted(fittingCompositions, element);
+                        if(wload->cores < it->compositions[i].coresRack->freeCores) {
+                            int alpha = (100 - 100 * ((wload->nvmeBandwidth / compositionTotalBw)
+                                                      + (wload->nvmeCapacity /
+                                                         it->compositions[i].composedNvme.getTotalCapacity()))
+                                               / (100 * wload->cores / it->compositions[i].coresRack->freeCores));
+
+                            nvmeFitness element = {
+                                    alpha,
+                                    estimateTTL - compositionTTL, i, &(*it)
+                            };
+                            this->insertSorted(fittingCompositions, element);
+                        }
                     }
                 } else if (it->compositions[i].used && it->compositions[i].coresRack->freeCores<wload->cores &&
                            it->possibleToColocate(workloads, wloadIt, i, step, this->model)) {
@@ -353,8 +359,11 @@ bool MinFragPolicy::placeWorkloadNewComposition(vector<workload>& workloads, int
         else if(it->resources.begin()->getTotalCapacity()>1 && (it->cores==0 || it->freeCores >= wload->cores)) {
             vector<int> selection = this->MinFragHeuristic(it->resources, it->freeResources, bandwidth, capacity);
             if (!selection.empty()) {
-                int remCores = it->freeCores - wload->cores;
-                rackFitness element = {remCores / layout.minCoresWl, it->inUse(),
+//                int remCores = it->freeCores - wload->cores;
+                int alpha = (((wload->nvmeBandwidth / it->totalBandwidth) * 100
+                              + (wload->nvmeCapacity / it->totalCapacity) * 100));
+
+                rackFitness element = {alpha, it->inUse(),
                                        selection, &(*it)
                 };
                 insertRackSorted(fittingRacks, element);

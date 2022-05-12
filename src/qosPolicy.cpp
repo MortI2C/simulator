@@ -144,7 +144,7 @@ bool QoSPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloadIt, L
             if(it->freeCores >= wload->cores) {
                 rackFitness element(1, true,
                                     vector<int>(), &(*it));
-                fittingRacks.push_back(element);
+                fittingRacks.insert(fittingRacks.begin(),element);
             }
         }
         if(fittingRacks.size()>0)
