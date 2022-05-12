@@ -92,7 +92,9 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
         for(auto it = layout.racks.begin(); fittingRack== nullptr && it!=layout.racks.end(); ++it) {
             if(it->freeCores >= wload->cores) {
                 int remCores = it->freeCores - wload->cores;
-                rackFitness element(remCores / layout.minCoresWl, true,
+                int f = remCores / layout.minCoresWl;
+                if(it->inUse()) f=100-f;
+                rackFitness element(f, true,
                                        vector<int>(), &(*it));
                 this->insertRackSortedGpu(fittingRacks, element);
 //                fittingRack = &(*it);

@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.5) { //0.2
+        if(number < 0.2) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.7) {
+        } else if (number <  0.4) {
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600; //600
