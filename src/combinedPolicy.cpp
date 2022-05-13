@@ -93,7 +93,7 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
             if(it->freeCores >= wload->cores) {
                 int remCores = it->freeCores - wload->cores;
                 int f = remCores / layout.minCoresWl;
-                if(it->inUse()) f=100-f;
+//                if(it->inUse()) f=100-f;
                 rackFitness element(f, true,
                                        vector<int>(), &(*it));
                 this->insertRackSortedGpu(fittingRacks, element);
@@ -124,8 +124,8 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
                 int bwDivisions = floor(it->getTotalBandwidth()/wload->gpuBandwidth);
                 int memDivisions = floor(it->getTotalMemory()/wload->gpuMemory);
                 assert(memDivisions >= 1 && bwDivisions >= 1);
-                if(bwDivisions > 3 && memDivisions > 3)
-                    memDivisions = 3;
+//                if(bwDivisions > 3 && memDivisions > 3)
+//                    memDivisions = 3;
 
                 bwDivisions = it->getTotalBandwidth()/bwDivisions;
                 memDivisions = it->getTotalMemory()/memDivisions;

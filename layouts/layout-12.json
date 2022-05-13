@@ -37,23 +37,11 @@
 			{
 				"bandwidth": 2000,
 				"capacity": 600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 600
-			},
-			{
-				"bandwidth": 2000,
-				"capacity": 600
 			}
 		],
 		"gpus": [{
 			"bandwidth": 4,
-			"memory": 3200
+			"memory": 800
 		}
 		],
 		"cores": 0

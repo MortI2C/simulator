@@ -87,7 +87,7 @@ bool GpuResource::removeWorkload(workload* wload) {
 vGPUResource* GpuResource::possibleAllocateWloadInvGPU(int bandwidth, int memory) {
     int element = 0;
     for(auto it = this->vgpus.begin(); it!=this->vgpus.end(); ++it) {
-        if(!(*it)->isUsed()) {
+        if(!(*it)->isUsed() && this->getAvailableMemory()>=memory) {
             return *it;
         }
     }
