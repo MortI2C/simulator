@@ -386,6 +386,8 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 bwDivisions = it->getTotalBandwidth()/bwDivisions;
                 memDivisions = it->getTotalMemory()/memDivisions;
 
+//                int bwDivisions = 1;
+//                int memDivisions = 1;
                 int totalBw = it->getTotalBandwidth();
                 int totalMem = it->getTotalMemory();
                 vector<vGPUResource*> vgpus;

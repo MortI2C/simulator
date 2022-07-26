@@ -8,9 +8,14 @@
 using namespace std;
 
 DegradationModel::DegradationModel() {
+    this->degradCoefficient = 1.0;
 //    this->distortion = distortionValues({1706.29,1.08423,0.858092});
 //    this->distortion = distortionValues({-0.021875,97.9734,1276.36}); SKX mix numbers
     this->distortion = distortionValues({-0.113236,123.627,1719.01});
+}
+
+void DegradationModel::setDegradCoefficient(double degradCoefficient) {
+    this->degradCoefficient = degradCoefficient;
 }
 
 int DegradationModel::timeDistortion(raid& composition, workload& wload) {
@@ -50,7 +55,7 @@ int DegradationModel::fioModel(int totalBandwidth, int totalRuns) {
 int DegradationModel::yoloModel(int totalRuns) {
     int times[] = {151,175,282,757};
     assert(totalRuns<=4);
-    return times[totalRuns-1];
+    return times[totalRuns-1]*this->degradCoefficient;
 }
 
 

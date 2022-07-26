@@ -278,6 +278,7 @@ int main(int argc, char* argv[]) {
     double prio_threshold = 0.2;
     double starvCoefficient = 0.5;
     double highPrioCoefficient = 1.2;
+    double degradCoefficient = 1.0;
 //    if(argc>2)
 //        prio_threshold=atof(argv[2]);
 
@@ -294,6 +295,9 @@ int main(int argc, char* argv[]) {
     if(argc>5)
         highPrioCoefficient = atof(argv[5]);
 
+    if(argc>6)
+        degradCoefficient = atof(argv[6]);
+
     WorkloadPoissonGenerator* generator = new WorkloadPoissonGenerator();
 //    vector<workload> workloads = generator->generateWorkloads(patients, 1499*1.5, 2000, 1600, 4000, 3000);
     vector<workload> workloads(patients);
@@ -303,7 +307,7 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for(int i = 0; i<patients; ++i) {
         double number = distribution(generate);
-        if(number < 0.2) { //0.2
+        if(number < 0.5) { //0.2
             workloads[i].executionTime = 1600;
             workloads[i].nvmeBandwidth = 1800;
             workloads[i].baseBandwidth = 1800;
@@ -323,7 +327,7 @@ int main(int argc, char* argv[]) {
             workloads[i].cores = 2; //6
             workloads[i].wlName = "fio";
             workloads[i].wlType = "nvme";
-        } else if (number <  0.4) {
+        } else if (number <  0.7) {
             workloads[i].executionTime = 800;
             workloads[i].nvmeBandwidth = 160;
             workloads[i].nvmeCapacity = 600; //600
@@ -341,7 +345,7 @@ int main(int argc, char* argv[]) {
             workloads[i].gpuBandwidth = 1;
             workloads[i].performanceMultiplier = 1;
             workloads[i].limitPeakBandwidth = 160;
-            workloads[i].cores = 6; //6
+            workloads[i].cores = 2; //6
             workloads[i].wlName = "yolo";
             workloads[i].wlType = "gpuOnly";
         } else {
@@ -405,6 +409,7 @@ int main(int argc, char* argv[]) {
     layout.generateLayout(layoutPath);
     layout.minCoresWl = 6; //6 works
     DegradationModel* model = new DegradationModel();
+    model->setDegradCoefficient(degradCoefficient);
     MinFragPolicy* minFrag = new MinFragPolicy(*model);
     QoSPolicy* qosPolicy = new QoSPolicy(*model);
     FirstFitPolicy* firstFit = new FirstFitPolicy(*model);
@@ -431,12 +436,12 @@ int main(int argc, char* argv[]) {
     simulator(earliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
     copyWL = workloads;
     simulator(flexibleEarliestSched, firstFit, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
-//    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
-    copyWL = workloads;
-    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
-//    simulator(earliestSched, combinedPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    simulator(earliestSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+//    copyWL = workloads;
+//    simulator(earliestSched, minFrag, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
+    copyWL = workloads;
+    simulator(earliestSched, combinedPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;
 //    simulator(fcfsSched, qosPolicy, copyWL, patients, layout, lambdaCoefficient, highPrioCoefficient);
 //    copyWL = workloads;

@@ -7,6 +7,7 @@ using namespace std;
 
 class DegradationModel {
    public:
+    double degradCoefficient;
     struct distortionValues {
         float a;
         float b;
@@ -21,6 +22,7 @@ class DegradationModel {
 
     distortionValues distortion;
     DegradationModel();
+    void setDegradCoefficient(double);
     int timeDistortion(raid&, workload&);
     int smufinModel(int, int);
     int fioModel(int,int);
