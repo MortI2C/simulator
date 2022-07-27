@@ -148,7 +148,7 @@ bool CombinedPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wload
 
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
-//                wload->executionTime = this->model.yoloModel(it->getNumWorkloads());
+                wload->executionTime = this->model.yoloModel(it->getNumWorkloads());
                 assigned = true;
             }
         }

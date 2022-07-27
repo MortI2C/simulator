@@ -346,7 +346,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                     gpu->setUsed(true);
                     gpu->assignWorkload(wload);
                     assert(gpu->getNumWorkloads()==1);
-//                    wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
+                    wload->executionTime = this->model.yoloModel(gpu->getNumWorkloads());
                 }
             }
         }
@@ -406,7 +406,7 @@ bool PlacementPolicy::placeGpuOnlyWorkload(vector<workload>& workloads, int wloa
                 fittingRack->addvGPU(*vgpus.begin());
                 (*vgpus.begin())->assignWorkload(wload);
                 wload->timeLeft = wload->executionTime;
-//                wload->executionTime = this->model.yoloModel(it->getNumWorkloads()); NO NEED, IT IS ALWAYS 1 CONC RUN HERE
+                wload->executionTime = this->model.yoloModel(it->getNumWorkloads()); //NO NEED, IT IS ALWAYS 1 CONC RUN HERE
                 assigned = true;
             }
         }
